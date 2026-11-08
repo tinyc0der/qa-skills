@@ -1,6 +1,6 @@
 ---
 name: qa-write-test-cases
-description: Generate test cases and checklists for software testing. Use this skill whenever the user asks to create test cases, test scenarios, test plans, checklists, QA documentation, or mentions testing activities like "write tests for feature", "create a test checklist", "generate test scenarios from requirements", or similar. This skill works better if user provides documentation, requirements, etc., or it can create test cases based on the user prompt without any additional context.
+description: Generate test cases and checklists for software testing. Use this skill whenever the user asks to create test cases, test scenarios, test plans, checklists (high-level test cases), QA documentation, or mentions testing activities like "write tests for feature", "create a test checklist", "generate test scenarios from requirements", or similar. This skill works better if user provides documentation, requirements, etc., or it can create test cases based on the user prompt without any additional context.
 ---
 
 # Test Case & Checklist Generator
@@ -24,6 +24,7 @@ References:
 - **Always generate a checklist before test cases**, even if the user asks for test cases directly.
 - **Do not skip steps. Get user approval at each gate before moving to the next step.**
 - Strictly recommend PLAN mode. Switch to Edit mode only on the last step — writing test cases to md files.
+- Write the checklist and test cases in the language the user asks for. Otherwise use the language of existing test cases, then of the requirements.
 - Use the Ask tool for choices when available.
 - Fill input fields with suggestions when asking the user for input.
 - Mark questions with ❓ and numbered options:
@@ -64,6 +65,12 @@ Information sources:
   - manual test files: `.test.md` or `.md` in folders like `test-cases`, `tests`, `manual`, `qa`, `spec`
   - automated test files (spec, test, cy files, etc.)
   - project structure
+
+Source priority:
+
+- A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, and parent ticket.
+- From linked documents, use only the parts within the ticket's scope.
+- If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
 Sources may come as pasted text, links, or MCP tools. Ask the user for MCP configuration if needed.
 
@@ -126,10 +133,10 @@ Show each option as a block: bold label with test count on the first line, descr
 Critical-path only
 
 **2. ⚖️ Balanced** ~<N> tests
-Happy path, key negative and common edge cases
+Happy path, alternative flows, key negative and common edge cases
 
 **3. 🧨 Exhaustive** ~<N> tests
-Full coverage incl. error states, boundaries, and security/perf/i18n where relevant
+Full coverage incl. error states, boundaries, invalid input combinations, empty and default states, and UI/security/perf/i18n where relevant
 
 **4. ✏️ Other**
 Type a number of tests, or describe scope in your own words
@@ -177,29 +184,41 @@ When ask for a role:
 
 Create a hierarchical, categorized checklist from the gathered context.
 
-Size it to the Step 2 tier:
+Size it to the tier chosen in Step 2. The tier description lists the categories to cover.
 
-- 🚀 smoke — only critical paths
-- ⚖️ balanced — happy path, key negative, common edge cases
-- 🧨 exhaustive — full coverage
-- ✏️ other — follow what the user described
+Derive items with the techniques that fit the feature:
+
+- at least one item per acceptance criterion
+- equivalence partitioning and boundary values for inputs and limits
+- decision tables for combined conditions
+- pairwise combinations when several independent options interact
+- state transitions for statuses and lifecycles
+- a role/permission matrix when the feature has roles
+- invalid input combinations and error handling
+
+Item rules:
+
+- Each item is one test objective. Split items that check several outcomes.
+- Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
+- Cover UI consistency with one item per screen, not one per element.
+- Prefix each item with its priority: 🔴 critical, 🟠 important, 🟡 high, 🟢 normal, ⚪ low.
 
 Example:
 
 ```markdown
 - Signup
-  - Signup with valid email
-  - Signup with valid phone number
+  - 🔴 [critical] Signup with valid email
+  - 🟢 [normal] Signup with valid phone number
 
 - Login
-  - Login with valid email
-  - Login with valid phone number
-  - Login with invalid password
+  - 🔴 [critical] Login with valid email
+  - 🟢 [normal] Login with valid phone number
+  - 🟡 [high] Login with invalid password
 ```
 
 #### Approval gate
 
-- If a multi-select/checkbox Ask tool is available: present leaf items as checkboxes, prefixed with their category (e.g. `Login: valid email`), with the recommended subset for the chosen tier pre-checked. The ticked items become the test cases in Step 5.
+- If a multi-select/checkbox Ask tool is available: present leaf items as checkboxes, prefixed with priority and category (e.g. `🔴 Login: valid email`), with the recommended subset for the chosen tier pre-checked. The ticked items become the test cases in Step 5.
 - Otherwise: show the markdown checklist and ask the user to add/remove/change items.
 
 Always ask about the amount of cases / level of detail:
@@ -230,6 +249,7 @@ Where to store test cases:
 
 Generation rules:
 
+- Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority.
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
 - **Don't change the user's source code. Only generate `*.test.md` files.**
@@ -244,7 +264,7 @@ Format rules:
 - If required, put `tags:` and `labels:` inside each `<!-- test ... -->` metadata block (see [test metadata](./references/test-case-format.md#test-metadata)), not only on the suite block.
 - Reuse existing tags and labels obtained via MCP or from other test cases.
 - Do not use labels if you are not aware of any existing ones.
-- If reasonable, add test metadata (priority, preconditions, test data, labels, tags) based on the analyzed context.
+- If reasonable, add test metadata (preconditions, test data, labels, tags) based on the analyzed context.
 - Use concrete, executable values. **Do NOT introduce `${...}` placeholders in first-pass generation.** Parametrize only genuinely reused or data-driven values; format them as `${variable}` in backticks.
 - **NEVER generate test or suite IDs of any kind:**
   - Do NOT include Testomat.io IDs (`id: @T*`, `id: @S*`, e.g. `@T12345678`, `@S380c64db`).
@@ -260,7 +280,6 @@ DO match:
 - writing style and level of detail
 - field structure (Priority, Preconditions, Type, Test Data, etc.)
 - additional fields like labels and tags
-- original case language
 
 DON'T copy:
 
@@ -271,4 +290,5 @@ DON'T copy:
 
 - Show a concise summary (markdown table works well): number of test cases and suites, generated files, destination folder.
 - Ask the user to review the files and request changes if needed.
+- List items that needed splitting and gaps found while writing, as suggested additions.
 - Suggest uploading the test cases to Testomat.io via the `sync-test-cases-with-tms` skill.

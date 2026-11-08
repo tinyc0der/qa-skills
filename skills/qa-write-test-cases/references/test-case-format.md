@@ -63,7 +63,7 @@ Metadata is inside an HTML comment block: `<!-- test ... -->`.
 | ---------- | ------- | ----------------------------------------------------------------------------------------------------- |
 | `id`       | string  | Test UID in format `@T{uid}` 8-chars (e.g. `@T12345678`). Optional; used for matching existing tests. |
 | `type`     | string  | Test state: `manual` or `automated`.                                                                  |
-| `priority` | string  | One of: `low`, `normal`, `important`, `high`, `critical`.                                             |
+| `priority` | string  | One of, lowest to highest: `low`, `normal`, `high`, `important`, `critical`.                          |
 | `assignee` | string  | User email for the assignee. Must exist in the project.                                               |
 | `creator`  | string  | User email for the creator (used when `include_meta: [:creator]`).                                    |
 | `shared`   | boolean | `true` when the test is shared (used when `include_meta: [:shared]`).                                 |
