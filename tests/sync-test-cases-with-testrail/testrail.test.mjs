@@ -290,10 +290,11 @@ test('toCasePayload resolves priority names, short names and aliases case-insens
   }
 });
 
-test('toCasePayload falls back to the suite priority and omits unknown or missing values', () => {
+test('toCasePayload falls back to the suite priority, omits a missing one and rejects an unknown one', () => {
   assert.equal(toCasePayload(mkTest(), { meta: { priority: 'critical' } }, ctx).priority_id, 4);
   assert.equal(toCasePayload(mkTest({ meta: { priority: 'low' } }), { meta: { priority: 'critical' } }, ctx).priority_id, 1);
-  assert.ok(!('priority_id' in toCasePayload(mkTest({ meta: { priority: 'urgent' } }), emptySuite, ctx)));
+  assert.throws(() => toCasePayload(mkTest({ meta: { priority: 'urgent' } }), emptySuite, ctx), /unknown priority "urgent" in "T"/);
+  assert.throws(() => toCasePayload(mkTest(), { meta: { priority: 'urgent' } }, ctx), /unknown priority "urgent"/);
   assert.ok(!('priority_id' in toCasePayload(mkTest(), emptySuite, ctx)));
 });
 
@@ -376,6 +377,7 @@ function startMock(opts = {}) {
     nextSection: 10,
     nextCase: 100,
     limited: 0,
+    failed: 0,
   };
   const json = (res, status, body, headers = {}) => {
     res.writeHead(status, { 'Content-Type': 'application/json', ...headers });
@@ -395,6 +397,7 @@ function startMock(opts = {}) {
       if (opts.rateLimitFirst === name && !state.limited++) {
         return json(res, 429, { error: 'slow down' }, { 'Retry-After': '0' });
       }
+      if (opts.serverErrorFirst === name && !state.failed++) return json(res, 503, { error: 'unavailable' });
       switch (name) {
         case 'get_suites':
           return json(res, 200, state.suites);
@@ -411,6 +414,9 @@ function startMock(opts = {}) {
             { id: 2, name: 'Test Case (Steps)', is_default: false },
           ]);
         case 'get_sections': {
+          if (opts.stuckNext) {
+            return json(res, 200, { offset: 0, _links: { next: `/api/v2/get_sections/${id}&suite_id=1&offset=0` }, sections: state.sections });
+          }
           if (!opts.pageSize) return json(res, 200, state.sections);
           const offset = Number(query.get('offset') ?? 0);
           const slice = state.sections.slice(offset, offset + opts.pageSize);
@@ -436,6 +442,7 @@ function startMock(opts = {}) {
         case 'add_case': {
           const c = { id: state.nextCase++, section_id: Number(id), title: body.title };
           state.cases.push(c);
+          if (opts.lostAddResponse && state.cases.length === 1) return json(res, 502, { error: 'Bad Gateway' });
           return json(res, 200, c);
         }
         case 'update_case':
@@ -474,7 +481,7 @@ function startMock(opts = {}) {
 
 function runCli(args, { env = {}, cwd }) {
   return new Promise((resolve) => {
-    execFile(process.execPath, [SCRIPT, ...args], { cwd, env: { PATH: process.env.PATH, ...env } }, (err, stdout, stderr) => {
+    execFile(process.execPath, [SCRIPT, ...args], { cwd, env: { PATH: process.env.PATH, ...env }, timeout: 10_000 }, (err, stdout, stderr) => {
       resolve({ code: err ? err.code : 0, stdout, stderr });
     });
   });
@@ -591,6 +598,59 @@ test('push retries a 429 and succeeds', async () => {
     assert.equal(run.code, 0, run.stderr);
     assert.equal(named(mock.state, 'get_priorities').length, 2);
     assert.equal(named(mock.state, 'add_case').length, 2);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push retries a GET after a 5xx but never resends a POST whose response was lost', async () => {
+  const flaky = await startMock({ serverErrorFirst: 'get_priorities' });
+  try {
+    const run = await runCli(['push', 'login.test.md'], { env: baseEnv(flaky.port), cwd: workdir() });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(flaky.state, 'get_priorities').length, 2);
+  } finally {
+    await flaky.close();
+  }
+
+  const lost = await startMock({ lostAddResponse: true });
+  try {
+    const run = await runCli(['push', 'login.test.md'], { env: baseEnv(lost.port), cwd: workdir() });
+    assert.equal(run.code, 2);
+    assert.equal(named(lost.state, 'add_case').length, 1);
+    assert.equal(lost.state.cases.length, 1);
+    assert.match(run.stderr, /add_case\/10 failed with HTTP 502: Bad Gateway/);
+    assert.match(run.stderr, /may have saved/);
+  } finally {
+    await lost.close();
+  }
+});
+
+test('push rejects a priority TestRail does not have before writing anything', async () => {
+  const mock = await startMock();
+  const cwd = workdir();
+  const file = join(cwd, 'login.test.md');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('priority: high', 'priority: 4 - must test'));
+  try {
+    const run = await runCli(['push', 'login.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /login\.test\.md: unknown priority "4 - must test" in "User cannot log in with invalid password"/);
+    assert.match(run.stderr, /Low, Medium, High, Critical/);
+    assert.equal(posts(mock.state).length, 0);
+    assert.doesNotMatch(readFileSync(file, 'utf8'), /testrail_/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('a next-page link that repeats stops with an API error instead of looping', async () => {
+  const mock = await startMock({ stuckNext: true, sections: [{ id: 6, name: 'Login', parent_id: null }] });
+  try {
+    const run = await runCli(['list'], { env: baseEnv(mock.port), cwd: workdir() });
+    assert.equal(run.code, 2, `exit ${run.code} after ${named(mock.state, 'get_sections').length} get_sections calls`);
+    assert.match(run.stderr, /get_sections/);
+    assert.match(run.stderr, /repeat/);
+    assert.equal(named(mock.state, 'get_sections').length, 2);
   } finally {
     await mock.close();
   }

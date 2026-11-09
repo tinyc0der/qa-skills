@@ -198,8 +198,15 @@ function resolvePriority(map, value) {
 
 export function toCasePayload(test, suite, ctx) {
   const payload = { title: test.title, template_id: ctx.templateId };
-  const priorityId = resolvePriority(ctx.priorityIdByName, test.meta?.priority ?? suite.meta?.priority);
-  if (priorityId !== undefined) payload.priority_id = priorityId;
+  const priority = test.meta?.priority ?? suite.meta?.priority;
+  if (priority) {
+    const priorityId = resolvePriority(ctx.priorityIdByName, priority);
+    if (priorityId === undefined) {
+      const known = [...ctx.priorityIdByName.keys()].join(', ');
+      throw new CliError(`unknown priority "${priority}" in ${JSON.stringify(test.title)}; TestRail priorities: ${known}`);
+    }
+    payload.priority_id = priorityId;
+  }
   const refs = test.meta?.refs ?? suite.meta?.refs;
   if (refs) payload.refs = refs;
   const preconds = [test.description?.trim(), test.examples ? `Test data:\n${test.examples}` : '']
@@ -308,6 +315,7 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
   const authorization = `Basic ${Buffer.from(`${user}:${apiKey}`).toString('base64')}`;
 
   async function send(method, target, label, body) {
+    const unsure = method === 'POST' ? '. TestRail may have saved this change; check it with list before pushing again' : '';
     let rateTries = 0;
     let serverTries = 0;
     for (;;) {
@@ -319,14 +327,14 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
           body: body === undefined ? undefined : JSON.stringify(body),
         });
       } catch (e) {
-        throw new ApiError(`${method} ${label} failed: ${e.cause?.code ?? e.message}`);
+        throw new ApiError(`${method} ${label} failed: ${e.cause?.code ?? e.message}${unsure}`);
       }
       if (res.status === 429 && ++rateTries < 3) {
         const wait = Number(res.headers.get('retry-after'));
         await sleep((Number.isFinite(wait) ? wait : 1) * 1000);
         continue;
       }
-      if (res.status >= 500 && ++serverTries < 2) {
+      if (res.status >= 500 && method === 'GET' && ++serverTries < 2) {
         await sleep(500 * serverTries);
         continue;
       }
@@ -339,7 +347,7 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
       }
       if (!res.ok) {
         const detail = data?.error ?? raw.slice(0, 200);
-        throw new ApiError(`${method} ${label} failed with HTTP ${res.status}: ${detail}`, res.status);
+        throw new ApiError(`${method} ${label} failed with HTTP ${res.status}: ${detail}${res.status >= 500 ? unsure : ''}`, res.status);
       }
       return data;
     }
@@ -352,8 +360,11 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
     let data = await get(endpoint);
     if (Array.isArray(data)) return data;
     const items = [...(data?.[key] ?? [])];
+    const followed = new Set();
     while (data?._links?.next) {
       const next = data._links.next;
+      if (followed.has(next)) throw new ApiError(`GET ${endpoint} failed: TestRail repeated the next page ${next}`);
+      followed.add(next);
       data = await send('GET', `${base}/index.php?${next}`, next);
       items.push(...(data?.[key] ?? []));
     }
@@ -671,6 +682,13 @@ async function cmdPush(files, opts, cfg, cwd) {
   const suiteId = await resolveSuite(client, cfg);
   const templateId = await resolveTemplate(client, cfg);
   const ctx = { templateId, priorityIdByName: buildPriorityMap(await client.get('get_priorities')) };
+  const payloads = loaded.map(({ file, doc }) => {
+    try {
+      return doc.suites.map((suite) => suite.tests.map((test) => toCasePayload(test, suite, ctx)));
+    } catch (e) {
+      throw new CliError(`${file}: ${e.message}`);
+    }
+  });
   const sections = await loadSections(client, cfg, suiteId);
   let placeholders = 0;
   let remoteCases = null;
@@ -702,7 +720,7 @@ async function cmdPush(files, opts, cfg, cwd) {
     parentId = parent.id;
   }
 
-  for (const { file, path, text, doc } of loaded) {
+  for (const [fileIndex, { file, path, text, doc }] of loaded.entries()) {
     const stats = { created: 0, reused: 0, added: 0, updated: 0, unchanged: 0 };
     const ids = { sections: [], cases: [] };
     try {
@@ -718,7 +736,7 @@ async function cmdPush(files, opts, cfg, cwd) {
         }
         if (!dry) ids.sections.push({ suiteIndex, sectionId });
         for (const [testIndex, test] of suite.tests.entries()) {
-          const payload = toCasePayload(test, suite, ctx);
+          const payload = payloads[fileIndex][suiteIndex][testIndex];
           if (test.meta.testrail_id) {
             const caseId = test.meta.testrail_id.replace(/^C/i, '');
             if (!dry) ids.cases.push({ suiteIndex, testIndex, caseId });

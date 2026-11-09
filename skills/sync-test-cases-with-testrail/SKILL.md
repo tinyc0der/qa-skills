@@ -54,7 +54,7 @@ Rules:
 - Each suite becomes a section with the same name. An existing section with that name is reused.
 - `--parent-section` nests the sections under a top-level section, created if missing.
 - A test with `testrail_id:` is updated in place. A test without it is created. Never edit or remove these lines by hand.
-- `priority:` matches the project's priorities by name (`normal` counts as Medium, `important` as High). An unknown value gets the project's default priority.
+- `priority:` matches the project's priorities by name (`normal` counts as Medium, `important` as High). `push` stops before writing anything if a value matches none of them, and lists the project's priorities.
 
 ## Pull
 
