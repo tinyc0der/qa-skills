@@ -9,19 +9,8 @@ description: Markdown format for manual test cases (`*.test.md`) and how the `sy
 
 The document is structured as:
 
-1. **Suite block** — one or more per file, with suite metadata and content
-2. **Test blocks** — one or more per suite, each with test metadata and content
-3. **Examples section** (optional) — test data in a markdown table
-
-## Mapping to TestRail
-
-| Markdown                                  | TestRail                                   |
-| ----------------------------------------- | ------------------------------------------ |
-| Suite title and description               | Section name and description               |
-| Test title                                | Case title                                 |
-| Test description, `## Preconditions`, examples table | Preconditions (table under `Test data:`) |
-| `## Steps` action and `*Expected*` lines  | Steps (separated): step and expected result |
-| `priority`, `refs`                        | Priority, References                       |
+1. **Suite block** — one or more per file, with suite metadata, title, and description
+2. **Test blocks** — one or more per suite, each with test metadata, title, description, preconditions, test data table, and steps
 
 ## Document Structure
 
@@ -71,44 +60,45 @@ If a test has no `priority` or `refs`, the suite's value is used.
 
 ## Formatting Rules
 
-### 1. Metadata blocks
-
-- Metadata must be inside HTML comments: `<!-- suite ... -->` and `<!-- test ... -->`.
-- Each line is `key: value`; lines without `:` are ignored.
-- Keys and values are trimmed of surrounding whitespace.
-
-### 2. Headings
-
-- **Suite title:** first `#` heading after the suite metadata block.
-- **Test title:** first `#` or `##` heading after each test metadata block.
-- Only these headings are used for titles; other headings are part of the description.
-
-### 3. Suite and test blocks
+### 1. Suite and test blocks
 
 - Suite block starts with `<!-- suite`.
 - Test blocks start with `<!-- test`.
 - Each test block is separated by `<!-- test`.
 
-### 4. Examples section
+### 2. Metadata blocks
+
+- Metadata must be inside HTML comments: `<!-- suite ... -->` and `<!-- test ... -->`.
+- Each line is `key: value`; lines without `:` are ignored.
+- Keys and values are trimmed of surrounding whitespace.
+
+### 3. Headings
+
+- **Suite title:** first `#` heading after the suite metadata block.
+- **Test title:** first `#` or `##` heading after each test metadata block.
+- Only these headings are used for titles; other headings are part of the description.
+
+### 4. Description
+
+- Everything after the test heading until `## Steps` or the next `<!-- test` is the test description, except the examples table.
+- Description supports standard markdown.
+
+### 5. Preconditions
+
+- Optional. Write them under a `## Preconditions` heading after the test description and before `## Steps`.
+- List each precondition as a bullet point.
+
+### 6. Examples section
 
 - Introduced by `<!-- example -->` (optional content after `-->`).
-- Must be a markdown table.
+- Place it after the test description and preconditions, before `## Steps`. A table after the steps also works.
+- Must be a markdown table. The table ends at the first line that is not a table row.
 - **Table format:** rows must start with `| ` and end with ` |`.
 - **Headers:** first row after `<!-- example -->` is header.
 - **Separator:** next row must contain `---` (3+ dashes) in each cell to mark headers.
 - **Data rows:** rows after the separator are example rows.
 
-### 5. Description
-
-- Everything after the test heading until `## Steps`, the next `<!-- test`, or `<!-- example` is the test description.
-- Description supports standard markdown.
-
-### 6. Preconditions
-
-- Optional. Write them under a `## Preconditions` heading after the test description and before `## Steps`.
-- List each precondition as a bullet point.
-
-### 7. Test Steps Format
+### 7. Steps
 
 Test steps use the `## Steps` header section with a nested markdown list format:
 
@@ -128,6 +118,16 @@ Test steps use the `## Steps` header section with a nested markdown list format:
 - Top-level items describe the action to perform
 - Nested items with `*Expected*` (or `*Expected*:`, `*Expected result*`) describe the observable behavior
 - Expected results should be specific and verifiable
+
+## Mapping to TestRail
+
+| Markdown                                  | TestRail                                   |
+| ----------------------------------------- | ------------------------------------------ |
+| Suite title and description               | Section name and description               |
+| Test title                                | Case title                                 |
+| Test description, `## Preconditions`, examples table | Preconditions (table under `Test data:`) |
+| `## Steps` action and `*Expected*` lines  | Steps (separated): step and expected result |
+| `priority`, `refs`                        | Priority, References                       |
 
 ## Examples
 
@@ -173,6 +173,13 @@ A user should be able to log in with valid credentials.
 - The accounts from the test data table exist and are active
 - User is logged out
 
+<!-- example -->
+
+| Username | Password | Role  |
+| -------- | -------- | ----- |
+| admin    | admin123 | admin |
+| user     | user123  | user  |
+
 ## Steps
 
 - Navigate to the login page
@@ -181,13 +188,6 @@ A user should be able to log in with valid credentials.
   *Expected*: Credentials are entered without errors
 - Click the "Login" button
   *Expected*: User is redirected to the dashboard
-
-<!-- example -->
-
-| Username | Password | Role  |
-| -------- | -------- | ----- |
-| admin    | admin123 | admin |
-| user     | user123  | user  |
 ```
 
 ### Test with numbered steps and a code block
