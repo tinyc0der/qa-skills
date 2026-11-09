@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -17,6 +17,8 @@ Commands:
   list [--section <name>]                   Print sections and cases (C<id>) of the resolved suite
   push <files...> [--dry-run]               Create or update cases in TestRail and write IDs back
        [--parent-section <name>]
+  pull [--section <name>] [--out <dir>]     Download cases into .test.md files (default dir test-cases/)
+       [--overwrite]                        Replace local files that differ from the download
 
 Environment (or .env in the current directory):
   TESTRAIL_URL, TESTRAIL_USER, TESTRAIL_API_KEY, TESTRAIL_PROJECT_ID
@@ -229,6 +231,55 @@ export function buildPriorityMap(priorities) {
   return map;
 }
 
+const normText = (v) => String(v ?? '').replace(/\r\n/g, '\n').replace(/\n\s*\n+/g, '\n').trim();
+
+export function caseMatches(payload, remote) {
+  if (!remote) return false;
+  for (const key of ['title', 'refs', 'custom_preconds']) {
+    if (key in payload && normText(payload[key]) !== normText(remote[key])) return false;
+  }
+  for (const key of ['template_id', 'priority_id']) {
+    if (key in payload && Number(payload[key]) !== Number(remote[key])) return false;
+  }
+  if (payload.custom_steps_separated) {
+    const have = remote.custom_steps_separated ?? [];
+    const want = payload.custom_steps_separated;
+    if (want.length !== have.length) return false;
+    return want.every((s, i) => normText(s.content) === normText(have[i].content) && normText(s.expected) === normText(have[i].expected));
+  }
+  return true;
+}
+
+function indentLines(text, pad) {
+  return text.split('\n').map((l, i) => (i === 0 || !l ? l : pad + l)).join('\n');
+}
+
+export function serializeSection(section, cases, priorityNames = new Map()) {
+  const clean = (v) => String(v ?? '').replace(/\r\n/g, '\n').trim();
+  const out = [`<!-- suite\ntestrail_section_id: ${section.id}\n-->\n\n# ${section.name}\n`];
+  if (clean(section.description)) out.push(`${clean(section.description)}\n`);
+  for (const c of cases) {
+    const meta = [`testrail_id: C${c.id}`];
+    const priority = priorityNames.get(c.priority_id);
+    if (priority) meta.push(`priority: ${priority.toLowerCase()}`);
+    if (clean(c.refs)) meta.push(`refs: ${clean(c.refs)}`);
+    out.push(`<!-- test\n${meta.join('\n')}\n-->\n\n# ${c.title}\n`);
+    if (clean(c.custom_preconds)) out.push(`${clean(c.custom_preconds)}\n`);
+    let steps = (c.custom_steps_separated ?? []).map((s) => ({ content: clean(s.content), expected: clean(s.expected) }));
+    if (!steps.length && (clean(c.custom_steps) || clean(c.custom_expected))) {
+      steps = [{ content: clean(c.custom_steps), expected: clean(c.custom_expected) }];
+    }
+    if (steps.length) {
+      const lines = steps.map((s) => {
+        const exp = s.expected ? `\n  *Expected*: ${indentLines(s.expected, '  ')}` : '';
+        return `- ${indentLines(s.content, '  ')}${exp}`;
+      });
+      out.push(`## Steps\n\n${lines.join('\n')}\n`);
+    }
+  }
+  return `${out.join('\n').trimEnd()}\n`;
+}
+
 const defaultSleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
@@ -392,6 +443,57 @@ async function cmdList(opts, cfg) {
   return 0;
 }
 
+const slug = (name) => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+
+async function cmdPull(opts, cfg, cwd) {
+  const client = createClient(cfg);
+  const suiteId = await resolveSuite(client, cfg);
+  const priorityNames = new Map((await client.get('get_priorities')).map((p) => [p.id, p.name]));
+  const raw = await client.getAll(`get_sections/${cfg.projectId}&suite_id=${suiteId}`, 'sections');
+  const sections = raw.map((s) => ({ id: s.id, name: s.name, parent_id: s.parent_id ?? null, description: s.description }));
+  const byId = new Map(sections.map((s) => [s.id, s]));
+  const children = (id) => sections.filter((s) => s.parent_id === id);
+  let selected = sections;
+  if (opts.section) {
+    const want = opts.section.trim().toLowerCase();
+    const roots = sections.filter((s) => s.name.trim().toLowerCase() === want);
+    if (!roots.length) throw new CliError(`Section not found: ${opts.section}`);
+    selected = [];
+    const walk = (s) => {
+      selected.push(s);
+      children(s.id).forEach(walk);
+    };
+    roots.forEach(walk);
+  }
+  const cases = await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}`, 'cases');
+  const pathOf = (s) => (s.parent_id !== null && byId.has(s.parent_id) ? `${pathOf(byId.get(s.parent_id))}--${slug(s.name)}` : slug(s.name));
+  const targets = selected
+    .map((s) => ({ section: s, cases: cases.filter((c) => c.section_id === s.id), base: pathOf(s) || `section-${s.id}` }))
+    .filter((t) => t.cases.length);
+  const dir = resolve(cwd, opts.out ?? 'test-cases');
+  const files = targets.map((t) => {
+    const clash = targets.filter((o) => o.base === t.base).length > 1;
+    const name = `${clash ? `${t.base}-${t.section.id}` : t.base}.test.md`;
+    return { name, path: resolve(dir, name), text: serializeSection(t.section, t.cases, priorityNames), count: t.cases.length };
+  });
+  const differing = files.filter((f) => existsSync(f.path) && readFileSync(f.path, 'utf8') !== f.text);
+  if (differing.length && !opts.overwrite) {
+    const list = differing.map((f) => `  ${f.name}`).join('\n');
+    throw new CliError(`Refusing to overwrite local files that differ from TestRail:\n${list}\nMove them away, pull into another --out directory, or pass --overwrite. Nothing was written.`);
+  }
+  mkdirSync(dir, { recursive: true });
+  for (const f of files) {
+    if (existsSync(f.path) && readFileSync(f.path, 'utf8') === f.text) {
+      console.log(`unchanged ${f.name} (${f.count} cases)`);
+      continue;
+    }
+    writeFileSync(f.path, f.text);
+    console.log(`wrote ${f.name} (${f.count} cases)`);
+  }
+  if (!files.length) console.log('No cases found');
+  return 0;
+}
+
 async function cmdPush(files, opts, cfg, cwd) {
   if (!files.length) throw new CliError('push needs at least one file');
   const loaded = files.map((f) => loadFile(f, cwd));
@@ -417,6 +519,13 @@ async function cmdPush(files, opts, cfg, cwd) {
   const ctx = { templateId, priorityIdByName: buildPriorityMap(await client.get('get_priorities')) };
   const sections = await loadSections(client, cfg, suiteId);
   let placeholders = 0;
+  let remoteCases = null;
+  const remoteCase = async (id) => {
+    remoteCases ??= new Map(
+      (await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}`, 'cases')).map((c) => [String(c.id), c]),
+    );
+    return remoteCases.get(String(id));
+  };
 
   async function ensureSection(name, parentId, description) {
     const found = sections.find((s) => s.parent_id === parentId && s.name === name);
@@ -440,7 +549,7 @@ async function cmdPush(files, opts, cfg, cwd) {
   }
 
   for (const { file, path, text, doc } of loaded) {
-    const stats = { created: 0, reused: 0, added: 0, updated: 0 };
+    const stats = { created: 0, reused: 0, added: 0, updated: 0, unchanged: 0 };
     const ids = { sections: [], cases: [] };
     try {
       for (const [suiteIndex, suite] of doc.suites.entries()) {
@@ -458,10 +567,14 @@ async function cmdPush(files, opts, cfg, cwd) {
           const payload = toCasePayload(test, suite, ctx);
           if (test.meta.testrail_id) {
             const caseId = test.meta.testrail_id.replace(/^C/i, '');
+            if (!dry) ids.cases.push({ suiteIndex, testIndex, caseId });
+            if (caseMatches(payload, await remoteCase(caseId))) {
+              stats.unchanged++;
+              continue;
+            }
             console.log(`${tag}update case C${caseId} ${JSON.stringify(test.title)}`);
             if (!dry) await client.post(`update_case/${caseId}`, payload);
             stats.updated++;
-            if (!dry) ids.cases.push({ suiteIndex, testIndex, caseId });
           } else {
             console.log(`${tag}add case ${JSON.stringify(test.title)} in section ${JSON.stringify(suite.title)}`);
             if (!dry) {
@@ -479,7 +592,7 @@ async function cmdPush(files, opts, cfg, cwd) {
       }
     }
     console.log(
-      `${tag}${file}: sections created ${stats.created}, reused ${stats.reused}; cases added ${stats.added}, updated ${stats.updated}`,
+      `${tag}${file}: sections created ${stats.created}, reused ${stats.reused}; cases added ${stats.added}, updated ${stats.updated}, unchanged ${stats.unchanged}`,
     );
   }
   return 0;
@@ -487,7 +600,7 @@ async function cmdPush(files, opts, cfg, cwd) {
 
 export async function main(argv = process.argv.slice(2), env = process.env, cwd = process.cwd()) {
   const [command, ...rest] = argv;
-  if (!['check', 'list', 'push'].includes(command)) {
+  if (!['check', 'list', 'push', 'pull'].includes(command)) {
     console.error(USAGE);
     return 1;
   }
@@ -501,6 +614,8 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
           'dry-run': { type: 'boolean' },
           'parent-section': { type: 'string' },
           section: { type: 'string' },
+          out: { type: 'string' },
+          overwrite: { type: 'boolean' },
         },
       });
     } catch (e) {
@@ -510,6 +625,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
     if (command === 'check') return cmdCheck(positionals, cwd);
     const cfg = readConfig({ ...loadDotEnv(cwd), ...env });
     if (command === 'list') return await cmdList(values, cfg);
+    if (command === 'pull') return await cmdPull(values, cfg, cwd);
     return await cmdPush(positionals, values, cfg, cwd);
   } catch (e) {
     console.error(e.message);

@@ -1,11 +1,11 @@
 ---
 name: sync-test-cases-with-testrail
-description: Push Markdown test cases (`*.test.md`) to TestRail through its API, and list existing TestRail sections and cases. Use when the user wants to upload, push, import, or sync test cases to TestRail, or check which TestRail cases already exist for a feature.
+description: Push Markdown test cases (`*.test.md`) to TestRail through its API, pull (download, export) existing TestRail cases into `*.test.md` files, and list TestRail sections and cases. Use when the user wants to upload, push, import, or sync test cases to TestRail, pull, download, or export cases from TestRail, or check which TestRail cases already exist for a feature.
 ---
 
 # Sync Test Cases with TestRail
 
-Pushes `*.test.md` files to TestRail as sections and cases, and lists existing cases for deduplication. The script is [scripts/testrail.mjs](./scripts/testrail.mjs) (Node 18+, no dependencies). The file format is defined in the `qa-write-test-cases` skill's [`references/testrail-test-case-format.md`](../qa-write-test-cases/references/testrail-test-case-format.md).
+Pushes `*.test.md` files to TestRail as sections and cases, pulls existing cases back into `*.test.md` files, and lists existing case titles. The script is [scripts/testrail.mjs](./scripts/testrail.mjs) (Node 18+, no dependencies). The file format is defined in the `qa-write-test-cases` skill's [`references/testrail-test-case-format.md`](../qa-write-test-cases/references/testrail-test-case-format.md).
 
 ## Setup
 
@@ -20,7 +20,7 @@ The script reads these variables from the environment, then from `.env` in the c
 | `TESTRAIL_SUITE_ID`    | Only for projects with several suites                                       |
 | `TESTRAIL_TEMPLATE_ID` | Only when the project has no template named like "Test Case (Steps)"        |
 
-- Save values to `.env` and make sure `.env` is git-ignored.
+- Save values to `.env`. If the folder is a git repo, make sure `.env` is git-ignored.
 - The API must be enabled in **Administration → Site Settings → API**.
 
 ## Commands
@@ -30,12 +30,14 @@ Run from the project root. `<skill>` is this skill's directory.
 ```bash
 node <skill>/scripts/testrail.mjs check <files...>
 node <skill>/scripts/testrail.mjs list [--section <name>]
+node <skill>/scripts/testrail.mjs pull [--section <name>] [--out <dir>] [--overwrite]
 node <skill>/scripts/testrail.mjs push <files...> --dry-run [--parent-section <name>]
 node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>]
 ```
 
 - `check` validates the files offline. It needs no credentials.
 - `list` prints the section tree and case titles with their `C<id>`.
+- `pull` downloads cases into `*.test.md` files. `--out` defaults to `test-cases/`.
 - Use only the options listed here.
 
 ## Push
@@ -44,7 +46,7 @@ node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>]
 2. Run `push --dry-run` and show the user the plan: sections to create, cases to add, cases to update.
 3. **Push only after the user confirms the plan.** It writes to a shared TestRail project.
 4. Run `push` with the same files and options.
-5. Commit the files. The push writes `testrail_section_id:` and `testrail_id:` into them.
+5. If the folder is a git repo, commit the files. The push writes `testrail_section_id:` and `testrail_id:` into them.
 
 Rules:
 
@@ -53,6 +55,20 @@ Rules:
 - `--parent-section` nests the sections under a top-level section, created if missing.
 - A test with `testrail_id:` is updated in place. A test without it is created. Never edit or remove these lines by hand.
 - `priority:` matches the project's priorities by name (`normal` counts as Medium, `important` as High). An unknown value gets the project's default priority.
+
+## Pull
+
+Use `list` when titles are enough. Use `pull` when a skill needs full case content (steps, expected results, preconditions).
+
+1. Run `pull`, with `--section <name>` to limit it to one section and its child sections.
+2. Read the files from `--out`.
+
+Rules:
+
+- One file per section that holds cases. The file name is the section path, slugified and joined with `--` (`web-login--sso.test.md`). The suite title is the section's own name.
+- Each file carries `testrail_section_id`, `testrail_id`, `priority` (lowercase name), `refs`, preconditions, and separated steps with `*Expected*`. A pulled file passes `check`, and `push --dry-run` on it shows no updates for unchanged cases.
+- A case from a template without separated steps becomes one step: the Steps text as the action, the Expected text as the result. Pushing it back converts it to the steps template and shows as an update.
+- Pull never replaces a local file that differs from the download. It lists those files and writes nothing. Pass `--overwrite` only after the user agrees to lose the local edits.
 
 ## Errors
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -597,4 +597,116 @@ test('check passes a valid fixture offline and fails broken or empty files', asy
   const empty = await runCli(['check', join(FIXTURES, 'empty.test.md')], { cwd: here });
   assert.equal(empty.code, 1);
   assert.match(empty.stdout, /0 tests/);
+});
+
+const PULL_SECTIONS = [
+  { id: 6, name: 'Web Login', parent_id: null, description: 'Login flows.' },
+  { id: 7, name: 'SSO', parent_id: 6, description: '' },
+  { id: 8, name: 'Empty', parent_id: null, description: '' },
+];
+const PULL_CASES = [
+  {
+    id: 100,
+    section_id: 6,
+    title: 'Log in with valid credentials',
+    template_id: 2,
+    priority_id: 3,
+    refs: 'JIR-1, JIR-2',
+    custom_preconds: 'User exists.\n\nTest data:\n| User | Pass |\n| --- | --- |\n| a | b |',
+    custom_steps_separated: [
+      { content: 'Open the login page', expected: 'Form is shown' },
+      { content: 'Submit\n```json\n{ "a": 1 }\n```', expected: 'Redirected\nSession cookie set' },
+    ],
+  },
+  { id: 101, section_id: 6, title: 'Text template case', template_id: 1, priority_id: 2, custom_steps: 'Do it', custom_expected: 'It works' },
+  {
+    id: 102,
+    section_id: 7,
+    title: 'SSO login',
+    template_id: 2,
+    priority_id: 4,
+    custom_steps_separated: [{ content: 'Click SSO', expected: 'IdP page opens' }],
+  },
+];
+
+test('pull writes one file per section that round-trips through check and push --dry-run', async () => {
+  const mock = await startMock({ sections: PULL_SECTIONS, cases: PULL_CASES });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  try {
+    const run = await runCli(['pull'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(readdirSync(join(cwd, 'test-cases')).sort(), ['web-login--sso.test.md', 'web-login.test.md']);
+    const text = readFileSync(join(cwd, 'test-cases/web-login.test.md'), 'utf8');
+    assert.match(text, /^<!-- suite\ntestrail_section_id: 6\n-->\n\n# Web Login\n\nLogin flows\.\n/);
+    assert.match(text, /testrail_id: C100\npriority: high\nrefs: JIR-1, JIR-2\n-->/);
+    assert.match(text, /\*Expected\*: Redirected\n {2}Session cookie set/);
+    const sso = readFileSync(join(cwd, 'test-cases/web-login--sso.test.md'), 'utf8');
+    assert.match(sso, /# SSO\n/);
+    assert.match(sso, /priority: critical/);
+
+    const files = ['test-cases/web-login.test.md', 'test-cases/web-login--sso.test.md'];
+    const check = await runCli(['check', ...files], { cwd });
+    assert.equal(check.code, 0, check.stdout + check.stderr);
+
+    const [first] = parseTestMd(text).suites[0].tests;
+    assert.equal(first.steps[1].content, 'Submit\n```json\n{ "a": 1 }\n```');
+    assert.equal(first.steps[1].expected, 'Redirected\nSession cookie set');
+
+    mock.state.requests.length = 0;
+    const dry = await runCli(['push', ...files, '--dry-run'], { env: baseEnv(mock.port), cwd });
+    assert.equal(dry.code, 0, dry.stderr);
+    assert.equal(posts(mock.state).length, 0);
+    assert.doesNotMatch(dry.stdout, /add case|create section/);
+    assert.doesNotMatch(dry.stdout, /update case C100|update case C102/);
+    assert.match(dry.stdout, /update case C101/);
+    assert.match(dry.stdout, /web-login--sso\.test\.md: sections created 0, reused 1; cases added 0, updated 0, unchanged 1/);
+
+    const again = await runCli(['pull'], { env: baseEnv(mock.port), cwd });
+    assert.equal(again.code, 0, again.stderr);
+    assert.match(again.stdout, /unchanged web-login\.test\.md/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('pull refuses to overwrite a differing local file unless --overwrite is given', async () => {
+  const mock = await startMock({ sections: PULL_SECTIONS, cases: PULL_CASES });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  try {
+    await runCli(['pull'], { env: baseEnv(mock.port), cwd });
+    const file = join(cwd, 'test-cases/web-login.test.md');
+    writeFileSync(file, `${readFileSync(file, 'utf8')}\nlocal edit\n`);
+    const sso = join(cwd, 'test-cases/web-login--sso.test.md');
+    writeFileSync(sso, 'stale');
+
+    const refused = await runCli(['pull'], { env: baseEnv(mock.port), cwd });
+    assert.equal(refused.code, 1);
+    assert.match(refused.stderr, /Refusing to overwrite/);
+    assert.match(refused.stderr, /web-login\.test\.md/);
+    assert.match(readFileSync(file, 'utf8'), /local edit/);
+    assert.equal(readFileSync(sso, 'utf8'), 'stale');
+
+    const forced = await runCli(['pull', '--overwrite'], { env: baseEnv(mock.port), cwd });
+    assert.equal(forced.code, 0, forced.stderr);
+    assert.doesNotMatch(readFileSync(file, 'utf8'), /local edit/);
+    assert.match(readFileSync(sso, 'utf8'), /# SSO/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('pull --section limits output to that section and its children, and honors --out', async () => {
+  const mock = await startMock({ sections: PULL_SECTIONS, cases: PULL_CASES });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  try {
+    const run = await runCli(['pull', '--section', 'sso', '--out', 'out'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(readdirSync(join(cwd, 'out')), ['web-login--sso.test.md']);
+
+    const missing = await runCli(['pull', '--section', 'nope'], { env: baseEnv(mock.port), cwd });
+    assert.equal(missing.code, 1);
+    assert.match(missing.stderr, /Section not found: nope/);
+  } finally {
+    await mock.close();
+  }
 });
