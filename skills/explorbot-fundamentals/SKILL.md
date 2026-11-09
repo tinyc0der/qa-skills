@@ -1,6 +1,6 @@
 ---
 name: explorbot-fundamentals
-description: Use when running or debugging Explorbot from the command line — which command to run, what a flag does, where results were written, why a run failed, or how to run it with nothing installed in the project.
+description: Use when running or debugging Explorbot from the command line — which command to run, what a flag does, where results were written, why a run failed, or how to run it against a staging URL from any folder, no product repo.
 license: MIT
 metadata:
   author: Testomat.io
@@ -27,9 +27,9 @@ npx explorbot init --global --provider <name>          # once per machine, key i
 npx explorbot explore https://app.example.com/login --max-tests 3
 ```
 
-Details, including the per-command `EXPLORBOT_*` form for CI: [references/no-install.md](references/no-install.md).
+Details, including the per-command `EXPLORBOT_*` form: [references/no-install.md](references/no-install.md).
 
-Installing into the project instead — config, knowledge, and generated tests in the repo — is [[explorbot-setup]].
+Installing into the QA workspace repo instead — config, knowledge, and plans versioned next to `test-cases/` — is [[explorbot-setup]].
 
 ## What a run needs
 
@@ -61,11 +61,11 @@ Rules:
 - `${env.NAME}` is resolved by Explorbot, so secrets stay out of the text.
 - Never set the variable and pass the same text through the flag. It is applied twice.
 
-Format and URL patterns: `docs/workflow/knowledge.md`.
+Format and URL patterns: `https://raw.githubusercontent.com/testomatio/explorbot/main/docs/workflow/knowledge.md`.
 
 ## Docs
 
-`node_modules/explorbot/docs/` after a local install, the repo's `docs/` when working inside Explorbot itself, otherwise `https://raw.githubusercontent.com/testomatio/explorbot/main/docs/<path>`. `docs/index.json` lists every page with a description — read it to pick the page, then open that page.
+`https://raw.githubusercontent.com/testomatio/explorbot/main/docs/index.json` lists every page with a description. Read it to pick the page, then fetch `https://raw.githubusercontent.com/testomatio/explorbot/main/docs/<path>`.
 
 ## Where results land
 
@@ -77,11 +77,10 @@ Explorbot writes into the project directory when the run used a project `explorb
 | `output/plans/` | the plan generated or executed |
 | `output/states/` | per-state HTML, ARIA snapshots, screenshots |
 | `output/research/` | UI maps from the Researcher |
-| `output/tests/` | generated Playwright / CodeceptJS files |
 | `output/explorbot.log` | run log — start here on a failure |
 | `knowledge/`, `experience/` | what you taught it, and what it learned |
 
-**Reporting is `@testomatio/reporter`.** Explorbot runs it inside and hands it every reporter variable, so `TESTOMATIO` sends the run to that Testomat.io project and the reporter's PR token posts the result to the open pull or merge request. Nothing else to wire. Variables: `testomatio-reporter` skill, or `docs/workflow/reporting.md`.
+Reports are markdown and html files in `output/reports/`. Nothing is exported to TestRail.
 
 **Exit codes are not pass/fail.** `explore` and `test` exit `0` whenever the session completes; a failing scenario is a result, not a crash. Read the report. `navigate` is the exception — `1` means unreachable, which makes it a pre-flight check.
 
@@ -106,5 +105,5 @@ A relative path needs a site to resolve against: `web.url` from a project config
 
 ## Related skills
 
-- [[explorbot-setup]] — install into a project: config, provider, login knowledge, verified navigation.
+- [[explorbot-setup]] — install into the QA workspace repo: config, provider, login knowledge, verified navigation.
 - [[explorbot-plan]] — hand-author a test plan and run it with `explorbot test`.

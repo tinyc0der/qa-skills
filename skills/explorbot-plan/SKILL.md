@@ -1,6 +1,6 @@
 ---
 name: explorbot-plan
-description: Use when the user wants to write an Explorbot test plan by hand — from a feature description, requirements, ticket, or docs, without exploring a live page — so `explorbot test` can run it.
+description: Use when the user wants to write an Explorbot test plan by hand — from a Jira ticket, a TestRail case, a Confluence page, a feature description, or requirements, without exploring a live page — so `explorbot test` can run it.
 license: MIT
 metadata:
   author: Testomat.io
@@ -17,7 +17,7 @@ Installation is only required later to *run* the plan (see Output).
 
 ## Inputs to gather
 
-- The feature / requirements / user story (ask for docs or a description).
+- The source: a Jira ticket, a TestRail case, a Confluence page, or a description of the feature.
 - A suite title (the feature under test).
 - The **start URL**: a path relative to the app host (e.g. `/login`), or a full absolute URL.
   This is mandatory. Relative paths resolve against `web.url` in a project config, or against
@@ -91,8 +91,8 @@ npx -y mdq-cli@latest 'comment(/^test/) && section("Prerequisite") item(/^URL: (
 
 ## Output
 
-A hand-written plan is input only — Explorbot never rewrites it, so keep it in the repo next to
-the code it covers (`tests/plans/<feature>.md` or similar) and pass its path to `explorbot test`.
+A hand-written plan is input only — Explorbot never rewrites it, so keep it in the QA workspace
+repo under `plans/<feature>.md` and pass its path to `explorbot test`.
 Save it under the run's `output/plans/` only when the user wants it alongside generated plans:
 `output/plans/` in a project setup, `~/.explorbot/sites/<host>/output/plans/` in global mode.
 

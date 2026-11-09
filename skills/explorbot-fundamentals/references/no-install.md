@@ -20,7 +20,7 @@ npx explorbot sites                                    # what has been explored,
 
 ## Per command
 
-When nothing may be written — CI, containers, someone else's machine — `EXPLORBOT_AI_PROVIDER` builds the config from the environment:
+When nothing may be written, such as on someone else's machine, `EXPLORBOT_AI_PROVIDER` builds the config from the environment:
 
 ```bash
 EXPLORBOT_URL=https://app.example.com \
@@ -36,4 +36,3 @@ EXPLORBOT_AI_PROVIDER=<name> \
 - Model variables take a provider name for its recommendation, or `provider/model-id` to pin one.
 - These variables win over `~/.explorbot/config.js`; a project `explorbot.config.js` wins over them.
 - `EXPLORBOT_EPHEMERAL=1` keeps nothing between runs.
-- Trade-off: the Historian is off, so no generated Playwright or CodeceptJS files. Plans and reports are still written.

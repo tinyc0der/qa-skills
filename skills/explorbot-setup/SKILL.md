@@ -1,6 +1,6 @@
 ---
 name: explorbot-setup
-description: Use to install Explorbot into a project — first-time setup, an `explorbot.config.js` in the repo, connecting an AI provider, teaching it how to log in, or when a command fails because the project has no config. Ends once `explorbot navigate` reaches the app.
+description: Use to install Explorbot into the QA workspace repo — first-time setup, an `explorbot.config.js` next to `test-cases/`, connecting an AI provider, pointing it at the staging URL, teaching it how to log in, or when a command fails because the workspace has no config. Ends once `explorbot navigate` reaches the app.
 license: MIT
 metadata:
   author: Testomat.io
@@ -9,18 +9,19 @@ metadata:
 
 # Explorbot Setup
 
-Install Explorbot into the user's project, connect a provider, teach it how to reach the app, and prove it with one navigation.
+Install Explorbot into the QA team's shared workspace repo, connect a provider, teach it how to reach the staging app, and prove it with one navigation.
 
-The config, the knowledge files, and the generated tests all land in the repo, so they are reviewed and versioned like the rest of the code. That is the point of installing locally.
+The config, the knowledge files, and the plans land in the workspace next to `test-cases/` and `.env`, so the team reviews and versions them together. That is the point of installing locally. Never install into a product repo.
 
-**To run Explorbot without installing it into the project, this is the wrong skill** — [[explorbot-fundamentals]] covers that: `npx`, a provider, no project files.
+**To run Explorbot without installing it into the workspace, this is the wrong skill** — [[explorbot-fundamentals]] covers that: `npx`, a provider, no project files.
 
 **Scope ends when `npx explorbot navigate <path>` exits `0`** — exploring and testing belong to [[explorbot-fundamentals]].
 
 ## 1. Requirements
 
 - Node ≥ 24 or Bun. If neither exists, stop — do not install a runtime.
-- The generated config uses `import`, so `package.json` must be ESM. `npm init -y` produces CommonJS; if `"type"` is missing or `"commonjs"` in an existing file, ask before changing it, and write `explorbot.config.mjs` (passed as `--config`) if the user declines.
+- No `package.json` in the workspace (an empty folder is fine): run `npm init -y` first; step 2 makes it ESM.
+- The generated config uses `import`, so `package.json` must be ESM. If `"type"` is missing or `"commonjs"` in an existing file, ask before changing it, and write `explorbot.config.mjs` (passed as `--config`) if the user declines.
 - Explorbot is for CRUD-heavy apps. Warn before installing if the target is a landing page, blog, CMS, or static site.
 
 ## 2. Install
@@ -41,13 +42,11 @@ npx explorbot init                  # writes explorbot.config.js, .env, output/
 
 The key: ask the user to paste it into `.env` in their editor and say "continue", then verify with `grep -q "^<KEY>=." .env`. Confirm `.env` is gitignored. Never echo a key back.
 
-`~/.explorbot/.env` is also read on every run, filling in variables the project `.env` does not set.
+`~/.explorbot/.env` is also read on every run, filling in variables the workspace `.env` does not set.
 
 ## 4. App URL
 
-Ask for it, and write it to `web.url` in the config — host only, no path. Explorbot clicks, fills, and submits on its own, so staging beats production.
-
-Do not guess it. Look for evidence in the project — `package.json` scripts, `.env` files, framework ports — and suggest what you find with its source. Otherwise ask in plain text. Never propose a URL from this skill or from memory.
+Always ask for the staging URL, and write it to `web.url` in the config — host only, no path. Explorbot clicks, fills, and submits on its own, so staging beats production. Never propose a URL from this skill or from memory.
 
 ## 5. Verify
 
@@ -71,7 +70,7 @@ Walk the rungs in order. Stop at the first failure, fix it, resume.
 
 ## 6. Handoff
 
-Report what the project now has: `explorbot.config.js`, `.env` (gitignored), `knowledge/`, `output/` with a saved session. Then hand off to [[explorbot-fundamentals]] with a first command:
+Report what the workspace now has: `explorbot.config.js`, `.env` (gitignored), `knowledge/`, `output/` with a saved session. Then hand off to [[explorbot-fundamentals]] with a first command:
 
 ```bash
 npx explorbot explore /<crud-page> --max-tests 10
@@ -79,7 +78,7 @@ npx explorbot explore /<crud-page> --max-tests 10
 
 ## Anti-patterns
 
-- Installing into the project when the user only wanted to try Explorbot — that is [[explorbot-fundamentals]].
+- Installing into the workspace when the user only wanted to try Explorbot — that is [[explorbot-fundamentals]].
 - Naming providers, model ids, or key variables without reading them from the docs or the generated config.
 - Putting secrets in knowledge files or config — always `${env.NAME}`, values in `.env`.
 - Driving `explorbot start` — it is an interactive TUI; ask the user to run it.

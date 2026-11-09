@@ -34,7 +34,7 @@ Optimize for **scanning** by eyes: the user should understand each item and what
 
 📈 Impact: <high|medium|low> · ⏱️ Effort: <rough estimate>
 
-🔍 **Found:** <one sentence — the scan/interview fact this item is based on>
+🔍 **Found:** <one sentence — the source/interview fact this item is based on>
 🎯 **Goal:** <one sentence — the outcome when done>
 ▶ **Action:** <concrete action (by skill or human)>
 
@@ -57,13 +57,13 @@ Optimize for **scanning** by eyes: the user should understand each item and what
 
 --------------------------------------------------
 
-### 2️⃣ Set up e2e test reporting
+### 2️⃣ Review payment stories before testing starts
 
-  📈 Impact: high · ⏱️ Effort: ~1 hour
+  📈 Impact: high · ⏱️ Effort: ~1 hour per epic
 
-  🔍 **Found:** Playwright runs in CI but shows only green/red — no history or flakiness data.
-  🎯 **Goal:** visibility into runs, history, and flaky tests.
-  ▶ **Action:** add a reporter to the Playwright project → `qa-e2e-tests-reporting` skill
+  🔍 **Found:** 7 of 11 production bugs last quarter trace to payment stories with vague criteria.
+  🎯 **Goal:** payment ambiguities resolved before test design starts.
+  ▶ **Action:** review the next payment epic → `epic-requirement-reviewer` skill
 
 --------------------------------------------------
 
