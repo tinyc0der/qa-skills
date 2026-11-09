@@ -153,3 +153,4 @@ Where to start. Mismatches by highest user impact first. Missing features per so
 - Update a catalog → `catalog-features`
 - Feedback to the PO on a contradicting story → `review-user-story`
 - Test cases for differing behavior → `qa-write-test-cases`
+- Jira Bug for a mismatch whose likely cause is Bug → `report-bug`

@@ -19,6 +19,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 | `improve-test-cases`            | Improve existing test cases quality                                         |
 | `detect-duplicate-test-cases`   | Find duplicate, near-duplicate, and overlapping test cases                  |
 | `sync-test-cases-with-testrail` | Push test cases to TestRail, list existing cases, pull them into files      |
+| `report-bug`                    | Create a Jira Bug from a failed case or a live app defect                   |
 | `agent-browser`                 | Check behavior on the live app in a browser                                 |
 
 ## Routing
@@ -29,6 +30,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
 - **Catalog features of a source** (a Jira project, a Confluence space, a Figma file, a TestRail suite, the live app) → route to the `catalog-features` skill.
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
+- **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
 - **Strategic intent** ("where do I start", "improve our QA process", "QA maturity review") → route to the `qa-lead-strategy-advisor` skill instead. It owns the high-level roadmap and delegates execution back here.
 

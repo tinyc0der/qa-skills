@@ -48,6 +48,12 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 | `detect-duplicate-test-cases`   | Find duplicate, overlapping, and low-value test cases                               |
 | `sync-test-cases-with-testrail` | Push test cases to TestRail, pull existing cases, and list sections                 |
 
+### Bugs
+
+| Skill        | Description                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------- |
+| `report-bug` | Create a reproducible Jira Bug from a failed TestRail case or a live app defect, linked to its story |
+
 ### QA process
 
 | Skill                      | Description                                                                                   |
@@ -60,7 +66,8 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 1. Review the Jira story with `qa-thinking` or `review-user-story`.
 2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`.
 3. Push to TestRail with `sync-test-cases-with-testrail` after a dry run.
-4. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+4. File a Jira Bug for each defect found, with `report-bug`.
+5. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
 
 ## Claude Code plugins
 
@@ -69,7 +76,7 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `requirements`    | `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `review-user-story`, `qa-thinking` |
+| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `report-bug`, `review-user-story`, `qa-thinking` |
 | `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
 
 ## Repository structure

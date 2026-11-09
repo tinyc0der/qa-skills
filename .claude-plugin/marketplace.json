@@ -15,7 +15,7 @@
     {
       "name": "test-management",
       "source": "./plugins/test-management",
-      "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, and pull"
+      "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, pull, and report failures as Jira bugs"
     },
     {
       "name": "qa-process",
