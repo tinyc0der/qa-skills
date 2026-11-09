@@ -73,6 +73,7 @@ Learn the UI pages, components, and API endpoints from Figma, Confluence, and th
 
 Before writing, check TestRail for duplicates:
 
+- If the QA workspace has a TestRail catalog (`catalog/` or `mismatches/sources/*/catalog/` whose README says Type TestRail), find the feature under test there first: its links are the existing cases to update. `mismatches/mismatches/README.md` lists its known mismatches.
 - Download the existing cases of the related sections with the `pull` command of the `sync-test-cases-with-testrail` skill.
 - Use its `list` command instead when titles are enough to spot overlap.
 - If existing test cases intersect with the feature under test, report them to the user and suggest expanding them or creating a new section.
