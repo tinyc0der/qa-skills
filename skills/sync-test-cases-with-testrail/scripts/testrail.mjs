@@ -148,6 +148,18 @@ function parseTestBody(body) {
   return { title, description: description.join('\n').trim(), steps: parseSteps(stepLines) };
 }
 
+function splitExampleBody(body) {
+  const lines = body.split(/\r?\n/);
+  let from = 0;
+  while (from < lines.length && !lines[from].trim()) from++;
+  let to = from;
+  while (to < lines.length && lines[to].trim().startsWith('|')) to++;
+  return {
+    table: lines.slice(from, to).map((l) => l.trim()).join('\n'),
+    rest: lines.slice(to).join('\n'),
+  };
+}
+
 export function parseTestMd(text) {
   const suites = [];
   for (const b of scanBlocks(text)) {
@@ -155,12 +167,18 @@ export function parseTestMd(text) {
       suites.push({ ...parseSuiteBody(b.body), meta: parseMeta(b.inner), tests: [] });
     } else if (b.kind === 'test') {
       if (!suites.length) suites.push({ title: '', description: '', meta: {}, tests: [] });
-      suites.at(-1).tests.push({ ...parseTestBody(b.body), meta: parseMeta(b.inner), examples: null });
+      suites.at(-1).tests.push({ body: b.body, meta: parseMeta(b.inner), examples: null });
     } else {
       const last = suites.at(-1)?.tests.at(-1);
-      const rows = b.body.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.startsWith('|'));
-      if (last && rows.length) last.examples = rows.join('\n');
+      const { table, rest } = splitExampleBody(b.body);
+      if (last && table) {
+        last.examples = table;
+        last.body += `\n${rest}`;
+      }
     }
+  }
+  for (const suite of suites) {
+    suite.tests = suite.tests.map(({ body, meta, examples }) => ({ ...parseTestBody(body), meta, examples }));
   }
   return { suites };
 }

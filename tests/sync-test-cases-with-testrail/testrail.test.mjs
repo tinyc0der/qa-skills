@@ -203,6 +203,63 @@ Test description
   assert.equal(parseTestMd(md).suites[0].tests[0].examples, '| Value1 | Value2 |');
 });
 
+const TABLE = '| User | Password |\n| --- | --- |\n| ann | pw1 |';
+const STEPS_MD = `## Steps
+
+1. Open the login page
+   **Expected:** form is shown
+2. Submit credentials
+   **Expected:** dashboard opens
+`;
+const TEST_HEAD = `<!-- test
+priority: high
+-->
+
+# Login with data
+
+Checks login.
+
+## Preconditions
+
+- Account exists
+`;
+const EXAMPLE_MD = `<!-- example
+-->
+
+${TABLE}
+`;
+const tableAfterSteps = `${TEST_HEAD}\n${STEPS_MD}\n${EXAMPLE_MD}`;
+const tableBeforeSteps = `${TEST_HEAD}\n${EXAMPLE_MD}\n${STEPS_MD}`;
+
+test('parseTestMd keeps steps when the example table comes before Steps', () => {
+  const t = parseTestMd(tableBeforeSteps).suites[0].tests[0];
+  assert.equal(t.title, 'Login with data');
+  assert.equal(t.description, 'Checks login.\n\n## Preconditions\n\n- Account exists');
+  assert.equal(t.examples, TABLE);
+  assert.deepEqual(t.steps, [
+    { content: 'Open the login page', expected: 'form is shown' },
+    { content: 'Submit credentials', expected: 'dashboard opens' },
+  ]);
+});
+
+test('parseTestMd gives the same test whether the example table is before or after Steps', () => {
+  const before = parseTestMd(tableBeforeSteps).suites[0].tests[0];
+  const after = parseTestMd(tableAfterSteps).suites[0].tests[0];
+  assert.deepEqual(before, after);
+  assert.deepEqual(
+    toCasePayload(before, emptySuite, ctx),
+    toCasePayload(after, emptySuite, ctx),
+  );
+});
+
+test('parseTestMd ends the example table at the first non-table line', () => {
+  const md = `${TEST_HEAD}\n${EXAMPLE_MD}\nNote: ann is locked out\n\n| stray |\n\n${STEPS_MD}`;
+  const t = parseTestMd(md).suites[0].tests[0];
+  assert.equal(t.examples, TABLE);
+  assert.equal(t.steps.length, 2);
+  assert.match(t.description, /Note: ann is locked out/);
+});
+
 test('parseTestMd handles several suites in one file', () => {
   const { suites } = parseTestMd(MULTI_SUITE);
   assert.deepEqual(
