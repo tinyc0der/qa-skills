@@ -1,6 +1,6 @@
 # QA Skills for Manual QC
 
-AI agent skills for manual QC engineers who work from Jira, Confluence, Figma, TestRail, and the running app, with no access to the product codebase. Forked from [testomatio/skills](https://github.com/testomatio/skills).
+AI agent skills for manual QC engineers who work from Jira, Confluence, Figma, TestRail, and the running app, with no access to the product codebase. Forked from [testomatio/skills](https://github.com/testomatio/skills) by Testomat.io (MIT license).
 
 ## Install
 

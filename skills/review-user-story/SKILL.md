@@ -1,10 +1,6 @@
 ---
 name: review-user-story
 description: Review a Jira user story with its subtasks, comments, parent epic, linked Confluence pages, and linked Figma frames, and draft QA feedback for the product owner. Produce story quality gaps (atomic, clear, complete, consistent, testable), material ambiguities, concrete risks, and proposed acceptance criteria; post the approved feedback as a Jira comment. Use when a user supplies a Jira story or ticket and asks to review it, check its testability or acceptance criteria, or give feedback to the PO. Accept Jira links, Confluence pages, and pasted text.
-license: MIT
-metadata:
-  author: Testomat.io
-  version: 2.0.0
 ---
 
 # Review User Story

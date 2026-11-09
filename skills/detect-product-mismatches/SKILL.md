@@ -4,9 +4,6 @@ description: >-
   Compares what different sources say the product does: the live app (observed behavior), Jira, Confluence requirements, Figma designs, and TestRail test cases (intended behavior), user docs (documented behavior), and any other source (release notes etc.).
   Checks every feature in every source and records mismatches: contradictions and differences, not observed in the app, unspecified, undocumented.
   Use when the user asks to compare, cross-check, align, validate requirements, specs, Jira tickets, Confluence pages, Figma designs, TestRail test cases, user docs, or the live app against each other, to find mismatches, contradictions, differences, or outdated docs, designs, or requirements, or to find what is missing from the app, not documented, or not specified.
-metadata:
-  author: Testomat.io
-  version: 1.0.0
 ---
 
 # Detect product mismatches

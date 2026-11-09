@@ -1,10 +1,6 @@
 ---
 name: improve-test-cases
 description: Analyze and improve existing manual test cases (`*.test.md` in TestRail format, or cases pulled from TestRail) for clarity, structure, and format compliance, then push the fixes back to TestRail. Use when the user asks to improve, clean up, review, standardize, or rewrite existing test cases or a TestRail section.
-license: MIT
-metadata:
-  author: Testomat.io
-  version: 1.0.0
 ---
 
 # Improve Test Cases

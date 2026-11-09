@@ -3,9 +3,6 @@ name: catalog-features
 description: >-
   Builds a catalog of product features from one source: a tree that mirrors the source, each feature as a key, title, and link to the source. Supports Jira, Confluence, TestRail, the live app, and user docs.
   Use when asked to catalog/list features, existing functionality, Jira issues, Confluence requirements, specs, PRDs, user docs, TestRail test cases, the live app's screens, or similar sources.
-metadata:
-  author: Testomat.io
-  version: 1.0.0
 ---
 
 # Catalog features

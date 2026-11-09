@@ -2,11 +2,6 @@
   "name": "qa-process",
   "version": "1.0.0",
   "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, and orchestrate the test case lifecycle",
-  "author": {
-    "name": "Testomat.io",
-    "url": "https://testomat.io"
-  },
-  "homepage": "https://docs.testomat.io",
   "repository": "https://github.com/tinyc0der/qa-skills",
   "license": "MIT",
   "keywords": [

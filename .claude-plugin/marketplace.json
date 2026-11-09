@@ -4,7 +4,7 @@
     "description": "Skills for manual QC with Jira, Confluence, Figma, TestRail, and the live app"
   },
   "owner": {
-    "name": "Testomatio.io"
+    "name": "tinyc0der"
   },
   "plugins": [
     {
