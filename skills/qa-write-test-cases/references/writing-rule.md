@@ -18,11 +18,6 @@ If the user provided example test cases, follow their style first; then apply th
 - Focus on black-box testing: every action and observable result goes through public APIs or UI (unless the user specifies otherwise).
 - Prefer UI over public APIs when possible.
 - Add system checks only when it is not clear how to test via public APIs or UI. This is not a unit test; usually no direct server or code access is allowed.
-- Understand UI pages, components, or API endpoints from source code, design, or requirements.
-- If this is a web app, ask the user to help discover it:
-  - by looking at its frontend source code
-  - by accessing it on a non-production environment via browser (URLs and credentials)
-  - by looking at screenshots of related pages
 
 ## Title
 
@@ -115,7 +110,7 @@ Step content rules:
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.
 - All step actions must be clear to perform via public API or UI.
 - All checks/verifications/assertions belong in the expected result, not in the step action.
-- A code block may follow a step when needed: API request, SQL, shell command, pseudocode, etc.
+- A code block may follow a step when it holds an API request or response body.
 
 If an expected result has multiple conditions, split them into separate lines.
 

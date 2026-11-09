@@ -1,6 +1,6 @@
 ---
 name: improve-test-cases
-description: Analyze and improve existing markdown manual test cases for clarity, structure, and Test Management Tool format compliance.
+description: Analyze and improve existing manual test cases (`*.test.md` in TestRail format, or cases pulled from TestRail) for clarity, structure, and format compliance, then push the fixes back to TestRail. Use when the user asks to improve, clean up, review, standardize, or rewrite existing test cases or a TestRail section.
 license: MIT
 metadata:
   author: Testomat.io
@@ -9,41 +9,33 @@ metadata:
 
 # Improve Test Cases
 
-Analyze and improve existing markdown manual test cases to make them clearer for the QA team:
+Analyze and improve existing manual test cases to make them clearer for the QA team:
 - Improve test titles for clarity.
 - Enhance test descriptions.
 - Fix broken formatting and markdown syntax.
-- Standardize test structure to Test Management Tool format.
+- Standardize test structure to the TestRail test case format.
 - Ensure consistent terminology and language.
-- Update tags and labels.
+
+The target format and rules are owned by the `qa-write-test-cases` skill:
+- [Test Case Format](../qa-write-test-cases/references/testrail-test-case-format.md)
+- [Writing Rules](../qa-write-test-cases/references/writing-rule.md)
 
 **DO NOT CHANGE:**
-- Original test/suite IDs.
+- `testrail_id:` and `testrail_section_id:` lines.
 - Original test intent.
 - Original language (fix only clarity, grammar, typos).
 
-## Step 1: Locate Test Files
+## Step 1: Get Test Cases
 
-- Find markdown test files (`.test.md` or `.md`) in common locations: `./test-cases`, `./tests/manual`, `./docs/tests`.
-- If none found, scan the whole project for `.md` files with test case content.
-- If still none, ask the user for the test directory path.
+- Use the local `test-cases/*.test.md` files the user points at.
+- Otherwise download the cases with the `pull` command of the `sync-test-cases-with-testrail` skill.
 
 ## Step 2: Analyze Test Quality
 
-Read each test and flag issues:
-
-Titles:
-- Unclear or vague test title.
-- Missing action-object format.
-- Not specific enough to understand what is being tested.
-
-Descriptions:
-- Vague or unclear test purpose.
-- Missing or incomplete description.
+Read each test and flag every place it breaks the format or the writing rules. Also flag:
 
 Steps and expected results:
 - Missing expected results.
-- Inconsistent step format.
 - Unclear actions.
 - Steps not ordered logically.
 - Expected results not relevant to the steps.
@@ -69,46 +61,18 @@ Ambiguity:
 
 ## Step 4: Improve Tests
 
-Titles:
-- Make clear and specific.
-- Use action-result format: "Verify [action] results in [expected]".
-- Ensure the title reflects the actual test purpose.
+- Rewrite each flagged test to the format and writing rules.
+- Include context from the parent suite in a description when relevant.
+- Keep `priority:` and `refs:` values.
 
-Descriptions:
-- Make purpose clear and concise.
-- Include context from the parent suite when relevant.
-- Fix grammar and spelling only.
-
-Steps:
-- Give each step an explicit expected result.
-  - Nested format: "- Step action..." with indented "_Expected_: ...".
-- Make actions specific and reproducible.
-- Add measurable pass/fail criteria.
-- Ensure results are directly relevant to the step action.
-- Make results measurable and verifiable.
-- Avoid vague terms; use specific values and conditions.
-
-Ambiguity:
-- Replace generic terms with specific, testable language.
-- Avoid subjective terms ("should work", "might fail").
-- Ensure steps can be verified objectively.
-
-Metadata:
-- Set `type: manual` in test metadata.
-- Use only these priority values: `low`, `normal`, `important`, `high`, `critical`.
-
-## Step 5: Save Changes
+## Step 5: Save and Push
 
 - Overwrite the original files.
 - Keep the same file names and directory structure.
-- **Preserve all original test/suite IDs.**
+- Push the changed files with the `sync-test-cases-with-testrail` skill. Its dry-run and confirmation step apply.
 
 ## Step 6: Show Final Summary
 
 - Number of files modified.
 - Number of tests improved.
 - Key improvements made.
-
-## Reference
-
-TMS markdown format example: [references/TESTOMAT_MARKDOWN_EXAMPLE.md](references/TESTOMAT_MARKDOWN_EXAMPLE.md)

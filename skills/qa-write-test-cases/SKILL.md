@@ -1,6 +1,6 @@
 ---
 name: qa-write-test-cases
-description: Generate test cases and checklists for software testing. Use this skill whenever the user asks to create test cases, test scenarios, test plans, checklists (high-level test cases), QA documentation, or mentions testing activities like "write tests for feature", "create a test checklist", "generate test scenarios from requirements", or similar. This skill works better if user provides documentation, requirements, etc., or it can create test cases based on the user prompt without any additional context.
+description: Generate checklists and manual test cases in TestRail format (`*.test.md`) from Jira tickets, Confluence pages, Figma designs, and the live app. Use this skill whenever the user asks to create test cases, test scenarios, test plans, checklists (high-level test cases), or QA documentation, or says "write test cases for PROJ-123", "write test cases from a Jira ticket", "create test cases from this Confluence page", "write test cases from this Figma design", "write test cases for TestRail", "create a test checklist", "generate test scenarios from requirements", or similar. It also works from the user prompt alone.
 ---
 
 # Test Case & Checklist Generator
@@ -9,16 +9,8 @@ Generates test cases and checklists for software testing from the context the us
 
 References:
 
-- [Test Case Format](./references/testomat-test-case-format.md) — markdown format for suites, tests, and steps (Testomat.io-friendly)
-- [TestRail Test Case Format](./references/testrail-test-case-format.md) — the same format with TestRail fields, used when the target is TestRail
-- [Writing Rules](./references/writing-rule.md) — rules for suites, tests, preconditions, steps, and AI writing patterns to avoid
-- [Testomat.io TMS Guide](./references/testomat-tms-guide.md) — Testomat.io conventions and MCP tools
-
-## Prerequisites
-
-- Project structure checked (source code, e2e tests, test cases) via the /scan-automation-project skill.
-- Existing Testomat.io tests pulled via the /sync-test-cases-with-tms skill.
-- PLAN mode enabled, if available, for the interview steps.
+- [Test Case Format](./references/testrail-test-case-format.md) defines the markdown for suites, tests, and steps, and maps each part to TestRail.
+- [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and AI writing patterns to avoid.
 
 ## User interaction
 
@@ -58,14 +50,11 @@ Understand:
 Information sources:
 
 - User prompt
-- Task tracking systems (Jira, etc.)
-- Requirements documents (Confluence, etc.)
-- Design mockups (Figma, Miro, etc.)
-- Existing test cases (TestRail, Testomat.io, etc.)
-- Source code:
-  - manual test files: `.test.md` or `.md` in folders like `test-cases`, `tests`, `manual`, `qa`, `spec`
-  - automated test files (spec, test, cy files, etc.)
-  - project structure
+- Jira: the ticket and its acceptance criteria (Atlassian MCP)
+- Confluence: specs and requirements pages (Atlassian MCP)
+- Figma: screens, states, and UI copy (Figma MCP)
+- TestRail: existing test cases, via the `sync-test-cases-with-testrail` skill
+- Live app: actual behavior on a non-production environment, via the `prima` skill
 
 Source priority:
 
@@ -73,34 +62,20 @@ Source priority:
 - From linked documents, use only the parts within the ticket's scope.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
-Sources may come as pasted text, links, or MCP tools. Ask the user for MCP configuration if needed.
+Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
 
-Analyzing source code:
+Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app:
 
-- Usually this skill runs from an automation project without application code. Check which case this is.
-- Automation-only project: scan briefly, focus on test files.
-- Application + automation project: scan the application code thoroughly; skip unit-test depth unless the user asks.
+- For a web app, ask the user for a non-production URL and credentials, then explore the related pages with the `prima` skill.
+- Use screenshots of related pages when the user shares them.
 
-#### Testomat.io TMS detection
+#### Existing test cases
 
-Detect if this is a Testomat.io project. Two options:
+Before writing, check TestRail for duplicates:
 
-Option 1 — MCP. If the `testomatio` MCP is available, gather context:
-
-- `suites_list`, `suites_search` — existing structure
-- `tests_search`, `tests_list` — existing tests, avoid duplicates
-- `steps_list`, `steps_search` — reusable shared steps
-- `tags_list`, `labels_list` — project conventions
-
-Option 2 — `sync-test-cases-with-tms` skill (with `check-tests` lib). Run it with the `pull` action, then analyze the downloaded files for:
-
-- existing structure and suites
-- current test cases (to avoid duplicates)
-- project conventions (tags, labels, priority levels)
-
-TestRail: if a TestRail MCP or `TESTRAIL_*` in `.env` is configured, list existing cases with the `sync-test-cases-with-testrail` skill.
-
-If existing test cases intersect with the feature under test, report them to the user and suggest expanding them or creating a new suite.
+- Download the existing cases of the related sections with the `pull` command of the `sync-test-cases-with-testrail` skill.
+- Use its `list` command instead when titles are enough to spot overlap.
+- If existing test cases intersect with the feature under test, report them to the user and suggest expanding them or creating a new section.
 
 #### Approval gate
 
@@ -180,7 +155,7 @@ When ask for a role:
 | **🎨 picasso**     | **ui/ux**                                |
 | **⚖️ lawyer**      | **texts**, error messages, typos, etc.   |
 | **🌐 polyglot**    | **localization**, translations           |
-| **📈 performance** | **performance**, load, stress, etc.      |
+| **📈 performance** | **performance**, slow pages, timeouts    |
 | 🔧 other           | **specify your own role**                |
 
 ### Step 4: Generate checklist
@@ -204,19 +179,19 @@ Item rules:
 - Each item is one test objective. Split items that check several outcomes.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Cover UI consistency with one item per screen, not one per element.
-- Prefix each item with its priority: 🔴 critical, 🟠 important, 🟡 high, 🟢 normal, ⚪ low. For TestRail: 🔴 critical, 🟠 high, 🟡 medium, 🟢 low.
+- Prefix each item with its TestRail priority: 🔴 critical, 🟠 high, 🟡 medium, 🟢 low. When pulled cases use other priority names, use those.
 
 Example:
 
 ```markdown
 - Signup
   - 🔴 [critical] Signup with valid email
-  - 🟢 [normal] Signup with valid phone number
+  - 🟡 [medium] Signup with valid phone number
 
 - Login
   - 🔴 [critical] Login with valid email
-  - 🟢 [normal] Login with valid phone number
-  - 🟡 [high] Login with invalid password
+  - 🟡 [medium] Login with valid phone number
+  - 🟠 [high] Login with invalid password
 ```
 
 #### Approval gate
@@ -244,37 +219,26 @@ Always ask about the amount of cases / level of detail:
 
 If the user originally asked only for a checklist, first ask: "Do you want to generate test cases for this checklist?"
 
-Where to store test cases:
-
-- Empty or manual-tests-only workspace → project root
-- End-to-end testing project → `test-cases/` directory
-- Any other case → `.testeiya/test-cases/` (ensure `.testeiya/` exists and is git-ignored)
+Write test case files to `test-cases/`.
 
 Generation rules:
 
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority.
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
-- **Don't change the user's source code. Only generate `*.test.md` files.**
+- When the user chose to expand pulled cases, add the new tests to the pulled file of that section. Never overwrite a pulled file.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.
 
 Format rules:
 
-- Strictly follow [Test Case Format](./references/testomat-test-case-format.md) for suites, tests, and steps. Only exception: the user specifies their own format in the prompt.
-- For TestRail, follow [TestRail Test Case Format](./references/testrail-test-case-format.md) instead.
+- Strictly follow [Test Case Format](./references/testrail-test-case-format.md) for suites, tests, and steps. Only exception: the user specifies their own format in the prompt.
 - Strictly follow [Writing Rules](./references/writing-rule.md) for suite/test descriptions, preconditions, steps, expected results, and anti-patterns.
-- Follow the [Testomat.io TMS Guide](./references/testomat-tms-guide.md) for conventions (priority levels, tags, labels), especially when using the testomatio MCP.
-- Wrap test cases in `<!-- suite ... -->` and `<!-- test ... -->` blocks.
-- If required, put `tags:` and `labels:` inside each `<!-- test ... -->` metadata block (see [test metadata](./references/testomat-test-case-format.md#test-metadata)), not only on the suite block.
-- Reuse existing tags and labels obtained via MCP or from other test cases.
-- Do not use labels if you are not aware of any existing ones.
-- If reasonable, add test metadata (preconditions, test data, labels, tags) based on the analyzed context.
+- Set `refs:` to the Jira key on every test case that comes from a Jira issue. When the whole file covers one issue, set `refs:` once on the suite instead.
+- If reasonable, add preconditions and test data based on the analyzed context.
 - Use concrete, executable values. **Do NOT introduce `${...}` placeholders in first-pass generation.** Parametrize only genuinely reused or data-driven values; format them as `${variable}` in backticks.
 - **NEVER generate test or suite IDs of any kind:**
-  - Do NOT include Testomat.io IDs (`id: @T*`, `id: @S*`, e.g. `@T12345678`, `@S380c64db`).
   - Do NOT write `testrail_id:` or `testrail_section_id:`. The TestRail push writes them. Keep them when editing a file.
-  - Do NOT include custom/random IDs (e.g. `TC-001`, `TC-R001`, `SUITE-01`) in `id:` fields, titles, or anywhere else.
-  - Testomat.io IDs are server-generated and assigned when the user runs `check-tests push` with `--update-ids` (or via the `sync-test-cases-with-tms` skill). Never add IDs at generation time.
+  - Do NOT include custom/random IDs (e.g. `TC-001`, `TC-R001`, `SUITE-01`) in metadata, titles, or anywhere else.
 
 #### Matching existing test case formats
 
@@ -284,16 +248,15 @@ DO match:
 
 - writing style and level of detail
 - field structure (Priority, Preconditions, Type, Test Data, etc.)
-- additional fields like labels and tags
 
 DON'T copy:
 
-- any IDs from the example — neither Testomat.io IDs (`@T...`, `@S...`) nor custom prefixes (e.g. `TC-R001`, `TC-001`)
+- any IDs from the example: TestRail IDs (`testrail_id:`, `C<id>`) or custom prefixes (e.g. `TC-R001`, `TC-001`)
 - original test case intent
 
 ### Step 6: Show summary
 
-- Show a concise summary (markdown table works well): number of test cases and suites, generated files, destination folder.
+- Show a concise summary (markdown table works well): number of test cases and suites, generated files.
 - Ask the user to review the files and request changes if needed.
 - List items that needed splitting and gaps found while writing, as suggested additions.
-- Suggest uploading the test cases to Testomat.io via the `sync-test-cases-with-tms` skill, or to TestRail via the `sync-test-cases-with-testrail` skill.
+- Suggest pushing the test cases to TestRail with the `sync-test-cases-with-testrail` skill.
