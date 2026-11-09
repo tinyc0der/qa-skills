@@ -19,7 +19,7 @@ The document is structured as:
 | ----------------------------------------- | ------------------------------------------ |
 | Suite title and description               | Section name and description               |
 | Test title                                | Case title                                 |
-| Test description and examples table       | Preconditions (table under `Test data:`)   |
+| Test description, `## Preconditions`, examples table | Preconditions (table under `Test data:`) |
 | `## Steps` action and `*Expected*` lines  | Steps (separated): step and expected result |
 | `priority`, `refs`                        | Priority, References                       |
 
@@ -103,7 +103,12 @@ If a test has no `priority` or `refs`, the suite's value is used.
 - Everything after the test heading until `## Steps`, the next `<!-- test`, or `<!-- example` is the test description.
 - Description supports standard markdown.
 
-### 6. Test Steps Format
+### 6. Preconditions
+
+- Optional. Write them under a `## Preconditions` heading after the test description and before `## Steps`.
+- List each precondition as a bullet point.
+
+### 7. Test Steps Format
 
 Test steps use the `## Steps` header section with a nested markdown list format:
 
@@ -162,6 +167,11 @@ priority: high
 # User can log in with valid credentials
 
 A user should be able to log in with valid credentials.
+
+## Preconditions
+
+- The accounts from the test data table exist and are active
+- User is logged out
 
 ## Steps
 
