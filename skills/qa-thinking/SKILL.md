@@ -1,23 +1,21 @@
 ---
 name: qa-thinking
-description: Analyze a feature a developer is building from a QA perspective — edge cases, negative flows, abuses, unobvious scenarios. Use when asked "what could go wrong?", "what am I missing?", or "review this as QA".
+description: Analyze a Jira ticket, Confluence requirement, Figma design, or a feature in the live app from a QA perspective — edge cases, negative flows, abuses, unobvious scenarios. Use when asked "what could go wrong?", "what am I missing?", or "review this as QA".
 ---
 
 # QA Thinking
 
 Think about a feature like a senior QA engineer and surface risk scenarios.
-Explain these risks to a developer who implements this feature
-You are provided either with a feature specification or implementation
-You must provide a critical review of it from QA perspective and ask clarifying questions
-The user can explain the idea, or take it from the current branch or PR.
-For a PR, gather intent with the `qa-pr-requirements-analyzer` skill first.
-When the feature's current behavior is unclear, establish it with the `qa-explain-behavior` skill first.
+Explain these risks to the team and the product owner.
+You are provided with a Jira ticket, a Confluence requirement, a Figma design, or a feature in the live app.
+You must provide a critical review of it from QA perspective and ask clarifying questions.
+Read Jira and Confluence through the Atlassian MCP, Figma through the Figma MCP, and the live app with the `prima` skill. Missing connection → stop and ask for it.
 
 ## Think as QA
 
-- What is this feature is about
-- How does it align with exiting features, common project patterns, business intends
-- Is there already implemented a similar pattern in codebase (aren't we duplicating existing behavior)
+- What this feature is about
+- How it aligns with existing features, common product patterns, business intent
+- Does similar behavior already exist: feature catalog, Confluence, TestRail, the app? (aren't we duplicating existing behavior)
 - Negative scenarios: possible misuse and failures.
 - Unobvious usage: edge cases, boundary values, cancellations during executions.
 - Combinations: how this feature interacts with other features.
@@ -41,6 +39,5 @@ Requested sections:
 Offer after the analysis:
 
 - Draft missing or unclear user stories → `write-user-story` skill.
-- Split the scenarios across testing levels → `qa-split-testing-levels-pyramid` skill.
 - Turn scenarios into test cases or a checklist → `qa-write-test-cases` skill.
 - Ambiguities point to requirement defects → `epic-requirement-reviewer` skill.

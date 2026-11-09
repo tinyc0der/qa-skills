@@ -1,6 +1,6 @@
 ---
 name: epic-requirement-reviewer
-description: Review an epic or feature requirement together with its subissues and discussion. Produce a concise feature breakdown, material ambiguities, concrete risks, and high-level acceptance criteria. Use when a user supplies an epic, feature ticket, specification, or requirement and asks for a review, analysis, or feature breakdown. Accept issue links, documents, directories, and pasted text.
+description: Review a Jira epic or feature requirement together with its child issues, comments, linked Confluence pages, and linked Figma frames. Produce a concise feature breakdown, material ambiguities, concrete risks, and high-level acceptance criteria. Use when a user supplies a Jira epic, feature ticket, Confluence specification, or requirement and asks for a review, analysis, or feature breakdown. Accept Jira links, Confluence pages, documents, directories, and pasted text.
 license: MIT
 metadata:
   author: Testomat.io
@@ -18,10 +18,10 @@ The deliverable is a brief, useful feature analysis—not a sentence-by-sentence
 ### 1. Read the requirement and its context
 
 - Read the full requirement, not only its title or summary.
-- For an epic or issue, inspect its subissues and their full descriptions. Read their comments and the parent discussion for clarifications, decisions, and changes to expected behavior.
-- Follow nested subissues when they contain relevant scope. Inspect linked requirements or customer requests when needed to understand the behavior.
+- For a Jira epic or issue, inspect its child issues (subissues) and their full descriptions. Read their comments and the parent discussion for clarifications, decisions, and changes to expected behavior.
+- Follow nested subissues when they contain relevant scope. Read linked Confluence pages and Figma frames when they define the behavior; inspect linked customer requests when needed.
 - Do not substitute fetching a list for actually reviewing its contents. If tool output is truncated, retrieve the omitted bodies before drawing conclusions.
-- Use the available authorized tracker tools. Follow host-specific source and skill instructions.
+- Read Jira and Confluence through the Atlassian MCP and Figma through the Figma MCP. Follow host-specific source and skill instructions.
 - Distinguish original requests, later clarifications, proposed behavior, implementation reports, and independently verified behavior. A closed issue or a comment saying PASS is not your own execution evidence.
 - If an important source is inaccessible, state the limitation briefly. Continue with available evidence unless the core requirement cannot be understood.
 

@@ -1,6 +1,6 @@
 ---
 name: write-user-story
-description: Write user stories, and acceptance criteria (which represent requirements) from a feature idea, ticket, notes, or existing behavior. Use when the user asks to write, draft, or rewrite/edit/improve requirements, a spec, BRD, user stories, use cases, or acceptance criteria.
+description: Write user stories, and acceptance criteria (which represent requirements) from a feature idea, Jira ticket, notes, or existing behavior. Use when the user asks to write, draft, or rewrite/edit/improve requirements, a spec, BRD, user stories, use cases, or acceptance criteria.
 metadata:
   author: Testomat.io
   version: 1.0.0
@@ -10,8 +10,8 @@ metadata:
 
 Turn source material into user story (or multiple stories). Acceptance criteria on each story are the requirements — testable, atomic rules the story must satisfy.
 
-If the source of data is a PR, use `qa-pr-requirements-analyzer` skill.
-If the source is a ticket in issue tracking system, ask for MCP connection.
+Stories live in Jira: read source tickets and write stories through the Atlassian MCP. No connection → stop and ask for it.
+Write to Jira only after the user approves the draft.
 
 ## Rules
 

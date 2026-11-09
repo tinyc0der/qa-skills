@@ -1,8 +1,8 @@
 ---
 name: catalog-features
 description: >-
-  Builds a catalog of product features from one source: a tree that mirrors the source, each feature as a key, title, and link to the source. Code, issues, requirements, docs, etc. are supported.
-  Use when asked to catalog/list features, existing functionality, issues, requirements, specs, PRDs, user docs or similar sources.
+  Builds a catalog of product features from one source: a tree that mirrors the source, each feature as a key, title, and link to the source. Supports Jira, Confluence, TestRail, the live app, and user docs.
+  Use when asked to catalog/list features, existing functionality, Jira issues, Confluence requirements, specs, PRDs, user docs, TestRail test cases, the live app's screens, or similar sources.
 metadata:
   author: Testomat.io
   version: 1.0.0
@@ -12,7 +12,7 @@ metadata:
 
 Catalog of **the source's features**: a tree that mirrors the source, each feature with its key, title, and link. Its behaviors (description, requirements, acceptance criteria, etc.) stay at the source.
 
-Output folder: given by the calling skill or the user. Default: `features/.catalog/`. Write only inside it.
+Output folder: given by the calling skill or the user. Default: `catalog/`. Write only inside it.
 
 ## Modes
 
@@ -20,53 +20,60 @@ Output folder: given by the calling skill or the user. Default: `features/.catal
 
 ## Source roles
 
-| Role       | Description                                                 |
-| ---------- | ----------------------------------------------------------- |
-| Actual     | Actual behavior of the product. Code, configs, etc.         |
-| Intended   | What we attempted to implement. Requirements, tickets, etc. |
-| Documented | What the product says it does. User docs, etc.              |
+| Role       | Description                                                                                |
+| ---------- | ------------------------------------------------------------------------------------------ |
+| Actual     | Actual behavior of the product. The live app.                                              |
+| Intended   | What we attempted to implement. Jira issues, Confluence requirements, TestRail test cases. |
+| Documented | What the product says it does. User docs.                                                  |
 
 ## Rules
 
-- **Read-only on the source.** Do NOT edit the source even when the tools offer it.
+- **Read-only on the source.** Do NOT edit the source even when the tools offer it. In the live app, navigate only; submit nothing that saves data.
 - One catalog per source.
 
 ## Sources
 
-### Code
+### Jira
 
-- Tree: areas → features, named from what the product does for its users, not from the stack or code folders, classes, files, or functions.
-- Feature: one per feature, not per file; same feature in two places → one feature. Link: repo paths of the main implementation (route, screen, job), not every file.
-- Scope: features users can reach now. Not stubs, routes users cannot reach, or features behind disabled flags; comments, docs, and tests do not make a feature.
-- `update`: `git diff --name-status -M {baseline}..HEAD`; take into account renamed, moved, deleted files.
-- Role: Actual.
-- History: No.
-
-### Issue tracker
-
-- Tree: the tracker's hierarchy: initiatives, epics, parent issues, issues, sub-tasks, etc.
-- Scope: a query (JQL, `gh` search, Linear filter, etc.); ask the user for it and store it. "Done" issues only (typical successfully resolved statuses); ask the user when in doubt.
+- Access: Atlassian MCP.
+- Tree: the Jira hierarchy: epics, parent issues, issues, sub-tasks.
+- Scope: a JQL query; ask the user for it and store it. "Done" issues only (typical successfully resolved statuses); ask the user when in doubt.
+- Link: issue key + URL.
 - Role: Intended.
 - History: Yes (unless user specified). Because different issues may be related to the same feature. Need to store date of creation and resolution to determine which issue overrides the other.
 
-### Requirements
+### Confluence
 
-- Word, PDF: extract the text first.
-- Tree: area by heading or other logical structure.
-- Scope: ask user for the scope and other crucial filters. Take into account that there could be drafts, deprecated pages, copies. Process them accordingly.
+- Access: Atlassian MCP.
+- Word, PDF attachments: extract the text first.
+- Tree: the page tree; headings inside long pages.
+- Scope: a space or a root page; ask the user for it and other crucial filters. Take into account that there could be drafts, deprecated pages, copies. Process them accordingly.
+- Link: page title + URL; the heading for long pages.
+- Role: Intended for requirements and specs; Documented for user docs. Ask when a space holds both.
+- History: No.
+
+### TestRail
+
+- Access: the `list` command of the `sync-test-cases-with-testrail` skill.
+- Tree: TestRail sections and subsections.
+- Feature: one case. Key: `C<id>`. Link: `{TESTRAIL_URL}/index.php?/cases/view/{id}`.
+- Scope: sections; ask the user.
 - Role: Intended.
 - History: No.
 
-### User docs
+### Live app
 
-- Tree: keep the original structure with required hierarchy levels.
-- Role: Documented.
-- Scope: ask user.
+- Access: the `prima` skill, signed in with the test account and role the user gives.
+- Tree: the app's navigation: menu sections, pages, tabs.
+- Feature: what users do, named from the product ("Invite member"), not one per page or URL; same feature on two screens → one feature.
+- Link: URL + navigation path, e.g. `Settings › Members`.
+- Scope: environment URL, roles, areas; ask the user. Only what the given roles can reach.
+- Role: Actual.
 - History: No.
 
 ### Other
 
-Any source that describes the product. Agree on role, coverage, history with the user before syncing. 
+Any source that describes the product (help site, release notes). Agree on role, coverage, history with the user before syncing.
 
 ## Steps
 
@@ -84,8 +91,8 @@ Read [references/layout.md](references/layout.md) before writing files.
 
 Ask the user in one message, unless given:
 
-- Type and access: repository, MCP, CLI, URL, export, or file path. No access → stop and ask for an MCP connection or an export.
-- Scope as a concrete, repeatable filter: repo paths, tracker query (JQL, project, label), root page or space, docs root.
+- Source and access: Jira or Confluence (Atlassian MCP), TestRail (`sync-test-cases-with-testrail` setup), live app (URL and test account), export or file. No access → stop and ask for the connection or an export.
+- Scope as a concrete, repeatable filter: JQL, Confluence space or root page, TestRail sections, app areas and roles.
 - Domain: what the product does and for whom, key terms. Not given → infer it from the source.
 
 Name area and features in the domain terms.
@@ -96,9 +103,7 @@ Several sources in one run → one output folder each; define all of them first,
 
 List every feature in scope with key or URL, title, status. Navigate all the pages.
 
-When `update`: take into account renamed, moved, deleted files. Process them accordingly.
-
-If source is code create areas and features based on features and logic, not just files, classes, functions.
+When `update`: take into account renamed, moved, deleted issues, pages, sections, cases, and screens. Process them accordingly.
 
 ## 3. Write the tree
 
@@ -113,7 +118,6 @@ Structure
 
 Content
 - [ ] Every feature yml is according to the `references/layout.md`
-- [ ] Code: areas and features named from the product, not the stack
 - [ ] Update: features gone from scope removed
 - [ ] Only existing keys and urls are used in the catalog
 ```
@@ -127,6 +131,5 @@ To a calling skill: features added, changed, and removed.
 ## Next actions
 
 - `detect-product-mismatches`
-- Feature pages from the code → `wiki-from-code`
 - `epic-requirement-reviewer`
 - Test cases from requirements → `qa-write-test-cases`

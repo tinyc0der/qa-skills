@@ -1,10 +1,10 @@
 # Features
 
-A feature is something the product does for its users that they would name: "Pay with saved card", "Export report to CSV". In a catalog, one feature YAML is one feature of its source, in the area where the source puts it. Another source may name it differently or split it differently: e.g. one epic covers three code features, one docs page covers two.
+A feature is something the product does for its users that they would name: "Pay with saved card", "Export report to CSV". In a catalog, one feature YAML is one feature of its source, in the area where the source puts it. Another source may name it differently or split it differently: e.g. one epic covers three app features, one docs page covers two.
 
 A feature is made of behaviors: what someone who uses it (end user, admin, API client, integrated system) can do, see, or get, and when. Sources are compared behavior by behavior, so every source's behaviors are written the same way.
 
-Behavior is similar to requirement or acceptance criteria, but those terms describe intended behavior; code gives actual behavior, user docs documented behavior (`catalog-features` › Source roles). "Behavior" fits every role: implemented, planned, or documented.
+Behavior is similar to requirement or acceptance criteria, but those terms describe intended behavior; the live app gives actual behavior, user docs documented behavior (`catalog-features` › Source roles). "Behavior" fits every role: implemented, planned, or documented.
 
 ## Find
 
@@ -13,13 +13,15 @@ Per source:
 1. Catalog: key, title, the area it sits in. Links in the feature YAML to other sources help.
 2. Not in the catalog → search the source, within the catalog's Scope:
 
-| Source        | Search                                                                                 |
-| ------------- | -------------------------------------------------------------------------------------- |
-| Code          | Domain terms, UI labels, messages, routes; start next to related features' code        |
-| Issue tracker | Text search inside the catalog's Scope query (JQL `text ~ "term"`, `gh search issues`) |
-| Requirements  | Search under the root page or space (CQL `text ~ "term"`); headings of long documents  |
-| User docs     | Docs site search or nav; `grep` in the docs repo                                       |
-| Other         | The source's own search                                                                |
+| Source     | Search                                                                                                         |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| Live app   | Catalog only in step 3; not there → Verify looks for it in the app, starting from related features' screens    |
+| Jira       | Text search inside the catalog's Scope query (JQL `text ~ "term"`)                                             |
+| Confluence | Search under the root page or space (CQL `text ~ "term"`); headings of long documents                          |
+| Figma      | Frames linked from the feature's Jira issues and Confluence pages; else Figma search by screen name and labels |
+| TestRail   | Sections and case titles in the pulled files; text in expected results                                         |
+| User docs  | Confluence search under the docs space; docs site search or nav                                                |
+| Other      | The source's own search                                                                                        |
 
 - Found at the source, missing from the catalog → use it and report a catalog error.
 - Found, but outside the catalog's Scope (open issue, draft, deprecated page or copy, other version) → not a behavior. Mention it on the mismatch page when it explains one.
@@ -29,15 +31,16 @@ Per source:
 
 Read every matching feature at its links (documents: under its headings). Behaviors come from:
 
-| Source        | Behaviors from                                                                                                                                              | Not behaviors                                                                                                                                     |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Code          | The code at the feature's `code` paths (else its links); Behaviors on its feature page in `features/`, when present, as a start                             | Claims (comments, docstrings, developer docs, API specs, configs, tests); stubs, routes users cannot reach; internal steps with no visible effect |
-| Issue tracker | Stories and feature issues: acceptance criteria, then the description. Epics: their scope. Bugs: the expected result                                        | A bug's reported actual result; tasks, spikes, chores, tech debt                                                                                  |
-| Requirements  | Functional requirements, business rules, acceptance criteria, flows; one behavior per table row and per meaningful matrix cell; exclusions as negative ones | Future phases, nice-to-have, MoSCoW Could and Won't; goals, rationale, personas, metrics, open questions                                          |
-| User docs     | Guides, how-tos, limits, notes and warnings; badges (plan, edition, role, platform) as conditions; navigation steps                                         | Screenshots and videos                                                                                                                            |
-| Test cases    | Expected results                                                                                                                                            | Steps, test data                                                                                                                                  |
+| Source     | Behaviors from                                                                                                                                              | Not behaviors                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Live app   | What the user sees and gets after each step: screens, labels, messages, emails, files; observed in Verify (SKILL.md › 4)                                    | Test data; console output; steps with no visible effect                                                  |
+| Jira       | Stories and feature issues: acceptance criteria, then the description. Epics: their scope. Bugs: the expected result                                        | A bug's reported actual result; tasks, spikes, chores, tech debt                                         |
+| Confluence | Functional requirements, business rules, acceptance criteria, flows; one behavior per table row and per meaningful matrix cell; exclusions as negative ones | Future phases, nice-to-have, MoSCoW Could and Won't; goals, rationale, personas, metrics, open questions |
+| Figma      | Copy (labels, messages, empty and error text), states (empty, loading, error, disabled), the screens of a flow and their order, annotations                 | Layout, colors, spacing; placeholder text; frames marked draft or exploration                            |
+| User docs  | Guides, how-tos, limits, notes and warnings; badges (plan, edition, role, platform) as conditions; navigation steps                                         | Screenshots and videos                                                                                   |
+| TestRail   | Expected results                                                                                                                                            | Steps, test data                                                                                         |
 
-- Code behind a flag or setting that can be turned on → a behavior with that condition (as `wiki-from-code`).
+- Live app behavior the test account cannot reach (other role, plan, or setting) → open question, not silence.
 - Comments and later edits may change the body ("dropped", "moved to PROJ-456", "decided: 3 retries, not 5"): state the final behavior, never the comment.
 - Acceptance criteria may sit in a custom field, a description heading, a checklist, or sub-tasks: find the convention in the first issues.
 
@@ -57,9 +60,9 @@ Read every matching feature at its links (documents: under its headings). Behavi
 ### Values and words
 
 - Values as the source states them, with units. No value in the source → none in the behavior. Never round, convert, or fill one in; a vague behavior stays vague (open question).
-- Code: exact values from the code that runs; a value read from config or environment: its default, marked `(configurable)` (as `wiki-from-code`).
+- Live app: values as observed (limits hit, text shown); a value an admin can change: the observed one, marked `(configurable)`.
 - UI labels and messages verbatim, in quotes; navigation paths with `›`.
-- Domain terms (prefer the user docs' terms), one per concept across sources and `features/`.
+- Domain terms (prefer the user docs' terms), one per concept across sources.
 - No class, function, table, file, flag, or library names. Protocol details (endpoints, status codes, fields) only when the API is what users use.
 - Keep the source's level of detail: a coarse behavior stays coarse. Never merge behaviors and drop values or conditions.
 - Restate, never paste. Never people, comments, or customer data.
