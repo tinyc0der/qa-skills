@@ -33,9 +33,9 @@ For Claude Code skills are grouped into plugins which could be installed from th
 2. Install required plugin
 
 ```bash
-/plugin install <plugin-name>@tinyc0der/qa-skills
+/plugin install <plugin-name>@vietcap-plugins
 # e.g.
-/plugin install test-management@tinyc0der/qa-skills
+/plugin install test-management@vietcap-plugins
 ```
 
 3. Use
