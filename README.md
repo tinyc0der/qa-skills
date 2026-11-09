@@ -1,144 +1,94 @@
-# Testomatio AI Skills
+# QA Skills for Manual QC
 
-AI skills for test management workflows with [Testomat.io](https://testomat.io). These skills bring the power of AI coding agents to your testing process — design tests, automate them, review quality, track coverage, and sync everything with your test management system.
-
-## Quick Start
-
-```bash
-npx skills add testomatio/skills
-```
+AI agent skills for manual QC engineers who work from Jira, Confluence, Figma, TestRail, and the running app, with no access to the product codebase. Forked from [testomatio/skills](https://github.com/testomatio/skills).
 
 ## Install
 
-The easiest way to install these skills across supported AI agent (Cursor, Claude Code, VS Code / GitHub Copilot, Cline etc.) is using the [`skills`](https://skills.sh) CLI. It provides an interactive menu to select the skills you need and choose whether to install them globally or for your current project.
-
 ```bash
-npx skills add testomatio/skills
+npx skills add tinyc0der/qa-skills
 ```
 
-To update your installed skills:
+To update installed skills:
 
 ```bash
 npx skills update
 ```
 
-For other ways of installation (Claude Code plugin, Codex, Cursor etc.) see [install details](./docs/install-details.md).
+Other ways to install (Claude Code plugin, Codex, Cursor): see [install details](./docs/install-details.md).
 
-## Available Skills
+## Setup
+
+| Source     | Used for                                     | Connect                                                                                              |
+| ---------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Jira       | Epics, stories, acceptance criteria, bugs    | Atlassian MCP server                                                                                 |
+| Confluence | Specs, requirements, user docs               | Atlassian MCP server (same connection as Jira)                                                       |
+| Figma      | Screens, states, copy                        | Figma MCP server                                                                                     |
+| TestRail   | Test cases                                   | `.env` with the variables listed in [`sync-test-cases-with-testrail`](./skills/sync-test-cases-with-testrail/SKILL.md) |
+| Live app   | Exploring and checking actual behavior       | A staging URL; [`prima`](./skills/prima/SKILL.md) needs Node 22+ and an AI provider key               |
+
+Keep test cases (`test-cases/`), `.env`, and Explorbot files in one shared QA workspace repo.
+
+## Skills
 
 ### Requirements
 
-| Skill                  | Description                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| `write-user-story` | Write user stories and acceptance criteria (the requirements) from a feature idea, ticket, or notes |
-| `wiki-from-code` | Build a whole-product wiki from code (actual behavior), or update it after large changes; flags mismatches with comments, dev docs, configs |
-| `catalog-features` | Catalog the features of one source — codebase, issue tracker (JQL), requirements space, or user docs — as key, title, and link, mirroring the source structure |
-| `detect-product-mismatches` | Compare code, issues, requirements, and user docs with each other — what is not implemented, differs, unspecified, or undocumented |
-| `epic-requirement-reviewer` | Review epics and features with their subissues: feature breakdown, ambiguities, risks, and acceptance criteria |
-| `qa-explain-behavior`  | Answer QA questions about product behavior — features, flows, rules, edge cases, and what is not implemented |
-| `qa-thinking`          | Analyze a feature from a QA perspective — edge cases, negative flows, abuses, unobvious scenarios |
-| `qa-pr-requirements-analyzer` | Extract original intent and acceptance criteria from a PR's title, description, comments, and linked tickets |
-| `pull-request-diff-analyzer` | Analyze a PR/branch diff to detect features/fixes and extract acceptance criteria from the code |
+| Skill                       | Description                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------ |
+| `write-user-story`          | Write user stories and acceptance criteria from a feature idea, Jira ticket, or notes            |
+| `epic-requirement-reviewer` | Review a Jira epic with its child issues: breakdown, ambiguities, risks, acceptance criteria     |
+| `qa-thinking`               | Analyze a ticket, requirement, or design from a QA perspective: edge cases, negative flows, abuse |
+| `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
+| `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing, differs, or is undocumented |
 
-### Test Management
+### Test cases
 
-| Skill                  | Description                                                                                          |
-| ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| `qa-write-test-cases`       | Generate test cases and checklists from requirements, tickets, or feature descriptions               |
-| `qa-split-testing-levels-pyramid` | Apply the test pyramid to a feature — assign scenarios to testing levels, coverage split per level |
-| `improve-test-cases`   | Analyze and improve existing markdown test cases for clarity                                         |
-| `detect-duplicate-test-cases` | Find duplicate, near-duplicate, and overlapping test cases                                           |
-| `detect-useless-tests` | Find useless tests within one testing level (unit, e2e, manual), listed by area, file, and line |
-| `sync-test-cases-with-tms`           | Synchronize Markdown test scenarios between local project and Testomat.io                            |
-| `sync-test-cases-with-testrail`      | Push Markdown test cases to TestRail via its API and list existing TestRail cases                    |
-| `migrate-to-testomatio` | Migrate tests to Testomat.io from TestRail, XRay, Testmo, QMetry, Allure, TestCaseLabs, or CSV/XLSX |
-| `qa-test-code-coverage`      | Map manual & automated tests to source files; generate `coverage.tests.yml` to run only the tests affected by a diff |
-| `testing-workflow`      | Tactical orchestrator of the test case lifecycle: generate, improve, analyze coverage, upload to TMS |
-| `qa-lead-strategy-advisor`         | Strategic QA advisor: interview & scan to build context, assess QA maturity, deliver a prioritized roadmap, and delegate execution to `testing-workflow` |
-| `scan-automation-project` | Inventory what a project has for QA: type, languages, frameworks, manual and automated tests, and Testomat.io access |
+| Skill                           | Description                                                                         |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `qa-write-test-cases`           | Generate TestRail test cases and checklists from Jira, Confluence, Figma, or the live app |
+| `improve-test-cases`            | Improve existing test cases for clarity and format                                  |
+| `detect-duplicate-test-cases`   | Find duplicate, overlapping, and low-value test cases                               |
+| `sync-test-cases-with-testrail` | Push test cases to TestRail, pull existing cases, and list sections                 |
 
-### Automation
+### QA process
 
-| Skill            | Description                                                                                          |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `qa-e2e-tests-reporting` | Set up Testomat.io test reporting for your automation framework (Playwright, CodeceptJS, Jest, etc.) |
-| `qa-data-seeder` | Analyze a feature's implementation and seed a balanced test dataset (regular + edge cases) into a target environment |
+| Skill                      | Description                                                                                   |
+| -------------------------- | --------------------------------------------------------------------------------------------- |
+| `testing-workflow`         | Orchestrate the test case lifecycle: requirements review, generation, improvement, TestRail sync |
+| `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
 
-### Explorbot
+### Browser and Explorbot
 
-| Skill                    | Description                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------ |
-| `explorbot-setup`        | Install Explorbot into a project: config, AI provider, login knowledge, verified navigation |
-| `explorbot-fundamentals` | Run, drive and debug Explorbot commands — including with nothing installed in the project |
-| `explorbot-plan`         | Author an Explorbot test plan in markdown so `explorbot test` can run it               |
-| `prima`                  | Drive a browser through described behaviour instead of locators, on top of playwright-cli   |
+| Skill                    | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `prima`                  | Drive a browser through described behavior instead of locators              |
+| `explorbot-setup`        | Set up Explorbot in the QA workspace: config, AI provider, login, staging URL |
+| `explorbot-fundamentals` | Run and debug Explorbot against a staging URL                               |
+| `explorbot-plan`         | Write an Explorbot test plan from a Jira ticket, TestRail case, or docs     |
 
----
+## Typical flow
 
-## Flows
+1. Review the Jira ticket or epic with `qa-thinking` or `epic-requirement-reviewer`.
+2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`.
+3. Push to TestRail with `sync-test-cases-with-testrail` after a dry run.
+4. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
 
-<img src="./docs/flows/flows.png" alt="Flows" height="300" />
+## Claude Code plugins
 
-Testomat.io provides a comprehensive set of flows for QA engineers:
+Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
-- Generate test cases from requirements
-<!-- - Improve test cases
-- Sync test cases to Testomat.io
-- Add test reporter to your automation project
-- Generate test cases from requirements
-- Improve test cases
-- Sync test cases to Testomat.io
-- Add test reporter to your automation project -->
+| Plugin            | Bundled skills                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `requirements`    | `write-user-story`, `epic-requirement-reviewer`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
+| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `write-user-story`, `epic-requirement-reviewer`, `qa-thinking` |
+| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
+| `explorbot`       | `explorbot-setup`, `explorbot-fundamentals`, `explorbot-plan`, `prima`                                            |
 
-Refer to [docs/flows](./docs/flows) for more detailed examples of flows.
+## Repository structure
 
----
+- `skills/` holds each skill (the canonical source).
+- `plugins/<plugin>/skills/` holds symlinks into `skills/`.
+- `tests/` holds the TestRail script tests and the skill reference check.
 
-## Repository Structure
+## Maintaining the fork
 
-```
-testomatio/skills
-├── skills/                    # Agent-agnostic skills (canonical source)
-│   ├── detect-duplicate-test-cases/
-│   ├── qa-write-test-cases/
-│   ├── improve-test-cases/
-│   ├── qa-e2e-tests-reporting/
-│   ├── sync-test-cases-with-tms/
-│   └── ...
-└── plugins/                   # Claude Code plugin wrappers
-    ├── requirements/
-    │   └── skills/
-    │       └── [symlinks to ../../skills/*]
-    ├── test-management/
-    │   └── skills/
-    │       └── [symlinks to ../../skills/*]
-    ├── test-automation/
-    │   └── skills/
-    │       └── [symlinks to ../../skills/*]
-    ├── qa-process/
-    │   └── skills/
-    │       └── [symlinks to ../../skills/*]
-    ├── explorbot/
-    │   └── skills/
-    │       └── [symlinks to ../../skills/*]
-    └── ...
-```
-
-## Claude Code Plugins
-
-Skills are also bundled as [Claude Code plugins](https://docs.testomat.io) via the `testomatio-plugins` marketplace:
-
-| Plugin            | Bundled skills                                                       | Use it to                                                                       |
-| ----------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `requirements`    | `write-user-story`, `wiki-from-code`, `catalog-features`, `detect-product-mismatches`, `epic-requirement-reviewer`, `qa-thinking`, `qa-explain-behavior`, `qa-pr-requirements-analyzer`, `pull-request-diff-analyzer` | Write, review, and analyze requirements and features before and during development |
-| `qa-process`      | `qa-lead-strategy-advisor`, `qa-explain-behavior`, `qa-thinking`, `testing-workflow` | Assess QA maturity, prioritize a quality roadmap, explain product behavior, and orchestrate the test lifecycle |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `sync-test-cases-with-tms`, `sync-test-cases-with-testrail`, coverage & more | Manage the test case lifecycle: generate, improve, sync to Testomat.io          |
-| `test-automation` | `automate-manual-test-cases`, `debug-fix-failed-flaky-autotests`, `qa-data-seeder` | Create automated tests, heal failing/flaky autotests, and seed test data        |
-| `explorbot`       | `explorbot-setup`, `explorbot-fundamentals`, `explorbot-plan`, `prima` | Install, configure, run, debug and plan Explorbot autonomous AI web tests, and drive a browser with prima |
-
-## Links
-
-- [Testomat.io](https://testomat.io)
-- [Testomat.io Documentation](https://docs.testomat.io)
-- [check-tests CLI](https://github.com/testomatio/check-tests)
-- [Markdown Import/Export Guide](https://docs.testomat.io/project/import-export/download-tests-as-files/download-manual-tests-as-files/)
+`tests/skill-refs.test.mjs` lists the upstream skills this fork removed. Run `npm test` after every merge from upstream. It fails when a merge brings back a removed skill or a reference to one, or leaves a broken plugin link.

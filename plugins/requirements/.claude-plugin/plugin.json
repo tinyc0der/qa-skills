@@ -1,14 +1,21 @@
 {
   "name": "requirements",
   "version": "1.0.0",
-  "description": "Write, review, and analyze product requirements and features — user stories, acceptance criteria, wiki from code, gaps, risks, PR intent, and existing behavior",
+  "description": "Write and review requirements from Jira, Confluence, and Figma: user stories, acceptance criteria, QA risks, feature catalogs, and mismatches with the live app",
   "author": {
     "name": "Testomat.io",
     "url": "https://testomat.io"
   },
   "homepage": "https://docs.testomat.io",
-  "repository": "https://github.com/testomatio/skills",
+  "repository": "https://github.com/tinyc0der/qa-skills",
   "license": "MIT",
-  "keywords": ["qa", "requirements", "features", "user-stories", "acceptance-criteria", "wiki", "testomat"],
+  "keywords": [
+    "qa",
+    "requirements",
+    "features",
+    "user-stories",
+    "acceptance-criteria",
+    "wiki"
+  ],
   "skills": "./skills/"
 }

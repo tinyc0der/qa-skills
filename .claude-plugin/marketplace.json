@@ -1,7 +1,7 @@
 {
   "name": "testomatio-plugins",
   "metadata": {
-    "description": "Testomatio.io plugins and skills for requirements, tests, test cases, test automation, results, coverage etc"
+    "description": "Skills for manual QC with Jira, Confluence, Figma, TestRail, and the live app"
   },
   "owner": {
     "name": "Testomatio.io"
@@ -10,27 +10,22 @@
     {
       "name": "requirements",
       "source": "./plugins/requirements",
-      "description": "Write, review, and analyze product requirements and features — user stories, acceptance criteria, wiki from code, gaps, risks, and PR intent"
+      "description": "Write and review requirements from Jira, Confluence, and Figma: user stories, acceptance criteria, QA risks, feature catalogs, and mismatches with the live app"
     },
     {
       "name": "test-management",
       "source": "./plugins/test-management",
-      "description": "Adds a /test-management skill for test management"
-    },
-    {
-      "name": "test-automation",
-      "source": "./plugins/test-automation",
-      "description": "Adds a /test-automation skill for test automation (create, heal, sync results, etc)"
+      "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, and pull"
     },
     {
       "name": "qa-process",
       "source": "./plugins/qa-process",
-      "description": "Strategic QA process advisory — assess QA maturity, prioritize a roadmap, explain product behavior, think through quality risks, and orchestrate the test lifecycle"
+      "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, and orchestrate the test case lifecycle"
     },
     {
       "name": "explorbot",
       "source": "./plugins/explorbot",
-      "description": "Adds /explorbot-setup, /explorbot-fundamentals, /explorbot-plan and /prima skills to install, configure, run, debug and plan Explorbot autonomous AI web tests, and to drive a browser through prima"
+      "description": "Run, plan, and debug Explorbot autonomous web tests against a staging URL, and drive a browser with prima"
     }
   ]
 }

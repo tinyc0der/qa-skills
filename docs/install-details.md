@@ -1,4 +1,4 @@
-# Testomatio skills installation details
+# QA skills installation details
 
 - [Most agentic tools](#most-agentic-tools-claude-code-cursor-cline-vs-code-and-others)
 - [Claude Code](#claude-code-plugin-with-marketplace)
@@ -9,7 +9,7 @@
 ### Most agentic tools (Claude Code, Cursor, Cline, VS Code and others)
 
 ```bash
-npx skills add testomatio/skills
+npx skills add tinyc0der/qa-skills
 ```
 
 To update your installed skills:
@@ -27,15 +27,15 @@ For Claude Code skills are grouped into plugins which could be installed from th
 1. Add marketplace
 
 ```bash
-/plugin marketplace add testomatio/skills
+/plugin marketplace add tinyc0der/qa-skills
 ```
 
 2. Install required plugin
 
 ```bash
-/plugin install <plugin-name>@testomatio/skills
+/plugin install <plugin-name>@tinyc0der/qa-skills
 # e.g.
-/plugin install test-management@testomatio/skills
+/plugin install test-management@tinyc0der/qa-skills
 ```
 
 3. Use
@@ -58,14 +58,14 @@ qa-write-test-cases
 
 Easiest way to install skills for Codex is to chat with Codex and ask something like:
 
-`install skills from https://github.com/testomatio/skills/tree/master/skills`
+`install skills from https://github.com/tinyc0der/qa-skills/tree/master/skills`
 
-or trigger `Skill Installer` in Codex chat and provide the same link `https://github.com/testomatio/skills/tree/master/skills`.
+or trigger `Skill Installer` in Codex chat and provide the same link `https://github.com/tinyc0der/qa-skills/tree/master/skills`.
 
 ### Cursor
 
 1. Open Cursor Settings (`Cmd+Shift+J` / `Ctrl+Shift+J`)
 2. Go to **Rules/Skills/Subagents** → **New** → **Add from GitHub/GitLab**
-3. Paste: `https://github.com/testomatio/skills.git`
+3. Paste: `https://github.com/tinyc0der/qa-skills.git`
 
 <img height="300" alt="Cursor install skills" src="./resources/skill-install-Cursor.png">

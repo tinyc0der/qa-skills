@@ -1,14 +1,20 @@
 {
   "name": "test-management",
   "version": "1.0.0",
-  "description": "Test case lifecycle management — generate, improve, sync to Testomat.io",
+  "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, and pull",
   "author": {
     "name": "Testomat.io",
     "url": "https://testomat.io"
   },
   "homepage": "https://docs.testomat.io",
-  "repository": "https://github.com/testomatio/skills",
+  "repository": "https://github.com/tinyc0der/qa-skills",
   "license": "MIT",
-  "keywords": ["testing", "test-management", "testomat", "test-cases", "qa"],
+  "keywords": [
+    "testing",
+    "test-management",
+    "test-cases",
+    "qa",
+    "testrail"
+  ],
   "skills": "./skills/"
 }
