@@ -74,7 +74,6 @@ Screenshot analysis needs a vision model:
 ### Inspecting Configuration
 
 - `npx prima-cli config` prints what this directory resolves to; `--json` for machine form.
-- Every `PRIMA_CLI_*` variable mirrors the `EXPLORBOT_*` variable (`PRIMA_CLI_AI_PROVIDER` / `EXPLORBOT_AI_PROVIDER`, `PRIMA_CLI_AI_MODEL` / `EXPLORBOT_AI_MODEL`, `PRIMA_CLI_VISION_MODEL` / `EXPLORBOT_VISION_MODEL`, `PRIMA_CLI_AGENTIC_MODEL` / `EXPLORBOT_AGENTIC_MODEL`) and wins over it, so an existing Explorbot setup is not disturbed.
 
 ## Session
 
@@ -91,7 +90,6 @@ playwright-cli close           # end
 - `--pw-session <title>` picks the session when several playwright-cli sessions are open. `--endpoint <ep>` attaches to a browser server directly, skipping discovery.
 - Prima requires Node.js 22+.
 - Every command is logged as it runs; `npx prima-cli report` turns the session into an html and markdown report, browser open or not.
-- `npx explorbot prima <command>` runs the same tool if explorbot is already installed.
 
 ## Tiers
 

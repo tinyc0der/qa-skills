@@ -1,0 +1,8 @@
+{
+  "name": "browser",
+  "description": "Drive a browser on the live app through described behavior with prima",
+  "version": "0.0.1",
+  "author": {
+    "name": "Testomat.io"
+  }
+}

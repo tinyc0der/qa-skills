@@ -1,8 +1,0 @@
-{
-  "name": "explorbot",
-  "description": "Run, plan, and debug Explorbot autonomous web tests against a staging URL, and drive a browser with prima",
-  "version": "0.0.1",
-  "author": {
-    "name": "Testomat.io"
-  }
-}

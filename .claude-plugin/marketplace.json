@@ -23,9 +23,9 @@
       "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, and orchestrate the test case lifecycle"
     },
     {
-      "name": "explorbot",
-      "source": "./plugins/explorbot",
-      "description": "Run, plan, and debug Explorbot autonomous web tests against a staging URL, and drive a browser with prima"
+      "name": "browser",
+      "source": "./plugins/browser",
+      "description": "Drive a browser on the live app through described behavior with prima"
     }
   ]
 }
