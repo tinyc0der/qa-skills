@@ -35,6 +35,7 @@ const REMOVED = [
   'testomat-allure-adapter',
   'testomatio-mcp',
   'wiki-from-code',
+  'write-user-story',
 ];
 
 const walk = (dir) =>

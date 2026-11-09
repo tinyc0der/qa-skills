@@ -34,8 +34,7 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 
 | Skill                       | Description                                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| `write-user-story`          | Write user stories and acceptance criteria from a feature idea, Jira ticket, or notes            |
-| `epic-requirement-reviewer` | Review a Jira epic with its child issues: breakdown, ambiguities, risks, acceptance criteria     |
+| `epic-requirement-reviewer` | Review a Jira user story or epic and draft feedback for the PO: gaps, risks, acceptance criteria |
 | `qa-thinking`               | Analyze a ticket, requirement, or design from a QA perspective: edge cases, negative flows, abuse |
 | `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
 | `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing, differs, or is undocumented |
@@ -69,8 +68,8 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `write-user-story`, `epic-requirement-reviewer`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `write-user-story`, `epic-requirement-reviewer`, `qa-thinking` |
+| `requirements`    | `epic-requirement-reviewer`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
+| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `epic-requirement-reviewer`, `qa-thinking` |
 | `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
 
 ## Repository structure

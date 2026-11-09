@@ -1,6 +1,6 @@
 ---
 name: epic-requirement-reviewer
-description: Review a Jira epic or feature requirement together with its child issues, comments, linked Confluence pages, and linked Figma frames. Produce a concise feature breakdown, material ambiguities, concrete risks, and high-level acceptance criteria. Use when a user supplies a Jira epic, feature ticket, Confluence specification, or requirement and asks for a review, analysis, or feature breakdown. Accept Jira links, Confluence pages, documents, directories, and pasted text.
+description: Review a Jira user story, epic, or feature requirement together with its child issues, comments, linked Confluence pages, and linked Figma frames, and draft QA feedback for the product owner. Produce a feature breakdown (epics) or story quality gaps (single story), material ambiguities, concrete risks, and proposed acceptance criteria; post the approved feedback as a Jira comment. Use when a user supplies a Jira story, epic, feature ticket, Confluence specification, or requirement and asks for a review, analysis, feature breakdown, testability check, or feedback to the PO. Accept Jira links, Confluence pages, documents, directories, and pasted text.
 license: MIT
 metadata:
   author: Testomat.io
@@ -9,7 +9,7 @@ metadata:
 
 # Epic Requirement Reviewer
 
-Review an epic or feature proposal to explain what it delivers, identify consequential unresolved behavior, and describe how its outcomes can be accepted.
+Review a user story, epic, or feature proposal to explain what it delivers, identify consequential unresolved behavior, and describe how its outcomes can be accepted. The result is QA feedback for the product owner.
 
 The deliverable is a brief, useful feature analysis—not a sentence-by-sentence requirements audit, release assessment, or critique of ticket organization.
 
@@ -25,7 +25,9 @@ The deliverable is a brief, useful feature analysis—not a sentence-by-sentence
 - Distinguish original requests, later clarifications, proposed behavior, implementation reports, and independently verified behavior. A closed issue or a comment saying PASS is not your own execution evidence.
 - If an important source is inaccessible, state the limitation briefly. Continue with available evidence unless the core requirement cannot be understood.
 
-### 2. Build a functional feature breakdown
+### 2. Break down the epic, or check the story
+
+#### Epic: functional feature breakdown
 
 - Organize the work into user-visible capabilities with nested behaviors.
 - Include relevant scope from subissues, not only the original epic description.
@@ -33,6 +35,16 @@ The deliverable is a brief, useful feature analysis—not a sentence-by-sentence
 - Group related field handling and configuration rules under the capability they support rather than making every bug a top-level feature.
 - Explain what users can accomplish and what the system must do. Do not merely repeat issue titles or dump a flat task inventory.
 - Preserve discovery work as discovery; do not turn an investigation request into a promised implemented feature.
+
+#### Single story: story quality
+
+Report only the checks the story fails, each quoting the story text it concerns:
+
+- **Atomic**: one actor, one capability.
+- **Clear**: no vague words that make a criterion untestable (`fast`, `relevant`, `user-friendly`, `should work`, `as needed`).
+- **Complete**: actor, trigger, outcome, and business rules; acceptance criteria cover the empty, error, and permission paths.
+- **Consistent**: the same terms throughout; no contradictions with comments, subissues, linked pages, or designs.
+- **Testable**: every acceptance criterion has a measurable pass/fail.
 
 ### 3. Identify material ambiguities and contradictions
 
@@ -71,9 +83,15 @@ Do not:
 - For investigation requirements, define an investigation deliverable rather than asserting that a working feature is required.
 - Criteria are proposed acceptance expectations, not claims that the feature has been executed or passed.
 
+### 6. Send the feedback to the PO
+
+- Show the review to the user first.
+- **Post it only after the user approves**, as one comment on the reviewed Jira issue through the Atlassian MCP.
+- The comment is the only write. Never edit the issue's description, fields, or subtasks.
+
 ## Output format
 
-Use exactly these four headings, in this order. Do not add an executive summary, readiness verdict, recommendation, or offer unless requested.
+Use exactly these four headings, in this order. A single story replaces `## Feature breakdown` with `## Story quality`: one bullet per failed check from step 2, or "No gaps found." Do not add an executive summary, readiness verdict, recommendation, or offer unless requested.
 
 ```markdown
 ## Feature breakdown
@@ -107,7 +125,7 @@ Output constraints:
 - Use plain, direct language. Every bullet must teach the reader something about the feature, a decision, a consequence, or an acceptance outcome.
 - Avoid abstract filler such as "reconcile the epic," "assign a disposition," "capture this as a capability," or "define a completion boundary" when you can state the actual behavior or decision instead.
 - Do not repeat the same concern across sections without adding a distinct purpose: feature = behavior; ambiguity = unresolved decision; risk = consequence; criterion = observable expected result.
-- If the requested task is review only, do not edit issues, create subtasks, rewrite the source requirement, or execute tests.
+- Do not edit issues, create subtasks, rewrite the source requirement, or execute tests. The approved Jira comment (step 6) is the only write.
 
 ## Quality check before responding
 

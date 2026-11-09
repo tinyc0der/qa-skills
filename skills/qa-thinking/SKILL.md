@@ -38,6 +38,5 @@ Requested sections:
 
 Offer after the analysis:
 
-- Draft missing or unclear user stories → `write-user-story` skill.
 - Turn scenarios into test cases or a checklist → `qa-write-test-cases` skill.
-- Ambiguities point to requirement defects → `epic-requirement-reviewer` skill.
+- Feedback to the PO on ambiguities and gaps in the story → `epic-requirement-reviewer` skill.

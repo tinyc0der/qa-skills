@@ -154,6 +154,5 @@ Where to start. Mismatches by highest user impact first. Missing features per so
 ## Next actions
 
 - Update a catalog → `catalog-features`
-- User stories for behavior not observed in the app → `write-user-story`
 - Review contradicting requirements → `epic-requirement-reviewer`
 - Test cases for differing behavior → `qa-write-test-cases`

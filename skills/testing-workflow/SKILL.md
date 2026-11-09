@@ -11,7 +11,6 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 
 | Skill                           | Purpose                                                                     |
 | ------------------------------- | --------------------------------------------------------------------------- |
-| `write-user-story`              | Write user stories and acceptance criteria (the requirements)               |
 | `epic-requirement-reviewer`     | Review requirements for ambiguity, gaps, and testability                    |
 | `catalog-features`              | Catalog the features of one source                                          |
 | `detect-product-mismatches`     | Compare sources with each other and record mismatches                       |
@@ -27,7 +26,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - Match the request to a flow below. Delegate to that flow's skill, then suggest its next actions.
 - Flows are examples, not exhaustive. Combine or extend them when a request spans several tasks.
 - When suggesting next steps, take into account the flows, context, user request, and results of previous steps.
-- **Write / draft user stories** (requirements, spec, acceptance criteria) → route to the `write-user-story` skill. Review of existing requirements → `epic-requirement-reviewer`.
+- **Review a user story or epic** (gaps, testability, feedback to the PO) → route to the `epic-requirement-reviewer` skill.
 - **Catalog features of a source** (a Jira project, a Confluence space, a Figma file, a TestRail suite, the live app) → route to the `catalog-features` skill.
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
