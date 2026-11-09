@@ -51,7 +51,7 @@ On a match, propose the action and write only after the user approves:
 
 - Same defect, other data or conditions → no new Bug. Report the existing key; for a failed result, Step 6 lists it for the result's Defects. Do not edit the old Bug's title, description, or attachments.
 - Closed Bug that recurs → reopen it with a comment instead of creating a new one.
-- Different defect the user assigns to an existing Bug → comment on it with Environment, Steps to reproduce, Expected result, and Actual result, written as in the description, plus images. No TestRail line.
+- Different defect the user assigns to an existing Bug → comment on it with Environment, Steps to reproduce, Expected result, and Actual result, written as in the description, plus images.
 - Unsure whether it is the same defect → show both and let the user decide.
 
 ### Step 3: Confirm the defect
