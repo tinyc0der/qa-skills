@@ -16,7 +16,7 @@ References:
 
 - **Always generate a checklist before test cases**, even if the user asks for test cases directly.
 - **Do not skip steps. Get user approval at each gate before moving to the next step.**
-- Strictly recommend PLAN mode. Switch to Edit mode only on the last step — writing test cases to md files.
+- Strictly recommend PLAN mode. Switch to Edit mode only on Step 5 — writing test cases to md files.
 - Write the checklist and test cases in the language the user asks for. Otherwise use the language of existing test cases, then of the requirements.
 - Use the Ask tool for choices when available.
 - Fill input fields with suggestions when asking the user for input.
@@ -55,39 +55,65 @@ Information sources:
 - Figma: screens, states, and UI copy (Figma MCP)
 - TestRail: existing test cases, via the `sync-test-cases-with-testrail` skill
 - Live app: actual behavior on a non-production environment, via the `agent-browser` skill
+- QA workspace: feature catalogs (`catalog-features` output) and mismatch pages (`detect-product-mismatches` output)
 
 Source priority:
 
 - A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, and parent ticket.
 - From linked documents, use only the parts within the ticket's scope.
+- Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and report the conflict at the gate.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
 Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
 
 Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app:
 
-- For a web app, ask the user for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill.
+- If the feature is deployed, ask the user for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill.
+- In the live app, navigate only. Submit nothing that saves data unless the user agrees.
 - Use screenshots of related pages when the user shares them.
+
+#### QA workspace
+
+A catalog's README `Type` names its source. Default folders: `catalog/` and `mismatches/sources/*/catalog/`.
+
+- Live app catalog: the feature's URL and navigation path are where exploring starts.
+- Jira catalog: the feature's other issues, read as context.
+- TestRail catalog: see Existing test cases.
+- Mismatch pages (`mismatches/mismatches/README.md`): read the ones for the feature. They are known conflicts.
 
 #### Existing test cases
 
-Before writing, check TestRail for duplicates:
+Find the TestRail cases that already test the feature, with the `sync-test-cases-with-testrail` skill:
 
-- If the QA workspace has a TestRail catalog (`catalog/` or `mismatches/sources/*/catalog/` whose README says Type TestRail), find the feature under test there first: its links are the existing cases to update. `mismatches/mismatches/README.md` lists its known mismatches.
-- Download the existing cases of the related sections with the `pull` command of the `sync-test-cases-with-testrail` skill.
-- Use its `list` command instead when titles are enough to spot overlap.
-- If existing test cases intersect with the feature under test, report them to the user and suggest expanding them or creating a new section.
+- TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases added after the catalog `Date`.
+- No catalog: run `list` and match sections and case titles to the feature.
+- TestRail not set up: ask for its Setup, or continue without the check and report that at the gate.
+- Do not `pull` here: it writes files. Step 5 pulls the section the user chooses to expand.
 
 #### Approval gate
 
-Show the list of sources (names only, no content) and ask:
+Show names only, no content:
+
+- sources read: ticket keys, page titles, frame names, app environment
+- sources that could not be read
+- existing cases: count, section, `C<id>` range
+- conflicts between sources, including known mismatches
 
 ```markdown
 I've gathered information from the following sources:
 
-- Jira issue ABC-123
-- Confluence
-- Figma
+- Jira ABC-123 (parent ABC-100)
+- Confluence: Saved cards
+- Figma: Checkout › Payment
+- Live app: staging, Checkout › Payment
+
+Not read: Confluence "Payments FAQ" (no access)
+
+Existing cases: 8 in TestRail section Checkout › Payment (C101–C108)
+
+Conflicts:
+
+- Expired cards at checkout: the live app lists them; ABC-123 hides them. Test cases follow ABC-123.
 
 ❓ Do you want to:
 
@@ -220,6 +246,15 @@ Always ask about the amount of cases / level of detail:
 
 If the user originally asked only for a checklist, first ask: "Do you want to generate test cases for this checklist?"
 
+If Step 1 found existing cases, ask:
+
+```
+❓ Where do the new test cases go?
+
+1. ➕ Expand section Checkout › Payment
+2. 🆕 Create a new section
+```
+
 Write test case files to `test-cases/`.
 
 Generation rules:
@@ -227,7 +262,7 @@ Generation rules:
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority.
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
-- When the user chose to expand pulled cases, add the new tests to the pulled file of that section. Never overwrite a pulled file.
+- When the user chose to expand an existing section, `pull --section <section>` it, then add the new tests to the pulled file. Never overwrite a pulled file.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.
 
 Format rules:
