@@ -19,6 +19,9 @@ Commands:
        [--parent-section <name>]
   pull [--section <name>] [--out <dir>]     Download cases into .test.md files (default dir test-cases/)
        [--overwrite]                        Replace local files that differ from the download
+  runs [--refs <keys>] [--milestone <name>] Print status counts of matching test runs, plan runs included
+       [--since <YYYY-MM-DD>] [--active]    At least one filter is required; filters combine with AND
+       [--details]                          Also list non-passed tests with their latest result
 
 Environment (or .env in the current directory):
   TESTRAIL_URL, TESTRAIL_USER, TESTRAIL_API_KEY, TESTRAIL_PROJECT_ID
@@ -512,6 +515,139 @@ async function cmdPull(opts, cfg, cwd) {
   return 0;
 }
 
+const PASSED = 1;
+const BLOCKED = 2;
+const UNTESTED = 3;
+const RETEST = 4;
+const FAILED = 5;
+const SYSTEM_STATUSES = { [PASSED]: 'passed', [BLOCKED]: 'blocked', [UNTESTED]: 'untested', [RETEST]: 'retest', [FAILED]: 'failed' };
+const countKey = (statusId) => `${SYSTEM_STATUSES[statusId] ?? `custom_status${statusId - FAILED}`}_count`;
+const splitKeys = (value) => String(value ?? '').split(/[\s,]+/).filter(Boolean).map((k) => k.toUpperCase());
+const cell = (value) => String(value ?? '').replace(/\s*\r?\n\s*/g, ' ').replace(/\|/g, '\\|').trim();
+const percent = (n, d) => (d ? `${Math.round((100 * n) / d)}% (${n}/${d})` : 'n/a');
+
+function sinceToUnix(value) {
+  const ms = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00`).getTime() : NaN;
+  if (Number.isNaN(ms)) throw new CliError(`--since must be a date as YYYY-MM-DD, got "${value}"`);
+  return Math.floor(ms / 1000);
+}
+
+function flattenMilestones(list) {
+  return list.flatMap((m) => [m, ...flattenMilestones(m.milestones ?? [])]);
+}
+
+function milestoneScope(milestones, name) {
+  const want = name.trim().toLowerCase();
+  const ids = new Set(milestones.filter((m) => m.name.trim().toLowerCase() === want).map((m) => m.id));
+  for (let grew = true; grew; ) {
+    const before = ids.size;
+    for (const m of milestones) if (ids.has(m.parent_id)) ids.add(m.id);
+    grew = ids.size > before;
+  }
+  return ids;
+}
+
+async function loadRuns(client, cfg, opts) {
+  const all = flattenMilestones(await client.getAll(`get_milestones/${cfg.projectId}`, 'milestones'));
+  const milestones = [...new Map(all.map((m) => [m.id, m])).values()];
+  let inMilestone = () => true;
+  if (opts.milestone) {
+    const ids = milestoneScope(milestones, opts.milestone);
+    if (!ids.size) {
+      const listing = milestones.map((m) => `  ${m.name}`).join('\n');
+      throw new CliError(`Milestone not found: ${opts.milestone}. Milestones:\n${listing}`);
+    }
+    inMilestone = (id) => ids.has(id);
+  }
+  const query = [opts.since && `&created_after=${sinceToUnix(opts.since)}`, opts.active && '&is_completed=0'].filter(Boolean).join('');
+  const runs = (await client.getAll(`get_runs/${cfg.projectId}${query}`, 'runs')).map((r) => ({ ...r, plan: null }));
+  for (const plan of await client.getAll(`get_plans/${cfg.projectId}${query}`, 'plans')) {
+    if (!inMilestone(plan.milestone_id)) continue;
+    const detail = await client.get(`get_plan/${plan.id}`);
+    for (const entry of detail.entries ?? []) {
+      for (const run of entry.runs ?? []) {
+        runs.push({ ...run, refs: run.refs ?? entry.refs, milestone_id: run.milestone_id ?? plan.milestone_id, plan: plan.name });
+      }
+    }
+  }
+  const refs = splitKeys(opts.refs);
+  const selected = runs.filter(
+    (r) =>
+      inMilestone(r.milestone_id) &&
+      !(opts.active && r.is_completed) &&
+      (!refs.length || splitKeys(r.refs).some((k) => refs.includes(k))),
+  );
+  const milestoneName = new Map(milestones.map((m) => [m.id, m.name]));
+  return selected.map((r) => ({ ...r, milestone: milestoneName.get(r.milestone_id) ?? '' }));
+}
+
+function latestResultByTest(tests, results) {
+  const status = new Map(tests.map((t) => [t.id, t.status_id]));
+  const latest = new Map();
+  for (const r of results) {
+    if (status.get(r.test_id) !== r.status_id) continue;
+    const seen = latest.get(r.test_id);
+    if (!seen || r.created_on > seen.created_on || (r.created_on === seen.created_on && r.id > seen.id)) latest.set(r.test_id, r);
+  }
+  return latest;
+}
+
+async function cmdRuns(opts, cfg) {
+  if (!opts.refs && !opts.milestone && !opts.since && !opts.active) {
+    throw new CliError('runs needs a scope: --refs, --milestone, --since, or --active');
+  }
+  const client = createClient(cfg);
+  const labels = new Map((await client.get('get_statuses')).map((s) => [s.id, s.label]));
+  const runs = await loadRuns(client, cfg, opts);
+  console.log(`Cut-off: ${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}`);
+  if (!runs.length) {
+    console.log('No runs match');
+    return 0;
+  }
+
+  const base = cfg.url.replace(/\/+$/, '');
+  const count = (run, id) => Number(run[countKey(id)] ?? 0);
+  const custom = [...labels.keys()].filter((id) => id > FAILED && runs.some((r) => count(r, id)));
+  const columns = [PASSED, FAILED, BLOCKED, RETEST, UNTESTED, ...custom];
+  const label = (id) => labels.get(id) ?? SYSTEM_STATUSES[id];
+  const row = (cells) => `| ${cells.join(' | ')} |`;
+  const numbers = (counts) => {
+    const total = columns.reduce((sum, id) => sum + counts(id), 0);
+    const executed = counts(PASSED) + counts(FAILED) + counts(BLOCKED);
+    return [total, ...columns.map(counts), percent(executed, total), percent(counts(PASSED), counts(PASSED) + counts(FAILED))];
+  };
+
+  console.log(`\n${row(['Run', 'Milestone', 'Refs', 'Total', ...columns.map(label), 'Executed', 'Pass rate'])}`);
+  console.log(row(Array(columns.length + 6).fill('---')));
+  for (const r of runs) {
+    const name = `[R${r.id}](${base}/index.php?/runs/view/${r.id}) ${cell(r.name)}${r.plan ? ` (plan ${cell(r.plan)})` : ''}`;
+    console.log(row([name, cell(r.milestone), cell(r.refs), ...numbers((id) => count(r, id))]));
+  }
+  console.log(row(['**Total**', '', '', ...numbers((id) => runs.reduce((sum, r) => sum + count(r, id), 0))]));
+  console.log(
+    `\nExecuted = (${label(PASSED)} + ${label(FAILED)} + ${label(BLOCKED)}) / Total. ` +
+      `Pass rate = ${label(PASSED)} / (${label(PASSED)} + ${label(FAILED)}). Other statuses are in neither.`,
+  );
+
+  if (!opts.details) return 0;
+  const detailed = columns.filter((id) => id !== PASSED && id !== UNTESTED);
+  for (const r of runs.filter((run) => detailed.some((id) => count(run, id)))) {
+    const ids = detailed.join(',');
+    const tests = await client.getAll(`get_tests/${r.id}&status_id=${ids}`, 'tests');
+    const latest = latestResultByTest(tests, await client.getAll(`get_results_for_run/${r.id}&status_id=${ids}`, 'results'));
+    tests.sort((a, b) => detailed.indexOf(a.status_id) - detailed.indexOf(b.status_id) || a.case_id - b.case_id);
+    console.log(`\n### R${r.id} ${cell(r.name)}\n`);
+    console.log(row(['Case', 'Title', 'Status', 'Defects', 'Version', 'Date', 'Comment']));
+    console.log(row(Array(7).fill('---')));
+    for (const t of tests) {
+      const res = latest.get(t.id);
+      const date = res?.created_on ? new Date(res.created_on * 1000).toISOString().slice(0, 10) : '';
+      console.log(row([`C${t.case_id}`, cell(t.title), label(t.status_id), cell(res?.defects), cell(res?.version), date, cell(res?.comment)]));
+    }
+  }
+  return 0;
+}
+
 async function cmdPush(files, opts, cfg, cwd) {
   if (!files.length) throw new CliError('push needs at least one file');
   const loaded = files.map((f) => loadFile(f, cwd));
@@ -618,7 +754,7 @@ async function cmdPush(files, opts, cfg, cwd) {
 
 export async function main(argv = process.argv.slice(2), env = process.env, cwd = process.cwd()) {
   const [command, ...rest] = argv;
-  if (!['check', 'list', 'push', 'pull'].includes(command)) {
+  if (!['check', 'list', 'push', 'pull', 'runs'].includes(command)) {
     console.error(USAGE);
     return 1;
   }
@@ -634,6 +770,11 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
           section: { type: 'string' },
           out: { type: 'string' },
           overwrite: { type: 'boolean' },
+          refs: { type: 'string' },
+          milestone: { type: 'string' },
+          since: { type: 'string' },
+          active: { type: 'boolean' },
+          details: { type: 'boolean' },
         },
       });
     } catch (e) {
@@ -644,6 +785,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
     const cfg = readConfig({ ...loadDotEnv(cwd), ...env });
     if (command === 'list') return await cmdList(values, cfg);
     if (command === 'pull') return await cmdPull(values, cfg, cwd);
+    if (command === 'runs') return await cmdRuns(values, cfg);
     return await cmdPush(positionals, values, cfg, cwd);
   } catch (e) {
     console.error(e.message);

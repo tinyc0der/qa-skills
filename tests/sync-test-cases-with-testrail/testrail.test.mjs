@@ -357,6 +357,16 @@ test('writeBackIds targets the right block in multi-suite files and handles one-
   assert.equal(writeBackIds(res, { sections: [{ suiteIndex: 0, sectionId: 1 }], cases: [{ suiteIndex: 0, testIndex: 0, caseId: 2 }] }), res);
 });
 
+const STATUSES = [
+  { id: 1, label: 'Passed' },
+  { id: 2, label: 'Blocked' },
+  { id: 3, label: 'Untested' },
+  { id: 4, label: 'Retest' },
+  { id: 5, label: 'Failed' },
+  { id: 6, label: 'In Progress' },
+  { id: 7, label: 'Skipped' },
+];
+
 function startMock(opts = {}) {
   const state = {
     requests: [],
@@ -430,6 +440,26 @@ function startMock(opts = {}) {
         }
         case 'update_case':
           return json(res, 200, { id: Number(id), ...body });
+        case 'get_statuses':
+          return json(res, 200, STATUSES);
+        case 'get_milestones':
+          return json(res, 200, { _links: { next: null }, milestones: opts.milestones ?? [] });
+        case 'get_runs':
+          return json(res, 200, { _links: { next: null }, runs: opts.runs ?? [] });
+        case 'get_plans':
+          return json(res, 200, { _links: { next: null }, plans: (opts.plans ?? []).map(({ entries, ...p }) => p) });
+        case 'get_plan':
+          return json(res, 200, opts.plans.find((p) => p.id === Number(id)));
+        case 'get_tests': {
+          const wanted = query.get('status_id').split(',').map(Number);
+          const tests = (opts.tests?.[id] ?? []).filter((t) => wanted.includes(t.status_id));
+          return json(res, 200, { _links: { next: null }, tests });
+        }
+        case 'get_results_for_run': {
+          const wanted = query.get('status_id').split(',').map(Number);
+          const results = (opts.results?.[id] ?? []).filter((r) => wanted.includes(r.status_id));
+          return json(res, 200, { _links: { next: null }, results });
+        }
         default:
           return json(res, 400, { error: `unknown endpoint ${req.url}` });
       }
@@ -766,4 +796,116 @@ test('pull --section limits output to that section and its children, and honors 
   } finally {
     await mock.close();
   }
+});
+
+const counts = (passed, failed, blocked, retest, untested, extra = {}) => ({
+  passed_count: passed,
+  failed_count: failed,
+  blocked_count: blocked,
+  retest_count: retest,
+  untested_count: untested,
+  custom_status1_count: 0,
+  custom_status2_count: 0,
+  ...extra,
+});
+
+const RUNS_DATA = {
+  milestones: [
+    { id: 1, name: 'Release 2.0', parent_id: null, milestones: [{ id: 2, name: 'Sprint 42', parent_id: 1 }] },
+    { id: 3, name: 'Sprint 41', parent_id: null },
+  ],
+  runs: [
+    { id: 11, name: 'Login | SSO', refs: 'ABC-1', milestone_id: 2, is_completed: false, ...counts(6, 2, 1, 0, 1, { custom_status1_count: 2 }) },
+    { id: 12, name: 'Old checkout', refs: 'ABC-9', milestone_id: 3, is_completed: true, ...counts(5, 0, 0, 0, 0) },
+  ],
+  plans: [
+    {
+      id: 50,
+      name: 'Regression',
+      milestone_id: 1,
+      entries: [{ refs: 'abc-2', runs: [{ id: 13, name: 'Cart', is_completed: false, ...counts(4, 0, 0, 1, 0) }] }],
+    },
+  ],
+  tests: {
+    11: [
+      { id: 101, case_id: 900, title: 'Log in with SSO', status_id: 5 },
+      { id: 102, case_id: 901, title: 'Log out', status_id: 2 },
+      { id: 103, case_id: 902, title: 'Remember me', status_id: 5 },
+      { id: 104, case_id: 903, title: 'Log in', status_id: 1 },
+    ],
+  },
+  results: {
+    11: [
+      { id: 1, test_id: 101, status_id: 5, created_on: 1700000000, defects: 'ABC-7', version: '1.0', comment: 'old failure' },
+      { id: 2, test_id: 101, status_id: 5, created_on: 1700086400, defects: 'ABC-8', version: '1.1', comment: 'Error toast\nshows | twice' },
+      { id: 3, test_id: 102, status_id: 2, created_on: 1700086400, defects: '', version: '1.1', comment: 'No SSO test account. Owner: PO' },
+      { id: 4, test_id: 102, status_id: 5, created_on: 1700090000, defects: 'ABC-6', version: '1.1', comment: 'failed before it was blocked' },
+    ],
+  },
+};
+
+const runsCli = async (args) => {
+  const mock = await startMock(RUNS_DATA);
+  try {
+    const run = await runCli(['runs', ...args], { env: baseEnv(mock.port), cwd: mkdtempSync(join(tmpdir(), 'testrail-')) });
+    return { ...run, requests: mock.state.requests };
+  } finally {
+    await mock.close();
+  }
+};
+
+test('runs selects by refs across plain and plan runs and computes executed and pass rate without blocked or untested', async () => {
+  const run = await runsCli(['--refs', 'ABC-1, ABC-2']);
+  assert.equal(run.code, 0, run.stderr);
+  assert.match(run.stdout, /^Cut-off: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/m);
+  assert.match(run.stdout, /\| Run \| Milestone \| Refs \| Total \| Passed \| Failed \| Blocked \| Retest \| Untested \| In Progress \| Executed \| Pass rate \|/);
+  assert.match(run.stdout, /\| \[R11\]\(http:\/\/127\.0\.0\.1:\d+\/index\.php\?\/runs\/view\/11\) Login \\\| SSO \| Sprint 42 \| ABC-1 \| 12 \| 6 \| 2 \| 1 \| 0 \| 1 \| 2 \| 75% \(9\/12\) \| 75% \(6\/8\) \|/);
+  assert.match(run.stdout, /\| \[R13\]\([^)]+\) Cart \(plan Regression\) \| Release 2\.0 \| abc-2 \| 5 \| 4 \| 0 \| 0 \| 1 \| 0 \| 0 \| 80% \(4\/5\) \| 100% \(4\/4\) \|/);
+  assert.match(run.stdout, /\| \*\*Total\*\* \|  \|  \| 17 \| 10 \| 2 \| 1 \| 1 \| 1 \| 2 \| 76% \(13\/17\) \| 83% \(10\/12\) \|/);
+  assert.doesNotMatch(run.stdout, /R12|Skipped/);
+});
+
+test('runs --milestone includes sub-milestones; --active and --since become API filters', async () => {
+  const release = await runsCli(['--milestone', 'release 2.0']);
+  assert.equal(release.code, 0, release.stderr);
+  assert.match(release.stdout, /R11/);
+  assert.match(release.stdout, /R13/);
+  assert.doesNotMatch(release.stdout, /R12/);
+
+  const sprint = await runsCli(['--milestone', 'Sprint 42', '--active', '--since', '2026-01-05']);
+  assert.equal(sprint.code, 0, sprint.stderr);
+  assert.match(sprint.stdout, /R11/);
+  assert.doesNotMatch(sprint.stdout, /R13|R12/);
+  const getRuns = sprint.requests.find((r) => r.name === 'get_runs').query;
+  assert.equal(getRuns.get('is_completed'), '0');
+  assert.equal(getRuns.get('created_after'), String(new Date('2026-01-05T00:00:00').getTime() / 1000));
+  assert.equal(sprint.requests.filter((r) => r.name === 'get_plan').length, 0);
+});
+
+test('runs refuses to run without a scope, with a bad date, or with an unknown milestone', async () => {
+  const none = await runsCli([]);
+  assert.equal(none.code, 1);
+  assert.match(none.stderr, /--refs, --milestone, --since, or --active/);
+  assert.equal(none.requests.length, 0);
+
+  const badDate = await runsCli(['--since', '05/01/2026']);
+  assert.equal(badDate.code, 1);
+  assert.match(badDate.stderr, /YYYY-MM-DD/);
+
+  const unknown = await runsCli(['--milestone', 'Sprint 99']);
+  assert.equal(unknown.code, 1);
+  assert.match(unknown.stderr, /Milestone not found: Sprint 99/);
+  assert.match(unknown.stderr, /Sprint 41/);
+});
+
+test('runs --details lists non-passed tests with the latest result that set their current status', async () => {
+  const run = await runsCli(['--refs', 'ABC-1', '--details']);
+  assert.equal(run.code, 0, run.stderr);
+  assert.match(run.stdout, /### R11 Login \\\| SSO/);
+  assert.match(run.stdout, /\| C900 \| Log in with SSO \| Failed \| ABC-8 \| 1\.1 \| 2023-11-15 \| Error toast shows \\\| twice \|/);
+  assert.match(run.stdout, /\| C902 \| Remember me \| Failed \|  \|  \|  \|  \|/);
+  assert.match(run.stdout, /\| C901 \| Log out \| Blocked \|  \| 1\.1 \| 2023-11-15 \| No SSO test account\. Owner: PO \|/);
+  assert.ok(run.stdout.indexOf('C900') < run.stdout.indexOf('C902') && run.stdout.indexOf('C902') < run.stdout.indexOf('C901'));
+  assert.doesNotMatch(run.stdout, /C903|old failure|ABC-6/);
+  assert.equal(run.requests.find((r) => r.name === 'get_tests').query.get('status_id'), '5,2,4,6');
 });
