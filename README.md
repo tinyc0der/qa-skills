@@ -24,7 +24,7 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 | Confluence | Specs, requirements, user docs               | Atlassian MCP server (same connection as Jira)                                                       |
 | Figma      | Screens, states, copy                        | Figma MCP server                                                                                     |
 | TestRail   | Test cases                                   | `.env` with the variables listed in [`sync-test-cases-with-testrail`](./skills/sync-test-cases-with-testrail/SKILL.md) |
-| Live app   | Exploring and checking actual behavior       | A staging URL; [`prima`](./skills/prima/SKILL.md) needs Node 22+ and an AI provider key               |
+| Live app   | Exploring and checking actual behavior       | A staging URL and [agent-browser](https://github.com/vercel-labs/agent-browser): `npm i -g agent-browser && agent-browser install`, then `npx skills add vercel-labs/agent-browser` |
 
 Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 
@@ -56,12 +56,6 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 | `testing-workflow`         | Orchestrate the test case lifecycle: requirements review, generation, improvement, TestRail sync |
 | `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
 
-### Browser
-
-| Skill   | Description                                                    |
-| ------- | -------------------------------------------------------------- |
-| `prima` | Drive a browser through described behavior instead of locators |
-
 ## Typical flow
 
 1. Review the Jira ticket or epic with `qa-thinking` or `epic-requirement-reviewer`.
@@ -78,7 +72,6 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 | `requirements`    | `write-user-story`, `epic-requirement-reviewer`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
 | `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `write-user-story`, `epic-requirement-reviewer`, `qa-thinking` |
 | `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
-| `browser`         | `prima`                                                                                                           |
 
 ## Repository structure
 

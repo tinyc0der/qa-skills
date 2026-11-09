@@ -26,7 +26,7 @@ README.md in catalog root:
 | Role    | Actual, Intended, or Documented (SKILL.md › Source roles)                                             |
 | Scope   | Defined by user (or inferred)                                                                         |
 | History | Important for sources like Jira                                                                       |
-| Access  | Atlassian MCP, `sync-test-cases-with-testrail`, `prima`, URL, files                                   |
+| Access  | Atlassian MCP, `sync-test-cases-with-testrail`, `agent-browser`, URL, files                                   |
 | Date    | Date of this sync; live app: app version (About page or release notes); Jira: creation and resolution |
 | Domain  | What the product does and for whom; infer if not given                                                |
 

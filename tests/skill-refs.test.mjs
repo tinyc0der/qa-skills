@@ -16,6 +16,7 @@ const REMOVED = [
   'explorbot-plan',
   'explorbot-setup',
   'migrate-to-testomatio',
+  'prima',
   'pull-request-diff-analyzer',
   'qa-automation-test-consolidation',
   'qa-data-seeder',

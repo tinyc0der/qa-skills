@@ -63,7 +63,7 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 
 ### Live app
 
-- Access: the `prima` skill, signed in with the test account and role the user gives.
+- Access: the `agent-browser` skill, signed in with the test account and role the user gives.
 - Tree: the app's navigation: menu sections, pages, tabs.
 - Feature: what users do, named from the product ("Invite member"), not one per page or URL; same feature on two screens → one feature.
 - Link: URL + navigation path, e.g. `Settings › Members`.

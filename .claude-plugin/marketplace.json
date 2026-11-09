@@ -21,11 +21,6 @@
       "name": "qa-process",
       "source": "./plugins/qa-process",
       "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, and orchestrate the test case lifecycle"
-    },
-    {
-      "name": "browser",
-      "source": "./plugins/browser",
-      "description": "Drive a browser on the live app through described behavior with prima"
     }
   ]
 }

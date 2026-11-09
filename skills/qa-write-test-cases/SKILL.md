@@ -54,7 +54,7 @@ Information sources:
 - Confluence: specs and requirements pages (Atlassian MCP)
 - Figma: screens, states, and UI copy (Figma MCP)
 - TestRail: existing test cases, via the `sync-test-cases-with-testrail` skill
-- Live app: actual behavior on a non-production environment, via the `prima` skill
+- Live app: actual behavior on a non-production environment, via the `agent-browser` skill
 
 Source priority:
 
@@ -66,7 +66,7 @@ Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or 
 
 Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app:
 
-- For a web app, ask the user for a non-production URL and credentials, then explore the related pages with the `prima` skill.
+- For a web app, ask the user for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill.
 - Use screenshots of related pages when the user shares them.
 
 #### Existing test cases

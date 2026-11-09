@@ -87,7 +87,7 @@ Read [references/features.md](references/features.md) and [references/layout.md]
 ## 1. Sources and access
 
 1. List the sources to compare: given by the user, else ask; offer the ones already cataloged.
-2. Check access: one real read per source (Atlassian MCP, Figma MCP, TestRail `list`, `prima` signed in to the app, URL, file). No access → stop and ask for the connection or an export. A catalog alone is not enough: behaviors are read at the source.
+2. Check access: one real read per source (Atlassian MCP, Figma MCP, TestRail `list`, `agent-browser` signed in to the app, URL, file). No access → stop and ask for the connection or an export. A catalog alone is not enough: behaviors are read at the source.
 3. Live app: environment URL, test account, and app version (About page or release notes).
 
 ## 2. Catalogs
@@ -117,7 +117,7 @@ Subagent writes nothing. Returns: matched catalog features per source (or `not f
 
 One fresh subagent per batch of mismatches, with the same inputs as step 3. It re-reads each mismatch at its Links and returns it as confirmed, corrected, or dropped (with why). Can't confirm → open question.
 
-Live app compared: one subagent runs the app checks in one `prima` session, feature after feature. No parallel browsers: the test account is shared. Per check:
+Live app compared: one subagent runs the app checks in one `agent-browser` session, feature after feature. No parallel browsers: the test account is shared. Per check:
 
 - Open the app at the catalog link, follow the steps, state what the user gets ([features.md](references/features.md) › Behaviors).
 - Matches every source → no page. Contradicts a source → Differs. Absent → Not observed in app. Same behavior already on a mismatch → add the app side to it.
