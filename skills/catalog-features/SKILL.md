@@ -56,7 +56,8 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 
 - Access: the `list` command of the `sync-test-cases-with-testrail` skill.
 - Tree: TestRail sections and subsections.
-- Feature: one case. Key: `C<id>`. Link: `{TESTRAIL_URL}/index.php?/cases/view/{id}`.
+- Feature: what users do, named from the product ("Invite member", not the case title "Invite member with a valid email"), grouping every case that tests it; not one per case or section; cases in several sections → one feature.
+- Key: none. Links: each case as `C<id>` + `{TESTRAIL_URL}/index.php?/cases/view/{id}`.
 - Scope: sections; ask the user.
 - Role: Intended.
 - History: No.
