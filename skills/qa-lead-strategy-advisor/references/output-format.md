@@ -59,11 +59,11 @@ Optimize for **scanning** by eyes: the user should understand each item and what
 
 ### 2️⃣ Review payment stories before testing starts
 
-  📈 Impact: high · ⏱️ Effort: ~1 hour per epic
+  📈 Impact: high · ⏱️ Effort: ~20 min per story
 
   🔍 **Found:** 7 of 11 production bugs last quarter trace to payment stories with vague criteria.
   🎯 **Goal:** payment ambiguities resolved before test design starts.
-  ▶ **Action:** review the next payment epic → `epic-requirement-reviewer` skill
+  ▶ **Action:** review the next payment stories → `review-user-story` skill
 
 --------------------------------------------------
 

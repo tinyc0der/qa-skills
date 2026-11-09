@@ -11,6 +11,7 @@ const REMOVED = [
   'automate-manual-test-cases',
   'debug-fix-failed-flaky-autotests',
   'detect-useless-tests',
+  'epic-requirement-reviewer',
   'epic-requirements-specification',
   'explorbot-fundamentals',
   'explorbot-plan',

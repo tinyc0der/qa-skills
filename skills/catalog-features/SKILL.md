@@ -131,5 +131,5 @@ To a calling skill: features added, changed, and removed.
 ## Next actions
 
 - `detect-product-mismatches`
-- `epic-requirement-reviewer`
+- `review-user-story`
 - Test cases from requirements → `qa-write-test-cases`

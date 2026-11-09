@@ -34,7 +34,7 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 
 | Skill                       | Description                                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| `epic-requirement-reviewer` | Review a Jira user story or epic and draft feedback for the PO: gaps, risks, acceptance criteria |
+| `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps, risks, acceptance criteria         |
 | `qa-thinking`               | Analyze a ticket, requirement, or design from a QA perspective: edge cases, negative flows, abuse |
 | `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
 | `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing, differs, or is undocumented |
@@ -57,7 +57,7 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 
 ## Typical flow
 
-1. Review the Jira ticket or epic with `qa-thinking` or `epic-requirement-reviewer`.
+1. Review the Jira story with `qa-thinking` or `review-user-story`.
 2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`.
 3. Push to TestRail with `sync-test-cases-with-testrail` after a dry run.
 4. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
@@ -68,8 +68,8 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `epic-requirement-reviewer`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `epic-requirement-reviewer`, `qa-thinking` |
+| `requirements`    | `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
+| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `review-user-story`, `qa-thinking` |
 | `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
 
 ## Repository structure

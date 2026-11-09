@@ -154,5 +154,5 @@ Where to start. Mismatches by highest user impact first. Missing features per so
 ## Next actions
 
 - Update a catalog → `catalog-features`
-- Review contradicting requirements → `epic-requirement-reviewer`
+- Feedback to the PO on a contradicting story → `review-user-story`
 - Test cases for differing behavior → `qa-write-test-cases`
