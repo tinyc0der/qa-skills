@@ -50,6 +50,7 @@ For other ways of installation (Claude Code plugin, Codex, Cursor etc.) see [ins
 | `detect-duplicate-test-cases` | Find duplicate, near-duplicate, and overlapping test cases                                           |
 | `detect-useless-tests` | Find useless tests within one testing level (unit, e2e, manual), listed by area, file, and line |
 | `sync-test-cases-with-tms`           | Synchronize Markdown test scenarios between local project and Testomat.io                            |
+| `sync-test-cases-with-testrail`      | Push Markdown test cases to TestRail via its API and list existing TestRail cases                    |
 | `migrate-to-testomatio` | Migrate tests to Testomat.io from TestRail, XRay, Testmo, QMetry, Allure, TestCaseLabs, or CSV/XLSX |
 | `qa-test-code-coverage`      | Map manual & automated tests to source files; generate `coverage.tests.yml` to run only the tests affected by a diff |
 | `testing-workflow`      | Tactical orchestrator of the test case lifecycle: generate, improve, analyze coverage, upload to TMS |
@@ -131,7 +132,7 @@ Skills are also bundled as [Claude Code plugins](https://docs.testomat.io) via t
 | ----------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `requirements`    | `write-user-story`, `wiki-from-code`, `catalog-features`, `detect-product-mismatches`, `epic-requirement-reviewer`, `qa-thinking`, `qa-explain-behavior`, `qa-pr-requirements-analyzer`, `pull-request-diff-analyzer` | Write, review, and analyze requirements and features before and during development |
 | `qa-process`      | `qa-lead-strategy-advisor`, `qa-explain-behavior`, `qa-thinking`, `testing-workflow` | Assess QA maturity, prioritize a quality roadmap, explain product behavior, and orchestrate the test lifecycle |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `sync-test-cases-with-tms`, coverage & more | Manage the test case lifecycle: generate, improve, sync to Testomat.io          |
+| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `sync-test-cases-with-tms`, `sync-test-cases-with-testrail`, coverage & more | Manage the test case lifecycle: generate, improve, sync to Testomat.io          |
 | `test-automation` | `automate-manual-test-cases`, `debug-fix-failed-flaky-autotests`, `qa-data-seeder` | Create automated tests, heal failing/flaky autotests, and seed test data        |
 | `explorbot`       | `explorbot-setup`, `explorbot-fundamentals`, `explorbot-plan`, `prima` | Install, configure, run, debug and plan Explorbot autonomous AI web tests, and drive a browser with prima |
 

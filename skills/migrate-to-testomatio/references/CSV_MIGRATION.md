@@ -65,7 +65,7 @@ node convert.js <path-to-export-csv>
 
 ## Descriptions and Images
 
-- Descriptions are pure Markdown; format steps per [test-case-format.md](../qa-write-test-cases/references/test-case-format.md).
+- Descriptions are pure Markdown; format steps per [testomat-test-case-format.md](../../qa-write-test-cases/references/testomat-test-case-format.md).
 - Images inside test cases are not carried by CSV: upload them via Testomat.io API, or switch to the API script path.
 
 ## Recovery

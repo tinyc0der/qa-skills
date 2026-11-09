@@ -7,7 +7,7 @@ description: Essential reference for generating Testomat.io-compatible test case
 
 Quick reference for generating test cases compatible with Testomat.io Test Management System.
 
-Follow this guide along with [Test Case Format](./test-case-format.md).
+Follow this guide along with [Test Case Format](./testomat-test-case-format.md).
 
 ## Structure
 
@@ -69,4 +69,4 @@ Split tests by module, testing type, scope and other criteria which helps to org
 ## References
 
 - [Testomat.io Docs](https://testomat.io/docs)
-- [Test Case Format](./test-case-format.md) - Full Markdown format reference
+- [Test Case Format](./testomat-test-case-format.md) - Full Markdown format reference

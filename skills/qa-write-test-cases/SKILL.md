@@ -9,7 +9,8 @@ Generates test cases and checklists for software testing from the context the us
 
 References:
 
-- [Test Case Format](./references/test-case-format.md) — markdown format for suites, tests, and steps (Testomat.io-friendly)
+- [Test Case Format](./references/testomat-test-case-format.md) — markdown format for suites, tests, and steps (Testomat.io-friendly)
+- [TestRail Test Case Format](./references/testrail-test-case-format.md) — the same format with TestRail fields, used when the target is TestRail
 - [Writing Rules](./references/writing-rule.md) — rules for suites, tests, preconditions, steps, and AI writing patterns to avoid
 - [Testomat.io TMS Guide](./references/testomat-tms-guide.md) — Testomat.io conventions and MCP tools
 
@@ -96,6 +97,8 @@ Option 2 — `sync-test-cases-with-tms` skill (with `check-tests` lib). Run it w
 - existing structure and suites
 - current test cases (to avoid duplicates)
 - project conventions (tags, labels, priority levels)
+
+TestRail: if a TestRail MCP or `TESTRAIL_*` in `.env` is configured, list existing cases with the `sync-test-cases-with-testrail` skill.
 
 If existing test cases intersect with the feature under test, report them to the user and suggest expanding them or creating a new suite.
 
@@ -201,7 +204,7 @@ Item rules:
 - Each item is one test objective. Split items that check several outcomes.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Cover UI consistency with one item per screen, not one per element.
-- Prefix each item with its priority: 🔴 critical, 🟠 important, 🟡 high, 🟢 normal, ⚪ low.
+- Prefix each item with its priority: 🔴 critical, 🟠 important, 🟡 high, 🟢 normal, ⚪ low. For TestRail: 🔴 critical, 🟠 high, 🟡 medium, 🟢 low.
 
 Example:
 
@@ -257,17 +260,19 @@ Generation rules:
 
 Format rules:
 
-- Strictly follow [Test Case Format](./references/test-case-format.md) for suites, tests, and steps. Only exception: the user specifies their own format in the prompt.
+- Strictly follow [Test Case Format](./references/testomat-test-case-format.md) for suites, tests, and steps. Only exception: the user specifies their own format in the prompt.
+- For TestRail, follow [TestRail Test Case Format](./references/testrail-test-case-format.md) instead.
 - Strictly follow [Writing Rules](./references/writing-rule.md) for suite/test descriptions, preconditions, steps, expected results, and anti-patterns.
 - Follow the [Testomat.io TMS Guide](./references/testomat-tms-guide.md) for conventions (priority levels, tags, labels), especially when using the testomatio MCP.
 - Wrap test cases in `<!-- suite ... -->` and `<!-- test ... -->` blocks.
-- If required, put `tags:` and `labels:` inside each `<!-- test ... -->` metadata block (see [test metadata](./references/test-case-format.md#test-metadata)), not only on the suite block.
+- If required, put `tags:` and `labels:` inside each `<!-- test ... -->` metadata block (see [test metadata](./references/testomat-test-case-format.md#test-metadata)), not only on the suite block.
 - Reuse existing tags and labels obtained via MCP or from other test cases.
 - Do not use labels if you are not aware of any existing ones.
 - If reasonable, add test metadata (preconditions, test data, labels, tags) based on the analyzed context.
 - Use concrete, executable values. **Do NOT introduce `${...}` placeholders in first-pass generation.** Parametrize only genuinely reused or data-driven values; format them as `${variable}` in backticks.
 - **NEVER generate test or suite IDs of any kind:**
   - Do NOT include Testomat.io IDs (`id: @T*`, `id: @S*`, e.g. `@T12345678`, `@S380c64db`).
+  - Do NOT write `testrail_id:` or `testrail_section_id:`. The TestRail push writes them. Keep them when editing a file.
   - Do NOT include custom/random IDs (e.g. `TC-001`, `TC-R001`, `SUITE-01`) in `id:` fields, titles, or anywhere else.
   - Testomat.io IDs are server-generated and assigned when the user runs `check-tests push` with `--update-ids` (or via the `sync-test-cases-with-tms` skill). Never add IDs at generation time.
 
@@ -291,4 +296,4 @@ DON'T copy:
 - Show a concise summary (markdown table works well): number of test cases and suites, generated files, destination folder.
 - Ask the user to review the files and request changes if needed.
 - List items that needed splitting and gaps found while writing, as suggested additions.
-- Suggest uploading the test cases to Testomat.io via the `sync-test-cases-with-tms` skill.
+- Suggest uploading the test cases to Testomat.io via the `sync-test-cases-with-tms` skill, or to TestRail via the `sync-test-cases-with-testrail` skill.

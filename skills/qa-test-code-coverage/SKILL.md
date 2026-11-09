@@ -53,7 +53,7 @@ Build one inventory of identifiers across both kinds:
 
 Where IDs live:
 
-- Manual cases follow the [Classical Tests Markdown Format](../qa-write-test-cases/references/test-case-format.md) — IDs in `<!-- suite ... id: @S... -->` / `<!-- test ... id: @T... -->` blocks, tags in titles and `tags:` lines.
+- Manual cases follow the [Classical Tests Markdown Format](../qa-write-test-cases/references/testomat-test-case-format.md) — IDs in `<!-- suite ... id: @S... -->` / `<!-- test ... id: @T... -->` blocks, tags in titles and `tags:` lines.
 - Automated tests carry IDs in `describe` / `it` / `test` / `Feature` / `Scenario` titles — see [E2E Frameworks](./references/E2E_FRAMEWORKS.md).
 
 Read the files, or `grep` the directories that hold the tests:
@@ -171,4 +171,4 @@ npx @testomatio/reporter run --kind manual \
 
 - [Coverage File Format](./references/COVERAGE_FILE_FORMAT.md) — coverage YAML grammar, reporter contract, GitHub Actions example.
 - [E2E Frameworks](./references/E2E_FRAMEWORKS.md) — framework detection signals, where IDs live, per-framework `check-tests` commands.
-- [Manual test markdown format](../qa-write-test-cases/references/test-case-format.md) — canonical, owned by `qa-write-test-cases`.
+- [Manual test markdown format](../qa-write-test-cases/references/testomat-test-case-format.md) — canonical, owned by `qa-write-test-cases`.
