@@ -11,6 +11,7 @@ References:
 
 - [Test Case Format](./references/testrail-test-case-format.md) defines the markdown for suites, tests, and steps, and maps each part to TestRail.
 - [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and AI writing patterns to avoid.
+- [Review Checklist](./references/review-checklist.md) lists what Self review checks.
 - [Related Sources](../qa-thinking/references/related-sources.md) of `qa-thinking` covers when and where to search for sources the ticket does not link.
 
 ## User interaction
@@ -30,14 +31,29 @@ References:
 3. type something else
 ```
 
+## Self review
+
+Review the checklist (Step 4) and the test cases (Step 6) yourself against [Review Checklist](./references/review-checklist.md). A fixer subagent applies the fixes. **Do not show either to the user before its review ends.**
+
+Loop until a review finds nothing to fix:
+
+1. Review: re-read the checklist or the written files item by item against every check. Write each finding in the Review Checklist's findings format.
+2. Fix: start a fresh fixer subagent, never one from an earlier round. Give it the `fix` findings, the paths of the files they name, the context file, and the Review Checklist. For the checklist, give it the checklist text, and it returns the fixed checklist. It applies only the listed findings.
+3. Keep `ask` findings for the user. Do not act on them.
+
+After the third fix, review once more and stop. Show the user only the `ask` findings and the `fix` findings still open, not the review or the fixes made.
+
+Without subagents, apply the fixes yourself.
+
 ## Workflow
 
 1. Gather context and save it to a context file
 2. Ask for coverage scope — approval gate
 3. Ask for role if any test cases for the feature exist; always skipped for smoke
-4. Generate checklist — approval gate
+4. Generate checklist — self review, then approval gate
 5. Generate detailed test cases
-6. Show summary
+6. Review test cases — self review
+7. Show summary
 
 ### Step 1: Gather context
 
@@ -239,6 +255,10 @@ Example:
   - 🟠 [high] Login with invalid password
 ```
 
+#### Self review
+
+Run [Self review](#self-review) on the checklist. Skip it when the user only removed or reworded items. Show the findings it leaves for the user above the approval question.
+
 #### Approval gate
 
 - If a multi-select/checkbox Ask tool is available: present leaf items as checkboxes, prefixed with priority and category (e.g. `🔴 Login: valid email`), with the recommended subset for the chosen tier pre-checked. The ticked items become the test cases in Step 5.
@@ -308,9 +328,13 @@ DON'T copy:
 - any IDs from the example: TestRail IDs (`testrail_id:`, `C<id>`) or custom prefixes (e.g. `TC-R001`, `TC-001`)
 - original test case intent
 
-### Step 6: Show summary
+### Step 6: Review test cases
+
+Run [Self review](#self-review) on the new test cases. Before each review, run `check` of the `sync-test-cases-with-testrail` skill on the files and fix what it reports.
+
+### Step 7: Show summary
 
 - Show a concise summary (markdown table works well): number of test cases and suites, generated files.
 - Ask the user to review the files and request changes if needed.
-- List items that needed splitting and gaps found while writing, as suggested additions.
+- List the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as suggested additions and questions.
 - Suggest pushing the test cases to TestRail with the `sync-test-cases-with-testrail` skill.
