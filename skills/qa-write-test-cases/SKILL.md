@@ -11,6 +11,7 @@ References:
 
 - [Test Case Format](./references/testrail-test-case-format.md) defines the markdown for suites, tests, and steps, and maps each part to TestRail.
 - [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and AI writing patterns to avoid.
+- [Related Sources](../qa-thinking/references/related-sources.md) of `qa-thinking` covers when and where to search for sources the ticket does not link.
 
 ## User interaction
 
@@ -90,14 +91,20 @@ Find the TestRail cases that already test the feature, with the `sync-test-cases
 - TestRail not set up: ask for its Setup, or continue without the check and report that at the gate.
 - Do not `pull` here: it writes files. Step 5 pulls the section the user chooses to expand.
 
+#### Related sources
+
+When the sources above leave a gap, search as [Related Sources](../qa-thinking/references/related-sources.md) describes.
+
 #### Approval gate
 
 Show names only, no content:
 
 - sources read: ticket keys, page titles, frame names, app environment
 - sources that could not be read
+- sources found by search, each with the gap it fills
 - existing cases: count, section, `C<id>` range
 - conflicts between sources, including known mismatches
+- gaps no source filled
 
 ```markdown
 I've gathered information from the following sources:
@@ -109,11 +116,19 @@ I've gathered information from the following sources:
 
 Not read: Confluence "Payments FAQ" (no access)
 
+Found by search:
+
+- Jira ABC-130 (same epic): card expiry rules
+
 Existing cases: 8 in TestRail section Checkout › Payment (C101–C108)
 
 Conflicts:
 
 - Expired cards at checkout: the live app lists them; ABC-123 hides them. Test cases follow ABC-123.
+
+Open questions:
+
+- Saved cards limit per user: no source says
 
 ❓ Do you want to:
 

@@ -58,6 +58,7 @@ On a match, propose the action and write only after the user approves:
 
 - Check the expected behavior against the story, its comments, and its linked pages. Behavior descoped there is not a bug.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
+- The expected behavior is not obvious and the story does not define it → search as [Related Sources](../qa-thinking/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
   - Use the same screen, tab, filters, data, and build as the report.
   - Redo what the reporter did before the failing step, not only the numbered steps.
@@ -105,6 +106,7 @@ Show the title, fields, and description. Also show:
 - web link to each TestRail case whose failed result gets this Bug
 - files to attach
 - reasons for priority and severity
+- sources the search found for the expected behavior
 
 Mark each unknown value `Unverified`. Do not create the Bug while the story, found-on environment, platform, build, or sprint is `Unverified`.
 
