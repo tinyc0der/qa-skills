@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -86,15 +86,23 @@ test('every marketplace plugin bundles at least one skill', () => {
   assert.deepEqual(listed.map((p) => p.source.replace('./plugins/', '')).sort(), [...plugins].sort());
 });
 
-test('relative links inside skills resolve', () => {
+test('relative links inside skills resolve in skills/ and in every plugin that bundles the skill', () => {
+  const homes = (skill) => [
+    'skills',
+    ...plugins.map((p) => join('plugins', p, 'skills')).filter((home) => existsSync(join(ROOT, home, skill))),
+  ];
   const broken = walk('skills')
     .filter((f) => f.endsWith('.md'))
-    .flatMap((f) =>
-      [...readFileSync(f, 'utf8').replace(/^```[\s\S]*?^```/gm, '').matchAll(/\]\(([^)\s]+)\)/g)]
+    .flatMap((f) => {
+      const path = relative(join(ROOT, 'skills'), f);
+      const targets = [...readFileSync(f, 'utf8').replace(/^```[\s\S]*?^```/gm, '').matchAll(/\]\(([^)\s]+)\)/g)]
         .map((m) => m[1].split('#')[0])
-        .filter((target) => /[./]/.test(target) && !/^[a-z]+:/i.test(target))
-        .filter((target) => !existsSync(join(dirname(f), target)))
-        .map((target) => `${rel(f)} -> ${target}`),
-    );
+        .filter((target) => /[./]/.test(target) && !/^[a-z]+:/i.test(target));
+      return homes(path.split(sep)[0]).flatMap((home) =>
+        targets
+          .filter((target) => !existsSync(join(ROOT, home, dirname(path), target)))
+          .map((target) => `${join(home, path)} -> ${target}`),
+      );
+    });
   assert.deepEqual(broken, []);
 });
