@@ -17,6 +17,7 @@ The deliverable is a brief, useful review, not a sentence-by-sentence audit or a
 - Read the parent epic for context only: rules and decisions that apply to this story. Do not review the epic.
 - Read linked Confluence pages and Figma frames when they define the behavior.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the story's feature. Cite a known mismatch instead of raising it as new.
+- If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists.
 - When these sources leave a gap, search as [Related Sources](../qa-thinking/references/related-sources.md) describes. An answer found only in a source the story does not link is still a Story quality finding (Complete): name the source and ask the PO to link it.
 - Read Jira and Confluence through the Atlassian MCP and Figma through the Figma MCP. Missing connection → stop and ask for it.
 - If tool output is truncated, retrieve the omitted content before drawing conclusions.

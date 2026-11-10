@@ -10,6 +10,7 @@ Explain these risks to the team and the product owner.
 You are provided with a Jira ticket, a Confluence requirement, a Figma design, or a feature in the live app.
 You must provide a critical review of it from QA perspective and ask clarifying questions.
 Read Jira and Confluence through the Atlassian MCP, Figma through the Figma MCP, and the live app with the `agent-browser` skill. Missing connection → stop and ask for it.
+If a context file (`test-cases/*.context.md`) names the ticket, read it and the sources it lists.
 When the given sources leave a gap, search as [Related Sources](./references/related-sources.md) describes. List each found source and the gap it fills in `👷 Must be aknowledged`. Ask in `👓 Must be clarified` only what no source answers.
 
 ## Think as QA
