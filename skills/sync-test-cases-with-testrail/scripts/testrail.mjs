@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -15,13 +15,16 @@ const USAGE = `Usage: node testrail.mjs <command> [options]
 Commands:
   check <files...>                          Parse .test.md files offline and report problems
   list [--section <name>]                   Print sections and cases (C<id>) of the resolved suite
+  list --run <id>                           Print the cases of a test run with their status
   push <files...> [--dry-run]               Create or update cases in TestRail and write IDs back
        [--parent-section <name>]
   pull [--section <name>] [--out <dir>]     Download cases into .test.md files (default dir test-cases/)
-       [--overwrite]                        Replace local files that differ from the download
+       [--run <id>] [--overwrite]           --run keeps only the run's cases; --overwrite replaces differing files
   runs [--refs <keys>] [--milestone <name>] Print status counts of matching test runs, plan runs included
        [--since <YYYY-MM-DD>] [--active]    At least one filter is required; filters combine with AND
        [--details]                          Also list non-passed tests with their latest result
+  results <file> [--dry-run]                Create the run of a results file if needed, add its results
+                                            and attach its evidence, then write the IDs back
 
 Environment (or .env in the current directory):
   TESTRAIL_URL, TESTRAIL_USER, TESTRAIL_API_KEY, TESTRAIL_PROJECT_ID
@@ -224,7 +227,7 @@ function setMetaLine(raw, key, value) {
   const eol = raw.includes('\r\n') ? '\r\n' : '\n';
   const line = `${key}: ${value}`;
   const keyRe = new RegExp(`^([ \\t]*${key}[ \\t]*:)[^\\r\\n]*`, 'm');
-  if (keyRe.test(head)) return `${head.replace(keyRe, `$1 ${value}`)}-->`;
+  if (keyRe.test(head)) return `${head.replace(keyRe, (_, k) => `${k} ${value}`)}-->`;
   const nl = head.lastIndexOf('\n');
   if (nl >= 0 && !head.slice(nl + 1).trim()) {
     return `${head.slice(0, nl + 1)}${line}${eol}${head.slice(nl + 1)}-->`;
@@ -315,7 +318,8 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
   const authorization = `Basic ${Buffer.from(`${user}:${apiKey}`).toString('base64')}`;
 
   async function send(method, target, label, body) {
-    const unsure = method === 'POST' ? '. TestRail may have saved this change; check it with list before pushing again' : '';
+    const unsure = method === 'POST' ? '. TestRail may have saved this change; check TestRail before running the command again' : '';
+    const form = body instanceof FormData;
     let rateTries = 0;
     let serverTries = 0;
     for (;;) {
@@ -323,8 +327,8 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
       try {
         res = await fetch(target, {
           method,
-          headers: { Authorization: authorization, 'Content-Type': 'application/json' },
-          body: body === undefined ? undefined : JSON.stringify(body),
+          headers: form ? { Authorization: authorization } : { Authorization: authorization, 'Content-Type': 'application/json' },
+          body: body === undefined || form ? body : JSON.stringify(body),
         });
       } catch (e) {
         throw new ApiError(`${method} ${label} failed: ${e.cause?.code ?? e.message}${unsure}`);
@@ -355,6 +359,11 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
 
   const get = (endpoint) => send('GET', `${base}/index.php?/api/v2/${endpoint}`, endpoint);
   const post = (endpoint, body) => send('POST', `${base}/index.php?/api/v2/${endpoint}`, endpoint, body ?? {});
+  const upload = (endpoint, file) => {
+    const form = new FormData();
+    form.append('attachment', new Blob([readFileSync(file)]), basename(file));
+    return post(endpoint, form);
+  };
 
   async function getAll(endpoint, key) {
     let data = await get(endpoint);
@@ -371,7 +380,7 @@ export function createClient({ url, user, apiKey, sleep = defaultSleep }) {
     return items;
   }
 
-  return { get, post, getAll };
+  return { get, post, upload, getAll };
 }
 
 function loadDotEnv(dir) {
@@ -453,8 +462,27 @@ function cmdCheck(files, cwd) {
   return failed ? 1 : 0;
 }
 
+const runIdOf = (value) => {
+  const m = String(value ?? '').match(/^R?(\d+)$/i);
+  if (!m) throw new CliError(`Invalid run ID "${value}"; use the number from runs/view/<id>, e.g. R123`);
+  return m[1];
+};
+
+async function loadRunCases(client, runId) {
+  const run = await client.get(`get_run/${runId}`);
+  const tests = await client.getAll(`get_tests/${runId}`, 'tests');
+  return { run, tests, caseIds: new Set(tests.map((t) => t.case_id)) };
+}
+
 async function cmdList(opts, cfg) {
   const client = createClient(cfg);
+  if (opts.run) {
+    const { run, tests } = await loadRunCases(client, runIdOf(opts.run));
+    const labels = new Map((await client.get('get_statuses')).map((s) => [s.id, s.label]));
+    console.log(`R${run.id} ${run.name}${run.is_completed ? ' (closed)' : ''}`);
+    for (const t of tests) console.log(`  C${t.case_id} [${labels.get(t.status_id) ?? t.status_id}] ${t.title}`);
+    return 0;
+  }
   const suiteId = await resolveSuite(client, cfg);
   const sections = await loadSections(client, cfg, suiteId);
   const cases = await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}`, 'cases');
@@ -479,7 +507,8 @@ const slug = (name) => name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').repla
 
 async function cmdPull(opts, cfg, cwd) {
   const client = createClient(cfg);
-  const suiteId = await resolveSuite(client, cfg);
+  const fromRun = opts.run ? await loadRunCases(client, runIdOf(opts.run)) : null;
+  const suiteId = fromRun ? fromRun.run.suite_id : await resolveSuite(client, cfg);
   const priorityNames = new Map((await client.get('get_priorities')).map((p) => [p.id, p.name]));
   const raw = await client.getAll(`get_sections/${cfg.projectId}&suite_id=${suiteId}`, 'sections');
   const sections = raw.map((s) => ({ id: s.id, name: s.name, parent_id: s.parent_id ?? null, description: s.description }));
@@ -497,7 +526,9 @@ async function cmdPull(opts, cfg, cwd) {
     };
     roots.forEach(walk);
   }
-  const cases = await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}`, 'cases');
+  const cases = (await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}`, 'cases')).filter(
+    (c) => !fromRun || fromRun.caseIds.has(c.id),
+  );
   const pathOf = (s) => (s.parent_id !== null && byId.has(s.parent_id) ? `${pathOf(byId.get(s.parent_id))}--${slug(s.name)}` : slug(s.name));
   const targets = selected
     .map((s) => ({ section: s, cases: cases.filter((c) => c.section_id === s.id), base: pathOf(s) || `section-${s.id}` }))
@@ -770,9 +801,206 @@ async function cmdPush(files, opts, cfg, cwd) {
   return 0;
 }
 
+const RESULT_MARKER_RE = /<!--\s*(run|result)\b([\s\S]*?)-->/g;
+const ELAPSED_RE = /^(?=\d)(?:\d+h\s*)?(?:\d+m\s*)?(?:\d+s)?$/;
+const STATUS_ORDER = ['passed', 'failed', 'blocked', 'retest', 'untested'];
+const listOf = (value) => String(value ?? '').split(',').map((v) => v.trim()).filter(Boolean);
+const caseNum = (value) => Number(String(value).replace(/^C/i, ''));
+
+function splitTitle(body) {
+  const lines = body.replace(/\r\n/g, '\n').split('\n');
+  const i = lines.findIndex((l) => l.trim());
+  if (i < 0 || !/^#{1,2}\s/.test(lines[i])) return { title: '', text: body.trim() };
+  return { title: lines[i].replace(/^#+\s*/, '').trim(), text: lines.slice(i + 1).join('\n').trim() };
+}
+
+export function parseResultsMd(text) {
+  const marks = [...text.matchAll(RESULT_MARKER_RE)];
+  const blocks = marks.map((m, i) => {
+    const end = m.index + m[0].length;
+    const body = text.slice(end, i + 1 < marks.length ? marks[i + 1].index : text.length);
+    return { kind: m[1], start: m.index, end, meta: parseMeta(m[2]), ...splitTitle(body) };
+  });
+  return { runs: blocks.filter((b) => b.kind === 'run'), results: blocks.filter((b) => b.kind === 'result') };
+}
+
+export function checkResults(doc, dir) {
+  const problems = [];
+  const [run] = doc.runs;
+  if (doc.runs.length !== 1) problems.push(`needs exactly one <!-- run --> block, found ${doc.runs.length}`);
+  const runId = run?.meta.testrail_run_id;
+  if (runId && !/^R?\d+$/i.test(runId)) problems.push(`invalid testrail_run_id "${runId}"`);
+  if (run && !runId && !run.title) problems.push('the run needs a # title to name the TestRail run');
+  if (!doc.results.some((r) => r.meta.case)) problems.push('no <!-- result --> blocks with a case');
+  const seen = new Set();
+  for (const r of doc.results.filter((x) => x.meta.case)) {
+    const where = r.meta.case;
+    const status = (r.meta.status ?? '').toLowerCase();
+    if (!/^C?\d+$/i.test(r.meta.case)) problems.push(`${where}: case must be a TestRail case ID like C123`);
+    else if (seen.has(caseNum(r.meta.case))) problems.push(`${where}: duplicate case`);
+    else seen.add(caseNum(r.meta.case));
+    if (!status) problems.push(`${where}: missing status`);
+    if (r.meta.elapsed && !ELAPSED_RE.test(r.meta.elapsed)) problems.push(`${where}: elapsed must look like 1m 30s, got "${r.meta.elapsed}"`);
+    if (r.meta.testrail_result_id && !runId) problems.push(`${where}: has testrail_result_id but the run has no testrail_run_id`);
+    if (r.meta.testrail_result_id && status === 'untested') problems.push(`${where}: TestRail cannot set a posted result back to untested`);
+    for (const f of listOf(r.meta.evidence)) if (!existsSync(resolve(dir, f))) problems.push(`${where}: evidence file not found: ${f}`);
+  }
+  return problems;
+}
+
+export function writeBackResults(text, { run = {}, results = [] } = {}) {
+  const doc = parseResultsMd(text);
+  const edits = new Map();
+  const add = (block, key, value) => edits.set(block, [...(edits.get(block) ?? []), [key, value]]);
+  for (const [key, value] of Object.entries(run)) add(doc.runs[0], key, value);
+  for (const { index, key, value } of results) add(doc.results[index], key, value);
+  let out = text;
+  for (const [b, pairs] of [...edits].sort(([x], [y]) => y.start - x.start)) {
+    const raw = pairs.reduce((acc, [key, value]) => setMetaLine(acc, key, value), out.slice(b.start, b.end));
+    out = out.slice(0, b.start) + raw + out.slice(b.end);
+  }
+  return out;
+}
+
+async function resolveMilestone(client, cfg, name) {
+  const all = flattenMilestones(await client.getAll(`get_milestones/${cfg.projectId}`, 'milestones'));
+  const found = [...new Map(all.map((m) => [m.id, m])).values()].filter((m) => m.name.trim().toLowerCase() === name.trim().toLowerCase());
+  if (found.length === 1) return found[0].id;
+  const listing = all.map((m) => `  ${m.name}`).join('\n');
+  throw new CliError(`${found.length ? 'Several milestones' : 'No milestone'} named ${JSON.stringify(name)}. Milestones:\n${listing}`);
+}
+
+async function cmdResults(files, opts, cfg, cwd) {
+  if (files.length !== 1) throw new CliError('results needs exactly one results file');
+  const path = resolve(cwd, files[0]);
+  if (!existsSync(path)) throw new CliError(`File not found: ${files[0]}`);
+  const dir = dirname(path);
+  let text = readFileSync(path, 'utf8');
+  const doc = parseResultsMd(text);
+  const problems = checkResults(doc, dir);
+  if (problems.length) throw new CliError(`${files[0]}:\n${problems.map((p) => `  ${p}`).join('\n')}`);
+
+  const dry = Boolean(opts['dry-run']);
+  const tag = dry ? '[dry-run] ' : '';
+  const persist = (edits) => {
+    text = writeBackResults(text, edits);
+    if (!dry) writeFileSync(path, text);
+  };
+  const client = createClient(cfg);
+  const statuses = await client.get('get_statuses');
+  const statusIdOf = (name) => statuses.find((s) => [s.name, s.label].some((v) => v?.toLowerCase() === name))?.id;
+  const local = doc.results.filter((r) => !r.meta.case);
+  for (const r of local) console.log(`${tag}skip ${JSON.stringify(r.title)}: no TestRail case`);
+  const unknown = [...new Set(doc.results.filter((r) => r.meta.case).map((r) => r.meta.status.toLowerCase()))].filter((s) => s !== 'untested' && !statusIdOf(s));
+  if (unknown.length) {
+    throw new CliError(`Unknown status ${unknown.map((s) => `"${s}"`).join(', ')}; TestRail statuses: ${statuses.map((s) => s.label).join(', ')}`);
+  }
+
+  const [run] = doc.runs;
+  const caseIds = doc.results.filter((r) => r.meta.case).map((r) => caseNum(r.meta.case));
+  let runId = run.meta.testrail_run_id ? runIdOf(run.meta.testrail_run_id) : null;
+  let tests = [];
+  let posted = new Map();
+  if (runId) {
+    const loaded = await loadRunCases(client, runId);
+    if (loaded.run.is_completed) throw new CliError(`Run R${runId} is closed; TestRail does not take results for a closed run`);
+    const missing = caseIds.filter((id) => !loaded.caseIds.has(id));
+    if (missing.length) throw new CliError(`Not in run R${runId}: ${missing.map((id) => `C${id}`).join(', ')}`);
+    tests = loaded.tests;
+    if (doc.results.some((r) => r.meta.testrail_result_id)) {
+      posted = new Map((await client.getAll(`get_results_for_run/${runId}`, 'results')).map((r) => [String(r.id), r]));
+    }
+  } else {
+    const body = { suite_id: await resolveSuite(client, cfg), name: run.title, include_all: false, case_ids: caseIds };
+    if (run.text) body.description = run.text;
+    if (run.meta.refs) body.refs = run.meta.refs;
+    if (run.meta.milestone) body.milestone_id = await resolveMilestone(client, cfg, run.meta.milestone);
+    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`].filter(Boolean);
+    console.log(`${tag}create run ${JSON.stringify(run.title)} with ${caseIds.length} cases${extras.length ? ` (${extras.join(', ')})` : ''}`);
+    if (!dry) {
+      runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
+      persist({ run: { testrail_run_id: `R${runId}` } });
+      tests = (await loadRunCases(client, runId)).tests;
+    }
+  }
+
+  const plan = doc.results.flatMap((r, index) => (r.meta.case ? [{ r, index }] : [])).map(({ r, index }) => {
+    const status = r.meta.status.toLowerCase();
+    const attached = listOf(r.meta.testrail_attachments);
+    const item = { index, caseId: caseNum(r.meta.case), status, attached, resultId: r.meta.testrail_result_id };
+    if (status === 'untested') return { ...item, action: 'untested', files: [] };
+    item.files = listOf(r.meta.evidence).filter((f) => !attached.includes(f));
+    const result = { case_id: item.caseId, status_id: statusIdOf(status) };
+    const version = r.meta.build || run.meta.build;
+    if (version) result.version = version;
+    if (r.meta.defects) result.defects = r.meta.defects;
+    if (!item.resultId) {
+      if (r.text) result.comment = r.text;
+      if (r.meta.elapsed) result.elapsed = r.meta.elapsed;
+      return { ...item, action: 'add', result };
+    }
+    const prev = posted.get(item.resultId);
+    if (!prev) throw new CliError(`C${item.caseId}: result ${item.resultId} is not in run R${runId}`);
+    if (prev.status_id !== result.status_id) {
+      item.attached = [];
+      item.files = listOf(r.meta.evidence);
+      return { ...item, action: 'correct', result: { ...result, comment: ['Corrected result.', r.text].filter(Boolean).join('\n\n') } };
+    }
+    const keys = (v) => splitKeys(v).sort().join();
+    if (keys(prev.defects) !== keys(r.meta.defects)) return { ...item, action: 'defects', result: { ...result, comment: 'Defects updated.' } };
+    return { ...item, action: 'in sync' };
+  });
+
+  const verbs = { add: 'add', correct: 'correct', defects: 'update defects of' };
+  for (const p of plan) {
+    const parts = [];
+    if (verbs[p.action]) parts.push(`${verbs[p.action]} C${p.caseId} ${p.status}${p.result.defects ? ` (defects ${p.result.defects})` : ''}`);
+    if (p.files.length) parts.push(`attach ${p.files.join(', ')}${verbs[p.action] ? '' : ` to C${p.caseId}`}`);
+    if (parts.length) console.log(`${tag}${parts.join(', ')}`);
+  }
+
+  const toPost = plan.filter((p) => verbs[p.action]);
+  if (!dry && toPost.length) {
+    const created = await client.post(`add_results_for_cases/${runId}`, { results: toPost.map((p) => p.result) });
+    const caseOfTest = new Map(tests.map((t) => [t.id, t.case_id]));
+    for (const res of created ?? []) {
+      const p = toPost.find((x) => x.caseId === caseOfTest.get(res.test_id));
+      if (p) p.resultId = String(res.id);
+    }
+    const lost = toPost.filter((p) => !(created ?? []).some((res) => String(res.id) === p.resultId));
+    const saved = toPost.filter((p) => !lost.includes(p));
+    persist({
+      results: saved.flatMap((p) => [
+        { index: p.index, key: 'testrail_result_id', value: p.resultId },
+        ...(p.action === 'correct' ? [{ index: p.index, key: 'testrail_attachments', value: '' }] : []),
+      ]),
+    });
+    if (lost.length) throw new ApiError(`TestRail returned no result for ${lost.map((p) => `C${p.caseId}`).join(', ')}; check run R${runId} before running again`);
+  }
+  if (!dry) {
+    for (const p of plan) {
+      for (const f of p.files) {
+        await client.upload(`add_attachment_to_result/${p.resultId}`, resolve(dir, f));
+        p.attached.push(f);
+        persist({ results: [{ index: p.index, key: 'testrail_attachments', value: p.attached.join(', ') }] });
+      }
+    }
+  }
+
+  const count = (action) => plan.filter((p) => p.action === action).length;
+  const seen = [...new Set(plan.map((p) => p.status))].sort((a, b) => (STATUS_ORDER.indexOf(a) + 1 || 99) - (STATUS_ORDER.indexOf(b) + 1 || 99));
+  console.log(
+    `${tag}${files[0]}: ${seen.map((s) => `${s} ${plan.filter((p) => p.status === s).length}`).join(', ')}; ` +
+      `results added ${count('add')}, corrected ${count('correct')}, defects updated ${count('defects')}, in sync ${count('in sync')}; ` +
+      `files attached ${plan.reduce((n, p) => n + p.files.length, 0)}${local.length ? `; skipped without a case ${local.length}` : ''}`,
+  );
+  if (runId) console.log(`${cfg.url.replace(/\/+$/, '')}/index.php?/runs/view/${runId}`);
+  return 0;
+}
+
 export async function main(argv = process.argv.slice(2), env = process.env, cwd = process.cwd()) {
   const [command, ...rest] = argv;
-  if (!['check', 'list', 'push', 'pull', 'runs'].includes(command)) {
+  if (!['check', 'list', 'push', 'pull', 'runs', 'results'].includes(command)) {
     console.error(USAGE);
     return 1;
   }
@@ -793,6 +1021,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
           since: { type: 'string' },
           active: { type: 'boolean' },
           details: { type: 'boolean' },
+          run: { type: 'string' },
         },
       });
     } catch (e) {
@@ -804,6 +1033,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
     if (command === 'list') return await cmdList(values, cfg);
     if (command === 'pull') return await cmdPull(values, cfg, cwd);
     if (command === 'runs') return await cmdRuns(values, cfg);
+    if (command === 'results') return await cmdResults(positionals, values, cfg, cwd);
     return await cmdPush(positionals, values, cfg, cwd);
   } catch (e) {
     console.error(e.message);

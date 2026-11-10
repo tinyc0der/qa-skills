@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { buildPriorityMap, parseTestMd, toCasePayload, writeBackIds } from '../../skills/sync-test-cases-with-testrail/scripts/testrail.mjs';
+import { buildPriorityMap, checkResults, parseResultsMd, parseTestMd, toCasePayload, writeBackIds, writeBackResults } from '../../skills/sync-test-cases-with-testrail/scripts/testrail.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SCRIPT = join(here, '../../skills/sync-test-cases-with-testrail/scripts/testrail.mjs');
@@ -378,6 +378,14 @@ function startMock(opts = {}) {
     nextCase: 100,
     limited: 0,
     failed: 0,
+    runs: [...(opts.runs ?? [])],
+    tests: { ...(opts.tests ?? {}) },
+    results: { ...(opts.results ?? {}) },
+    uploads: [],
+    uploadFailed: 0,
+    nextRun: 500,
+    nextTest: 9000,
+    nextResult: 7000,
   };
   const json = (res, status, body, headers = {}) => {
     res.writeHead(status, { 'Content-Type': 'application/json', ...headers });
@@ -390,7 +398,8 @@ function startMock(opts = {}) {
       const m = req.url.match(/^\/index\.php\?\/api\/v2\/([a-z_]+)\/?([^&]*)(?:&(.*))?$/);
       const [, name, id, qs] = m ?? [];
       const query = new URLSearchParams(qs ?? '');
-      const body = raw ? JSON.parse(raw) : undefined;
+      const multipart = /^multipart\//.test(req.headers['content-type'] ?? '');
+      const body = raw && !multipart ? JSON.parse(raw) : multipart ? raw : undefined;
       state.requests.push({ method: req.method, name, id, query, body });
       const expected = `Basic ${Buffer.from('qa@example.com:secret-key').toString('base64')}`;
       if (req.headers.authorization !== expected) return json(res, 401, { error: 'bad auth' });
@@ -452,19 +461,49 @@ function startMock(opts = {}) {
         case 'get_milestones':
           return json(res, 200, { _links: { next: null }, milestones: opts.milestones ?? [] });
         case 'get_runs':
-          return json(res, 200, { _links: { next: null }, runs: opts.runs ?? [] });
+          return json(res, 200, { _links: { next: null }, runs: state.runs });
+        case 'get_run': {
+          const run = state.runs.find((r) => r.id === Number(id));
+          return run ? json(res, 200, run) : json(res, 400, { error: 'Field :run_id is not a valid test run.' });
+        }
+        case 'add_run': {
+          const run = { id: state.nextRun++, ...body, is_completed: false };
+          state.runs.push(run);
+          state.tests[run.id] = body.case_ids.map((caseId) => ({ id: state.nextTest++, case_id: caseId, status_id: 3, title: `Case ${caseId}` }));
+          return json(res, 200, run);
+        }
+        case 'add_results_for_cases': {
+          const tests = state.tests[id] ?? [];
+          const created = body.results.map((r) => {
+            const test = tests.find((t) => t.case_id === r.case_id);
+            const { case_id, ...rest } = r;
+            const result = { id: state.nextResult++, test_id: test.id, ...rest };
+            test.status_id = r.status_id;
+            (state.results[id] ??= []).push(result);
+            return result;
+          });
+          return json(res, 200, created);
+        }
+        case 'add_attachment_to_result': {
+          if (opts.failUploadAfter !== undefined && state.uploads.length >= opts.failUploadAfter && !state.uploadFailed++) {
+            return json(res, 500, { error: 'disk full' });
+          }
+          const name = raw.match(/filename="([^"]+)"/)?.[1];
+          state.uploads.push({ resultId: Number(id), name });
+          return json(res, 200, { attachment_id: state.uploads.length });
+        }
         case 'get_plans':
           return json(res, 200, { _links: { next: null }, plans: (opts.plans ?? []).map(({ entries, ...p }) => p) });
         case 'get_plan':
           return json(res, 200, opts.plans.find((p) => p.id === Number(id)));
         case 'get_tests': {
-          const wanted = query.get('status_id').split(',').map(Number);
-          const tests = (opts.tests?.[id] ?? []).filter((t) => wanted.includes(t.status_id));
+          const wanted = query.get('status_id')?.split(',').map(Number);
+          const tests = (state.tests[id] ?? []).filter((t) => !wanted || wanted.includes(t.status_id));
           return json(res, 200, { _links: { next: null }, tests });
         }
         case 'get_results_for_run': {
-          const wanted = query.get('status_id').split(',').map(Number);
-          const results = (opts.results?.[id] ?? []).filter((r) => wanted.includes(r.status_id));
+          const wanted = query.get('status_id')?.split(',').map(Number);
+          const results = (state.results[id] ?? []).filter((r) => !wanted || wanted.includes(r.status_id));
           return json(res, 200, { _links: { next: null }, results });
         }
         default:
@@ -968,4 +1007,317 @@ test('runs --details lists non-passed tests with the latest result that set thei
   assert.ok(run.stdout.indexOf('C900') < run.stdout.indexOf('C902') && run.stdout.indexOf('C902') < run.stdout.indexOf('C901'));
   assert.doesNotMatch(run.stdout, /C903|old failure|ABC-6/);
   assert.equal(run.requests.find((r) => r.name === 'get_tests').query.get('status_id'), '5,2,4,6');
+});
+
+const RESULTS_MD = `<!-- run
+refs: PROJ-1
+milestone: Sprint 12
+build: staging · 2.14.3
+-->
+
+# PROJ-1 Login
+
+- Environment: https://staging.example.com, account qa-admin
+
+<!-- result
+case: C11
+status: passed
+elapsed: 1m 10s
+evidence: C11.png
+-->
+
+## C11 Successful login
+
+<!-- result
+case: C12
+status: failed
+elapsed: 2m 15s
+evidence: C12.png, C12-02.png
+-->
+
+## C12 Locked account
+
+**Step 3 failed: lock message**
+- Expected: "Account locked" message
+- Actual: "Invalid password" message
+
+<!-- result
+case: C13
+status: untested
+-->
+
+## C13 Password reset
+
+Not run: the reset email never arrived.
+`;
+
+function resultsDir(text = RESULTS_MD) {
+  const dir = mkdtempSync(join(tmpdir(), 'testrail-results-'));
+  writeFileSync(join(dir, 'results.md'), text);
+  for (const f of ['C11.png', 'C12.png', 'C12-02.png']) writeFileSync(join(dir, f), 'png');
+  return dir;
+}
+
+const resultsMock = (extra = {}) => startMock({ milestones: [{ id: 3, name: 'Sprint 12', milestones: [] }], ...extra });
+
+test('parseResultsMd reads the run and result blocks with titles and bodies', () => {
+  const doc = parseResultsMd(RESULTS_MD);
+  assert.equal(doc.runs.length, 1);
+  assert.equal(doc.runs[0].title, 'PROJ-1 Login');
+  assert.equal(doc.runs[0].text, '- Environment: https://staging.example.com, account qa-admin');
+  assert.deepEqual(doc.results.map((r) => [r.meta.case, r.meta.status, r.title]), [
+    ['C11', 'passed', 'C11 Successful login'],
+    ['C12', 'failed', 'C12 Locked account'],
+    ['C13', 'untested', 'C13 Password reset'],
+  ]);
+  assert.equal(doc.results[0].text, '');
+  assert.match(doc.results[1].text, /^\*\*Step 3 failed: lock message\*\*\n- Expected/);
+});
+
+test('checkResults reports every problem in one pass', () => {
+  const dir = resultsDir();
+  const bad = `<!-- run -->\n\n<!-- run -->\n\n<!-- result\ncase: 12x\nelapsed: soon\nevidence: missing.png\n-->\n\n<!-- result\ncase: C5\nstatus: untested\ntestrail_result_id: 9\n-->\n\n<!-- result\ncase: C5\nstatus: passed\n-->\n`;
+  assert.deepEqual(checkResults(parseResultsMd(bad), dir), [
+    'needs exactly one <!-- run --> block, found 2',
+    'the run needs a # title to name the TestRail run',
+    '12x: case must be a TestRail case ID like C123',
+    '12x: missing status',
+    '12x: elapsed must look like 1m 30s, got "soon"',
+    '12x: evidence file not found: missing.png',
+    'C5: has testrail_result_id but the run has no testrail_run_id',
+    'C5: TestRail cannot set a posted result back to untested',
+    'C5: duplicate case',
+  ]);
+  assert.deepEqual(checkResults(parseResultsMd(RESULTS_MD), dir), []);
+});
+
+test('writeBackResults sets several keys on one block without corrupting the next', () => {
+  const text = '<!-- run -->\n\n# R\n\n<!-- result\ncase: C1\n-->\n\n<!-- result\ncase: C2\n-->\n';
+  const out = writeBackResults(text, {
+    run: { testrail_run_id: 'R5' },
+    results: [
+      { index: 0, key: 'testrail_result_id', value: '70' },
+      { index: 0, key: 'testrail_attachments', value: 'a.png' },
+      { index: 1, key: 'testrail_result_id', value: '71' },
+    ],
+  });
+  assert.equal(
+    out,
+    '<!-- run\ntestrail_run_id: R5\n-->\n\n# R\n\n<!-- result\ncase: C1\ntestrail_result_id: 70\ntestrail_attachments: a.png\n-->\n\n<!-- result\ncase: C2\ntestrail_result_id: 71\n-->\n',
+  );
+});
+
+test('results creates the run, posts results, attaches evidence, writes IDs back, then finds nothing to do', async () => {
+  const mock = await resultsMock();
+  const cwd = resultsDir();
+  const file = join(cwd, 'results.md');
+  try {
+    const first = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(first.code, 0, first.stderr);
+    const [addRun] = named(mock.state, 'add_run');
+    assert.deepEqual(addRun.body, {
+      suite_id: 1,
+      name: 'PROJ-1 Login',
+      include_all: false,
+      case_ids: [11, 12, 13],
+      description: '- Environment: https://staging.example.com, account qa-admin',
+      refs: 'PROJ-1',
+      milestone_id: 3,
+    });
+    const [post] = named(mock.state, 'add_results_for_cases');
+    assert.equal(post.id, '500');
+    assert.deepEqual(post.body.results, [
+      { case_id: 11, status_id: 1, version: 'staging · 2.14.3', elapsed: '1m 10s' },
+      {
+        case_id: 12,
+        status_id: 5,
+        version: 'staging · 2.14.3',
+        comment: '**Step 3 failed: lock message**\n- Expected: "Account locked" message\n- Actual: "Invalid password" message',
+        elapsed: '2m 15s',
+      },
+    ]);
+    assert.deepEqual(mock.state.uploads, [
+      { resultId: 7000, name: 'C11.png' },
+      { resultId: 7001, name: 'C12.png' },
+      { resultId: 7001, name: 'C12-02.png' },
+    ]);
+    const written = readFileSync(file, 'utf8');
+    assert.match(written, /build: staging · 2\.14\.3\ntestrail_run_id: R500\n-->/);
+    assert.match(written, /evidence: C11\.png\ntestrail_result_id: 7000\ntestrail_attachments: C11\.png\n-->/);
+    assert.match(written, /testrail_result_id: 7001\ntestrail_attachments: C12\.png, C12-02\.png\n-->/);
+    assert.match(written, /case: C13\nstatus: untested\n-->/);
+    assert.match(first.stdout, /passed 1, failed 1, untested 1; results added 2, corrected 0, defects updated 0, in sync 0; files attached 3/);
+    assert.match(first.stdout, /index\.php\?\/runs\/view\/500/);
+
+    mock.state.requests.length = 0;
+    const second = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(second.code, 0, second.stderr);
+    assert.deepEqual(posts(mock.state), []);
+    assert.equal(readFileSync(file, 'utf8'), written);
+    assert.match(second.stdout, /results added 0, corrected 0, defects updated 0, in sync 2; files attached 0/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results posts a correction for a changed status and a defects-only result for a new Bug key', async () => {
+  const mock = await resultsMock();
+  const cwd = resultsDir();
+  const file = join(cwd, 'results.md');
+  try {
+    assert.equal((await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd })).code, 0);
+    const edited = readFileSync(file, 'utf8')
+      .replace('case: C11\nstatus: passed', 'case: C11\nstatus: blocked')
+      .replace('## C11 Successful login\n', '## C11 Successful login\n\n**Blocked: SSO page down**\n')
+      .replace('case: C12\nstatus: failed', 'case: C12\nstatus: failed\ndefects: PROJ-9');
+    writeFileSync(file, edited);
+    mock.state.requests.length = 0;
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(named(mock.state, 'add_results_for_cases')[0].body.results, [
+      { case_id: 11, status_id: 2, version: 'staging · 2.14.3', comment: 'Corrected result.\n\n**Blocked: SSO page down**' },
+      { case_id: 12, status_id: 5, version: 'staging · 2.14.3', defects: 'PROJ-9', comment: 'Defects updated.' },
+    ]);
+    assert.deepEqual(mock.state.uploads.slice(3), [{ resultId: 7002, name: 'C11.png' }]);
+    const written = readFileSync(file, 'utf8');
+    assert.match(written, /testrail_result_id: 7002\ntestrail_attachments: C11\.png\n/);
+    assert.match(written, /testrail_result_id: 7003\n/);
+    assert.match(run.stdout, /correct C11 blocked/);
+    assert.match(run.stdout, /update defects of C12 failed \(defects PROJ-9\)/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results --dry-run plans without writing to TestRail or the file', async () => {
+  const mock = await resultsMock();
+  const cwd = resultsDir();
+  const file = join(cwd, 'results.md');
+  try {
+    const run = await runCli(['results', 'results.md', '--dry-run'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(posts(mock.state), []);
+    assert.equal(readFileSync(file, 'utf8'), RESULTS_MD);
+    assert.match(run.stdout, /\[dry-run\] create run "PROJ-1 Login" with 3 cases \(refs PROJ-1, milestone Sprint 12\)/);
+    assert.match(run.stdout, /\[dry-run\] add C12 failed, attach C12\.png, C12-02\.png/);
+    assert.doesNotMatch(run.stdout, /C13/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results resumes after a failed upload without posting the results again', async () => {
+  const mock = await resultsMock({ failUploadAfter: 1 });
+  const cwd = resultsDir();
+  const file = join(cwd, 'results.md');
+  try {
+    const first = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(first.code, 2);
+    assert.match(first.stderr, /add_attachment_to_result\/7001 failed with HTTP 500/);
+    assert.match(readFileSync(file, 'utf8'), /testrail_result_id: 7001\n-->/);
+
+    mock.state.requests.length = 0;
+    const second = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(second.code, 0, second.stderr);
+    assert.deepEqual(named(mock.state, 'add_results_for_cases'), []);
+    assert.deepEqual(named(mock.state, 'add_run'), []);
+    assert.deepEqual(mock.state.uploads.map((u) => `${u.resultId} ${u.name}`), ['7000 C11.png', '7001 C12.png', '7001 C12-02.png']);
+    assert.match(readFileSync(file, 'utf8'), /testrail_attachments: C12\.png, C12-02\.png\n-->/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results refuses a closed run, cases outside the run, and unknown statuses before writing', async () => {
+  const tests = { 40: [{ id: 1, case_id: 11, status_id: 3 }, { id: 2, case_id: 12, status_id: 3 }] };
+  const mock = await resultsMock({ runs: [{ id: 40, name: 'Open', is_completed: false }, { id: 41, name: 'Done', is_completed: true }], tests });
+  const env = baseEnv(mock.port);
+  try {
+    const outside = resultsDir(RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: R40\n'));
+    const a = await runCli(['results', 'results.md'], { env, cwd: outside });
+    assert.equal(a.code, 1);
+    assert.match(a.stderr, /Not in run R40: C13/);
+
+    const closed = resultsDir(RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: 41\n'));
+    const b = await runCli(['results', 'results.md'], { env, cwd: closed });
+    assert.equal(b.code, 1);
+    assert.match(b.stderr, /Run R41 is closed/);
+
+    const unknown = resultsDir(RESULTS_MD.replace('status: passed', 'status: done'));
+    const c = await runCli(['results', 'results.md'], { env, cwd: unknown });
+    assert.equal(c.code, 1);
+    assert.match(c.stderr, /Unknown status "done"; TestRail statuses: Passed, Blocked/);
+
+    const invalid = resultsDir(RESULTS_MD.replace('elapsed: 1m 10s', 'elapsed: 70'));
+    const d = await runCli(['results', 'results.md'], { env, cwd: invalid });
+    assert.equal(d.code, 1);
+    assert.match(d.stderr, /C11: elapsed must look like 1m 30s, got "70"/);
+    assert.deepEqual(posts(mock.state), []);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results adds to an existing open run without creating one', async () => {
+  const tests = { 40: [11, 12, 13].map((c, i) => ({ id: 100 + i, case_id: c, status_id: 3 })) };
+  const mock = await resultsMock({ runs: [{ id: 40, name: 'Open', is_completed: false }], tests });
+  const cwd = resultsDir(RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: R40\n'));
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(named(mock.state, 'add_run'), []);
+    assert.equal(named(mock.state, 'add_results_for_cases')[0].id, '40');
+    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /case: C11\nstatus: passed\nelapsed: 1m 10s\nevidence: C11\.png\ntestrail_result_id: 7000/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('list --run prints the run cases with status; pull --run keeps only the run cases', async () => {
+  const sections = [{ id: 1, name: 'Login', parent_id: null }];
+  const cases = [
+    { id: 11, section_id: 1, title: 'Successful login', priority_id: 2 },
+    { id: 12, section_id: 1, title: 'Locked account', priority_id: 2 },
+  ];
+  const tests = { 40: [{ id: 100, case_id: 12, status_id: 5, title: 'Locked account' }] };
+  const mock = await startMock({ sections, cases, runs: [{ id: 40, name: 'Sprint run', suite_id: 1, is_completed: false }], tests });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-run-'));
+  try {
+    const list = await runCli(['list', '--run', 'R40'], { env: baseEnv(mock.port), cwd });
+    assert.equal(list.code, 0, list.stderr);
+    assert.equal(list.stdout, 'R40 Sprint run\n  C12 [Failed] Locked account\n');
+
+    const pull = await runCli(['pull', '--run', '40', '--out', 'cases'], { env: baseEnv(mock.port), cwd });
+    assert.equal(pull.code, 0, pull.stderr);
+    const text = readFileSync(join(cwd, 'cases', 'login.test.md'), 'utf8');
+    assert.match(text, /testrail_id: C12/);
+    assert.doesNotMatch(text, /C11/);
+    assert.deepEqual(named(mock.state, 'get_suites'), []);
+
+    const bad = await runCli(['list', '--run', 'run-40'], { env: baseEnv(mock.port), cwd });
+    assert.equal(bad.code, 1);
+    assert.match(bad.stderr, /Invalid run ID "run-40"/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results skips local-only cases and keeps a $ in file names intact', async () => {
+  const mock = await resultsMock();
+  const text = RESULTS_MD.replace('evidence: C12.png, C12-02.png', () => "evidence: C12.png, a$'b.png").replace(
+    '<!-- result\ncase: C13',
+    '<!-- result\ncase:\nstatus: passed\n-->\n\n## New case not on TestRail\n\n<!-- result\ncase: C13',
+  );
+  const cwd = resultsDir(text);
+  writeFileSync(join(cwd, "a$'b.png"), 'png');
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(named(mock.state, 'add_run')[0].body.case_ids, [11, 12, 13]);
+    assert.match(run.stdout, /skip "New case not on TestRail": no TestRail case/);
+    assert.match(run.stdout, /skipped without a case 1/);
+    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /testrail_attachments: C12\.png, a\$'b\.png\n/);
+  } finally {
+    await mock.close();
+  }
 });
