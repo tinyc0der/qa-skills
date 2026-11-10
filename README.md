@@ -26,7 +26,7 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 | TestRail   | Test cases                                   | `.env` with the variables listed in [`sync-test-cases-with-testrail`](./skills/sync-test-cases-with-testrail/SKILL.md) |
 | Live app   | Exploring and checking actual behavior       | A staging URL and [agent-browser](https://github.com/vercel-labs/agent-browser): `npm i -g agent-browser && agent-browser install`, then `npx skills add vercel-labs/agent-browser` |
 
-Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
+Keep test cases (`test-cases/`), test run results (`test-runs/`), automation lessons (`automation-lessons/`), and `.env` in one shared QA workspace repo. `automation-lessons/` holds one file per app with the deep links, waits, and session tips that make the next run faster.
 
 ## Skills
 
@@ -46,7 +46,8 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 | `qa-write-test-cases`           | Generate TestRail test cases and checklists from Jira, Confluence, Figma, or the live app |
 | `improve-test-cases`            | Improve existing test cases for clarity and format                                  |
 | `detect-duplicate-test-cases`   | Find duplicate, overlapping, and low-value test cases                               |
-| `sync-test-cases-with-testrail` | Push test cases to TestRail, pull existing cases, and list sections                 |
+| `sync-test-cases-with-testrail` | Push test cases to TestRail, pull existing cases, list sections, and push run results |
+| `run-test-suite`                | Run test cases on the live app, record results with evidence, and push them to a TestRail run |
 
 ### Bugs
 
@@ -66,8 +67,9 @@ Keep test cases (`test-cases/`) and `.env` in one shared QA workspace repo.
 1. Review the Jira story with `qa-thinking` or `review-user-story`.
 2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`.
 3. Push to TestRail with `sync-test-cases-with-testrail` after a dry run.
-4. File a Jira Bug for each defect found, with `report-bug`.
-5. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+4. Run the cases on the live app with `run-test-suite`. It pushes the results to a TestRail run.
+5. File a Jira Bug for each failed case, with `report-bug`.
+6. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
 
 ## Claude Code plugins
 
@@ -76,7 +78,7 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `requirements`    | `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `report-bug`, `review-user-story`, `qa-thinking` |
+| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking` |
 | `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
 
 ## Repository structure

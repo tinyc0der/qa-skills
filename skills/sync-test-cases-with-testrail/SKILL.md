@@ -1,11 +1,11 @@
 ---
 name: sync-test-cases-with-testrail
-description: Push Markdown test cases (`*.test.md`) to TestRail through its API, pull (download, export) existing TestRail cases into `*.test.md` files, and list TestRail sections and cases. Use when the user wants to upload, push, import, or sync test cases to TestRail, pull, download, or export cases from TestRail, or check which TestRail cases already exist for a feature.
+description: Push Markdown test cases (`*.test.md`) to TestRail through its API, pull (download, export) existing TestRail cases into `*.test.md` files, list TestRail sections and cases, and push a test run's results (`results.md` from `run-test-suite`). Use when the user wants to upload, push, import, or sync test cases to TestRail, pull, download, or export cases from TestRail, check which TestRail cases already exist for a feature, or push test run results.
 ---
 
 # Sync Test Cases with TestRail
 
-Pushes `*.test.md` files to TestRail as sections and cases, pulls existing cases back into `*.test.md` files, and lists existing case titles. The script is [scripts/testrail.mjs](./scripts/testrail.mjs) (Node 18+, no dependencies). The file format is defined in the `qa-write-test-cases` skill's [`references/testrail-test-case-format.md`](../qa-write-test-cases/references/testrail-test-case-format.md).
+Pushes `*.test.md` files to TestRail as sections and cases, pulls existing cases back into `*.test.md` files, lists existing case titles, and pushes test run results. The script is [scripts/testrail.mjs](./scripts/testrail.mjs) (Node 18+, no dependencies). The file format is defined in the `qa-write-test-cases` skill's [`references/testrail-test-case-format.md`](../qa-write-test-cases/references/testrail-test-case-format.md).
 
 ## Setup
 
@@ -30,14 +30,18 @@ Run from the project root. `<skill>` is this skill's directory.
 ```bash
 node <skill>/scripts/testrail.mjs check <files...>
 node <skill>/scripts/testrail.mjs list [--section <name>]
-node <skill>/scripts/testrail.mjs pull [--section <name>] [--out <dir>] [--overwrite]
+node <skill>/scripts/testrail.mjs list --run <id>
+node <skill>/scripts/testrail.mjs pull [--section <name>] [--run <id>] [--out <dir>] [--overwrite]
 node <skill>/scripts/testrail.mjs push <files...> --dry-run [--parent-section <name>]
 node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>]
+node <skill>/scripts/testrail.mjs results <results.md> --dry-run
+node <skill>/scripts/testrail.mjs results <results.md>
 ```
 
 - `check` validates the files offline. It needs no credentials.
-- `list` prints the section tree and case titles with their `C<id>`.
-- `pull` downloads cases into `*.test.md` files. `--out` defaults to `test-cases/`.
+- `list` prints the section tree and case titles with their `C<id>`. `list --run` prints a run's cases with their status in the run.
+- `pull` downloads cases into `*.test.md` files. `--out` defaults to `test-cases/`. `--run` keeps only the run's cases.
+- `results` pushes a run's results. The `run-test-suite` skill owns the flow and the [Results Format](../run-test-suite/references/results-format.md).
 - Use only the options listed here.
 
 ## Push

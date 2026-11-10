@@ -1,6 +1,6 @@
 ---
 name: testing-workflow
-description: Orchestrate the manual test case lifecycle from requirements in Jira, Confluence, and Figma to test cases in TestRail. Review requirements, write user stories, catalog features, compare sources, analyze risks, generate test cases and checklists, improve them, find duplicates, check behavior on the live app, and push, list, or pull TestRail cases. Use this skill when you need to manage the whole testing workflow or do one of these tasks. This is the tactical/execution layer triggered by concrete task verbs. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
+description: Orchestrate the manual test case lifecycle from requirements in Jira, Confluence, and Figma to test cases in TestRail. Review requirements, write user stories, catalog features, compare sources, analyze risks, generate test cases and checklists, improve them, find duplicates, check behavior on the live app, run test cases and record results in TestRail, and push, list, or pull TestRail cases. Use this skill when you need to manage the whole testing workflow or do one of these tasks. This is the tactical/execution layer triggered by concrete task verbs. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
 ---
 
 # Testing Workflow
@@ -19,6 +19,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 | `improve-test-cases`            | Improve existing test cases quality                                         |
 | `detect-duplicate-test-cases`   | Find duplicate, near-duplicate, and overlapping test cases                  |
 | `sync-test-cases-with-testrail` | Push test cases to TestRail, list existing cases, pull them into files      |
+| `run-test-suite`                | Run test cases on the live app and push the results to a TestRail run       |
 | `report-bug`                    | Create a Jira Bug from a failed case or a live app defect                   |
 | `agent-browser`                 | Check behavior on the live app in a browser                                 |
 
@@ -30,6 +31,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
 - **Catalog features of a source** (a Jira project, a Confluence space, a Figma file, a TestRail suite, the live app) → route to the `catalog-features` skill.
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
+- **Run test cases** (a suite, a ticket's cases, regression, smoke, a TestRail run) → route to the `run-test-suite` skill.
 - **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
 - **Strategic intent** ("where do I start", "improve our QA process", "QA maturity review") → route to the `qa-lead-strategy-advisor` skill instead. It owns the high-level roadmap and delegates execution back here.
@@ -70,6 +72,18 @@ Use `improve-test-cases` skill to proceed with test case improvement
 After improvement step fully completed, suggest next actions:
 1. ⬆️ Push the updated test cases to TestRail (with `sync-test-cases-with-testrail` skill)
 2. 🧹 Check for duplicate/overlapping cases (with `detect-duplicate-test-cases` skill)
+```
+
+### Test Run Flow
+
+```
+User: asks to run test cases, a suite, regression, smoke, or a TestRail run
+=>
+Use `run-test-suite` skill to run the cases on the live app and push the results to TestRail
+=>
+After the run fully completed, suggest next actions:
+1. 🐞 File a Jira Bug for each failed case (with `report-bug` skill)
+2. ✏️ Fix the cases marked "case needs fix" (with `improve-test-cases` skill)
 ```
 
 ### Duplicate Detection Flow

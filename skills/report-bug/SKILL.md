@@ -26,7 +26,7 @@ References:
 **Every Bug links to a user story. Do not create a Bug until the story is known.**
 
 - Jira ticket: a story is used as is. For a subtask or another issue, find the story through `parent`, issue links, and keys in the text. Never use a subtask, task, bug, or epic in place of the story.
-- TestRail case `C<id>`: with the `sync-test-cases-with-testrail` skill, run `list` to find its section, then `pull --section <section> --out <scratch dir>`. Read the case's `refs`, preconditions, and steps from the pulled file, and resolve the story from `refs`.
+- TestRail case `C<id>`: if a local `*.test.md` holds it (`test-cases/`, or `cases/` in a run folder), read its `refs` there. Otherwise, with the `sync-test-cases-with-testrail` skill, run `list` to find its section, then `pull --section <section> --out <scratch dir>`. Read the case's `refs`, preconditions, and steps from the pulled file, and resolve the story from `refs`.
 - Any other source: use only a story key it names. Never guess the story from a title, screen, or section name.
 - No story, several candidates, or conflicting sources → ask the user for the story key and list the candidates. Check duplicates and draft meanwhile.
 
@@ -61,13 +61,14 @@ On a match, propose the action and write only after the user approves:
 - If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists.
 - The expected behavior is not obvious and the story does not define it → search as [Related Sources](../qa-thinking/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
+  - Read the app's file in `automation-lessons/` first, if there is one.
   - Use the same screen, tab, filters, data, and build as the report.
   - Redo what the reporter did before the failing step, not only the numbered steps.
   - Record displayed values read from the app, not impressions from a screenshot.
   - Read the build from the app's version string, not from the environment name.
   - A different result on a similar but different screen is a separate finding. Report "not reproduced" only with the conditions set up, and ask whether to file from the user's evidence.
 - Other platforms or production: work from the user's evidence and ask for what is missing.
-- Failed TestRail case: the script does not read results. Take the result comment, build version, and screenshots from the user.
+- Failed TestRail case: take the result comment, build, and evidence from its block in `test-runs/*/results.md`. No results file → take them from the user.
 
 ### Step 4: Draft the Bug
 
@@ -135,4 +136,4 @@ Read the Bug back: every field sent, the story link, the assignee `accountId`, t
 
 - Bug key and URL.
 - Steps not completed, with the reason.
-- TestRail: the script does not write results. List each failed result with the Bug key for the user to add to its Defects field.
+- TestRail: called from `run-test-suite`, return the Bug key for its Step 6. Otherwise list each failed result with the Bug key for the user to add to its Defects field.
