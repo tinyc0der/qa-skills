@@ -17,7 +17,6 @@ References:
 
 - **Always generate a checklist before test cases**, even if the user asks for test cases directly.
 - **Do not skip steps. Get user approval at each gate before moving to the next step.**
-- Strictly recommend PLAN mode. Switch to Edit mode only on Step 5 — writing test cases to md files.
 - Write the checklist and test cases in the language the user asks for. Otherwise use the language of existing test cases, then of the requirements.
 - Use the Ask tool for choices when available.
 - Fill input fields with suggestions when asking the user for input.
@@ -33,7 +32,7 @@ References:
 
 ## Workflow
 
-1. Gather context and show sources — approval gate
+1. Gather context and save it to a context file
 2. Ask for coverage scope — approval gate
 3. Ask for role if any test cases for the feature exist; always skipped for smoke
 4. Generate checklist — approval gate
@@ -47,6 +46,8 @@ Understand:
 - the feature/functionality under test and its business goals
 - main testing flows and user journeys
 - specific areas of concern
+
+A context file for the feature from an earlier run is the starting point: read the sources it lists instead of searching again, and check its conflicts and open questions again.
 
 Information sources:
 
@@ -62,7 +63,7 @@ Source priority:
 
 - A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, and parent ticket.
 - From linked documents, use only the parts within the ticket's scope.
-- Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and report the conflict at the gate.
+- Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and record the conflict in the context file.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
 Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
@@ -88,37 +89,42 @@ Find the TestRail cases that already test the feature, with the `sync-test-cases
 
 - TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases added after the catalog `Date`.
 - No catalog: run `list` and match sections and case titles to the feature.
-- TestRail not set up: ask for its Setup, or continue without the check and report that at the gate.
-- Do not `pull` here: it writes files. Step 5 pulls the section the user chooses to expand.
+- TestRail not set up: ask for its Setup, or continue without the check and record TestRail as not read.
+- Do not `pull` here. Step 5 pulls the section the user chooses to expand.
 
 #### Related sources
 
 When the sources above leave a gap, search as [Related Sources](../qa-thinking/references/related-sources.md) describes.
 
-#### Approval gate
+#### Context file
 
-Show names only, no content:
+Save the findings to `test-cases/<feature-name>.context.md`, named like the feature's test case file. Overwrite it on a re-run, and update it when the user picks the other side of a conflict or answers an open question. Names and links only, no content:
 
-- sources read: ticket keys, page titles, frame names, app environment
+- `Date`
+- sources read: ticket keys, page titles, frame names, app environment and build, each with its link and last-updated date
 - sources that could not be read
 - sources found by search, each with the gap it fills
 - existing cases: count, section, `C<id>` range
-- conflicts between sources, including known mismatches
+- conflicts between sources, including known mismatches, and the side the test cases follow
 - gaps no source filled
 
 ```markdown
-I've gathered information from the following sources:
+# Saved cards
 
-- Jira ABC-123 (parent ABC-100)
-- Confluence: Saved cards
-- Figma: Checkout › Payment
-- Live app: staging, Checkout › Payment
+Date: 2026-11-10
+
+Sources read:
+
+- Jira [ABC-123](https://jira.example.com/browse/ABC-123), updated 2026-11-03; parent ABC-100
+- Confluence [Saved cards](https://wiki.example.com/x/Ab12), updated 2026-10-28
+- Figma [Checkout › Payment](https://figma.com/design/Ab12), updated 2026-10-30
+- Live app: staging, Checkout › Payment, build 4.12.0
 
 Not read: Confluence "Payments FAQ" (no access)
 
 Found by search:
 
-- Jira ABC-130 (same epic): card expiry rules
+- Jira [ABC-130](https://jira.example.com/browse/ABC-130) (same epic), updated 2026-10-15: card expiry rules
 
 Existing cases: 8 in TestRail section Checkout › Payment (C101–C108)
 
@@ -129,12 +135,9 @@ Conflicts:
 Open questions:
 
 - Saved cards limit per user: no source says
-
-❓ Do you want to:
-
-1. ➡️ Go to next step
-2. ✏️ Type changes
 ```
+
+Do not ask for approval. Above the Step 2 question, show the file's path and only its conflicts, open questions, and sources not read.
 
 ### Step 2: Ask for coverage scope
 
