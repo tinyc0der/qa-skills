@@ -58,6 +58,7 @@ Good vs bad:
 - If relevant, include the user role.
 - Skip preconditions that are not needed or repeat the suite description.
 - Give every value the steps rely on that differs from the screen's defaults: form data, time window, account state. Do not point to data written elsewhere.
+- Leave out values the screen already shows by default (`Order type: Market` when Market is the default). A test about the default itself says so in its steps.
 - Do not include preconditions like "service is running" or "user is logged in" unless the user explicitly mentioned them or the test is about them.
 
 ## Steps
@@ -106,6 +107,7 @@ Step content rules:
 - Prefer URL paths over full URLs, e.g. `/auth/login`.
 - Use specific values when they are important for the scenario (boundary values, format validation, locale-specific input).
 - Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)"; replace them with concrete, literal values.
+- For data that changes with time (market prices, the clock, balances), give the rule to derive it from what the screen shows: `ceiling price + 0.10`, `current time − 7 minutes`.
 - Avoid general statements in steps. Move them to the description.
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.
 - Exception: data entry that only sets up the action under test joins that action (`Enter 59 in **Interval** and click **Create**`) or goes in preconditions.

@@ -63,7 +63,7 @@ Understand:
 - main testing flows and user journeys
 - specific areas of concern
 
-A context file for the feature from an earlier run is the starting point: read the sources it lists instead of searching again, and check its conflicts and open questions again.
+A context file for the feature from an earlier run is the starting point: read the sources it lists instead of searching again, and check its conflicts and open questions again. Ignore it when the user asks for an independent run.
 
 Information sources:
 
@@ -77,9 +77,11 @@ Information sources:
 
 Source priority:
 
-- A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, and parent ticket.
+- A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, parent ticket, sub-tasks, and linked issues. Linked bugs record behavior settled after the ticket was written.
+- Ticket images the Atlassian MCP cannot download: ask the user for screenshots, or record them as not read.
 - From linked documents, use only the parts within the ticket's scope.
 - Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and record the conflict in the context file.
+- UI labels and layout follow the design; behavior and messages follow the ticket.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
 Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
@@ -114,7 +116,7 @@ When the sources above leave a gap, search as [Related Sources](../qa-thinking/r
 
 #### Context file
 
-Save the findings to `test-cases/<feature-name>.context.md`, named like the feature's test case file. Overwrite it on a re-run, and update it when the user picks the other side of a conflict or answers an open question. Names and links only, no content:
+Save the findings to `test-cases/<feature-name>.context.md`, named like the feature's test case file. Overwrite it on a re-run, and update it when the user picks the other side of a conflict or answers an open question. Name sources and link them; do not copy their content:
 
 - `Date`
 - sources read: ticket keys, page titles, frame names, app environment and build, each with its link and last-updated date
@@ -123,6 +125,8 @@ Save the findings to `test-cases/<feature-name>.context.md`, named like the feat
 - existing cases: count, section, `C<id>` range
 - conflicts between sources, including known mismatches, and the side the test cases follow
 - gaps no source filled
+- validation rules and error messages left without a checklist item, and why
+- answers the user gave to `ask` findings
 
 ```markdown
 # Saved cards
@@ -153,7 +157,7 @@ Open questions:
 - Saved cards limit per user: no source says
 ```
 
-Do not ask for approval. Above the Step 2 question, show the file's path and only its conflicts, open questions, and sources not read.
+Do not ask for approval. Above the Step 2 question, show the file's path, sources not read, and at most five conflicts or open questions that change expected results. The file holds the rest.
 
 ### Step 2: Ask for coverage scope
 
@@ -183,7 +187,7 @@ Type a number of tests, or describe scope in your own words
 
 ### Step 3: Ask for role
 
-Ask for a role only when Step 1 found existing test cases for the feature under test. The basics are already covered, so the user may want a specific angle.
+Ask for a role only when Step 1 found existing test cases for the feature under test. The basics are already covered, so the user may want a specific angle. Skip it when TestRail was not read.
 
 Also skip this step for "smoke" scope.
 
@@ -243,7 +247,7 @@ Item rules:
 - Each item is one test objective. Split items that check several outcomes.
 - Do not drop an item on an assumption no source states, such as "the field always has a value". Record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
-- Cover UI consistency with one item per screen, not one per element.
+- Cover UI consistency with one item per screen, not one per element. Each theme or language of a screen is one more item.
 - Prefix each item with its TestRail priority: 🔴 critical for the core flow, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
@@ -304,12 +308,13 @@ Write test case files to `test-cases/`.
 Generation rules:
 
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority, and `smoke: yes` when the item has `[smoke]`.
-- Set `automation:` on every test: `yes` for repeatable checks with clear data and little UI dependency (validation, boundaries, permission matrix), `no` otherwise.
+- Set `automation:` on every test: `yes` when the expected result is a value, message, or state a script can read (validation, boundaries, calculations, permission matrix); `no` for layout and visual checks, and for flows that wait on real market or clock time.
 - Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`).
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
 - When the user chose to expand an existing section, `pull --section <section>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
 - When pulled cases carry `platform:`, the project keeps one section tree per feature for all platforms. Add the new platform's tests to those subsections; do not create a section per platform.
+- A new section with several suites: tell the user to push with `--parent-section "<feature name>"` so the suites nest under one section.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.
 
 Format rules:
