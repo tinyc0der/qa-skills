@@ -5,15 +5,16 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 ## Checklist review
 
 - Every acceptance criterion has an item. At the Smoke tier, only criteria on the critical path need one.
-- Every validation rule and error message in the sources has an item, or the context file says why not. Not at the Smoke tier.
-- **Every item comes from a source.** Flag items that test behavior no source states.
+- Every validation rule, edge case, and error message in the sources has an item, or the context file says why not. A missing expected result is not a reason. Not at the Smoke tier.
+- Each [Test Design Technique](./test-design-techniques.md) that fits the feature produced its items.
+- **Every item comes from a source.** Flag items that test behavior no source states or implies.
 - Items follow the ticket. Where the context file records a conflict, they follow the side it names.
 - The item count and categories fit the tier and the role.
-- Each item is one test objective.
+- Each item is one test objective. No two items differ only in test data or share preconditions and steps.
 - Groups follow user journeys in flow order, with the happy path first.
 - The main flow has a higher priority than its edge cases.
 - No item repeats another item or an existing case.
-- No item tests a linked feature the user did not ask for.
+- No item tests a linked feature the user did not ask for, a role or data scope another story defines, or generic behavior of a shared component the story does not change.
 
 ## Test case review
 
@@ -34,7 +35,8 @@ Executable:
 
 - A tester who has not read the sources can run every step with the values given.
 - Preconditions set up every role, record, state, and value the steps assume, without pointing to data in the suite description.
-- Each expected result is visible in the UI or a public API response.
+- Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy.
+- Every precondition can be set up on the day of the run (no past dates the UI rejects).
 - A test does not depend on another test's data or order.
 
 Rules:

@@ -5,12 +5,12 @@ Search for sources not read yet only when the given sources leave a gap:
 - no acceptance criteria
 - an undefined term, flow, or state
 - an unclear expected result
-- a referenced feature that no source describes
+- a referenced feature or screen that no source read so far describes, including each screen a ticket applies to ("all screens with field X")
 
 Search through the Atlassian MCP:
 
 - Jira: the ticket's linked issues, sub-tasks, and the epic's other issues; then JQL `text ~ "<feature name>"` in the ticket's project.
-- Confluence: CQL `text ~ "<feature name>"` and `text ~ "<ticket key>"`.
+- Confluence: the pages the sub-tasks link or name (the spec a BA sub-task updated); then CQL `text ~ "<feature name>"`, `text ~ "<ticket key>"`, and `title ~ "<screen code>"` for each screen in scope.
 - No ticket → JQL and CQL `text ~ "<feature name>"`, without a project filter.
 - No Atlassian MCP → ask once to connect it. Declined → skip the search.
 

@@ -5,8 +5,8 @@ If the user provided example test cases, follow their style first; then apply th
 ## Test Suites
 
 - Formulas, business rules, edge-case reasoning, and feature context live in the suite/test description.
-- Prerequisites common to all test cases go as bullet points in the suite description.
-- Keep test data out of the suite description. TestRail shows a case without its section description.
+- Prerequisites common to all test cases go as bullet points in the suite description: the environment, such as role, account type, language, and app settings.
+- Keep test data and the state a test relies on out of the suite description. TestRail shows a case without its section description.
 - Formulas and diagrams relevant to all test cases can be included as code blocks in the suite description.
 
 ## Test Cases
@@ -17,7 +17,7 @@ If the user provided example test cases, follow their style first; then apply th
 - Keep the description clear and concise.
 - Put preparations into preconditions/description, not into steps.
 - Focus on black-box testing: every action and observable result goes through public APIs or UI (unless the user specifies otherwise).
-- Prefer UI over public APIs when possible.
+- Prefer UI over public APIs when possible. When the app can show a value (add a column, open details), read it there. Use DevTools or an API only for what the UI cannot show, and cover every page of a paged list.
 - Add system checks only when it is not clear how to test via public APIs or UI. This is not a unit test; usually no direct server or code access is allowed.
 
 ## Title

@@ -11,6 +11,7 @@ References:
 
 - [Test Case Format](./references/testrail-test-case-format.md) defines the markdown for suites, tests, and steps, and maps each part to TestRail.
 - [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and AI writing patterns to avoid.
+- [Test Design Techniques](./references/test-design-techniques.md) lists how Step 4 derives checklist items.
 - [Review Checklist](./references/review-checklist.md) lists what Self review checks.
 - [Related Sources](../qa-thinking/references/related-sources.md) of `qa-thinking` covers when and where to search for sources the ticket does not link.
 
@@ -79,9 +80,11 @@ Source priority:
 
 - A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, parent ticket, sub-tasks, and linked issues. Linked bugs record behavior settled after the ticket was written.
 - Ticket images the Atlassian MCP cannot download: ask the user for screenshots, or record them as not read.
-- From linked documents, use only the parts within the ticket's scope.
+- From linked documents, use only the parts within the ticket's scope, plus rules that apply to every result of the screen (which records it lists).
 - Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and record the conflict in the context file.
-- UI labels and layout follow the design; behavior and messages follow the ticket.
+- A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket.
+- A typo, missing space, or bold in the ticket's message text is not behavior: use the text another source writes correctly, and raise an `ask`.
+- UI labels and layout follow the design, or without a readable design, the screen spec's field table or existing cases. Behavior and messages follow the ticket.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
 Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
@@ -229,26 +232,16 @@ Create a hierarchical, categorized checklist from the gathered context.
 
 Size it to the tier chosen in Step 2. The tier description lists the categories to cover.
 
-Derive items with the techniques that fit the feature:
-
-- at least one item per acceptance criterion
-- one item per validation rule and error message a source states, empty required fields included
-- equivalence partitioning and boundary values for inputs and limits
-- decision tables for combined conditions
-- pairwise combinations when several independent options interact
-- state transitions for statuses and lifecycles
-- a role/permission matrix when the feature has roles
-- invalid input combinations and error handling
-- a source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, and values recalculated from other fields
-- a check that can pass on screen and fail at submit: the value changes in between (time passes, the balance is used elsewhere)
+Derive items with the [Test Design Techniques](./references/test-design-techniques.md) that fit the feature.
 
 Item rules:
 
-- Each item is one test objective. Split items that check several outcomes.
-- Do not drop an item on an assumption no source states, such as "the field always has a value". Record the doubt as an open question in the context file.
+- Each item is one test objective: one action or flow and the state it reaches. Split items that check outcomes of different actions.
+- Merge items whose tests would share preconditions and steps, items that differ only in test data (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
+- Do not drop an item on an assumption no source states, such as "the field always has a value". Keep the item, mark it `ask`, and record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
-- Cover UI consistency with one item per screen, not one per element. Each theme or language of a screen is one more item.
-- Prefix each item with its TestRail priority: 🔴 critical for the core flow, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
+- Cover UI consistency with one item per screen, not one per element. Each theme or language of a screen is one more item. Message texts in another language are one item with a data table.
+- Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
 
@@ -308,8 +301,8 @@ Write test case files to `test-cases/`.
 Generation rules:
 
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority, and `smoke: yes` when the item has `[smoke]`.
-- Set `automation:` on every test: `yes` when the expected result is a value, message, or state a script can read (validation, boundaries, calculations, permission matrix); `no` for layout and visual checks, and for flows that wait on real market or clock time.
-- Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`).
+- Set `automation:` on every test: `yes` when a script can read the expected result (a value, message, or state), even if the flow waits on market time; `no` for layout, visual, and judgment checks.
+- Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`). Without pulled cases, use `All` for behavior every platform shares, else the platform the ticket names.
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
 - When the user chose to expand an existing section, `pull --section <section>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
@@ -323,7 +316,7 @@ Format rules:
 - Strictly follow [Writing Rules](./references/writing-rule.md) for suite/test descriptions, preconditions, steps, expected results, and anti-patterns.
 - Set `refs:` to the Jira key on every test case that comes from a Jira issue. When the whole file covers one issue, set `refs:` once on the suite instead.
 - If reasonable, add preconditions and test data based on the analyzed context.
-- Use concrete, executable values. **Do NOT introduce `${...}` placeholders in first-pass generation.** Parametrize only genuinely reused or data-driven values; format them as `${variable}` in backticks.
+- Use concrete, executable values. **Do NOT introduce `${...}` placeholders in first-pass generation.** Parametrize only genuinely reused or data-driven values, and environment data no source gives that the tester supplies (test account, customer name); format them as `${variable}` in backticks.
 - **NEVER generate test or suite IDs of any kind:**
   - Do NOT write `testrail_id:` or `testrail_section_id:`. The TestRail push writes them. Keep them when editing a file.
   - Do NOT include custom/random IDs (e.g. `TC-001`, `TC-R001`, `SUITE-01`) in metadata, titles, or anywhere else.
