@@ -94,6 +94,7 @@ Step format rules:
 - Top-level items describe the action to perform.
 - Nested items with `*Expected*` (or `*Expected*:`, `*Expected result*`) describe the observable behavior.
 - Expected results should be specific and verifiable.
+- Each expected result passes or fails: no "either X or Y", no "record whether X". An outcome no source gives is an `ask` item, not two accepted outcomes.
 
 Step content rules:
 

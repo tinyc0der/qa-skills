@@ -34,6 +34,7 @@ Sources:
 Executable:
 
 - A tester who has not read the sources can run every step with the values given.
+- Each expected result passes or fails on the point the test is about: no "either X or Y", no "record whether X".
 - Preconditions set up every role, record, state, and value the steps assume, without pointing to data in the suite description.
 - Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy.
 - Every precondition can be set up on the day of the run (no past dates the UI rejects).
