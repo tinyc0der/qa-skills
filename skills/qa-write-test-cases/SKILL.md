@@ -79,10 +79,10 @@ Information sources:
 Source priority:
 
 - A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, parent ticket, sub-tasks, and linked issues. Linked bugs record behavior settled after the ticket was written.
-- Ticket images the Atlassian MCP cannot download: ask the user for screenshots, or record them as not read.
+- Ticket images the Atlassian MCP cannot download, and ticket sections that come back empty: ask the user for screenshots, or record them as not read.
 - From linked documents, use only the parts within the ticket's scope, plus rules that apply to every result of the screen (which records it lists).
 - Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and record the conflict in the context file.
-- A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket.
+- A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket and the ticket does not link it.
 - A typo, missing space, or bold in the ticket's message text is not behavior: use the text another source writes correctly, and raise an `ask`.
 - UI labels and layout follow the design, or without a readable design, the screen spec's field table or existing cases. Behavior and messages follow the ticket.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.

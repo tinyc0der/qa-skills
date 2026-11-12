@@ -5,7 +5,7 @@ Step 4 derives checklist items with the techniques that fit the feature. An item
 ## Coverage of the sources
 
 - At least one item per acceptance criterion.
-- One item per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks only what holds for any answer (no error page, the counts and the list stay consistent).
+- One item per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome.
 - A source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, values recalculated from other fields, and the options of an existing field the feature compares with.
 - A sub-task that changes a shared component other features read (engine, API, table): one regression item for those features.
 
@@ -27,11 +27,11 @@ Step 4 derives checklist items with the techniques that fit the feature. An item
 
 ## Who and where
 
-- A role/permission matrix when any source names user types for the screen (Guest, logged-in, account tiers), even if the ticket names none.
+- A role/permission matrix when any source names user types for the screen (Guest, logged-in, account tiers), even if the ticket names none: one item per user type that the new behavior works for it. Access rules another story defines stay with that story.
 - Each precondition a source states (user logged in, session valid): one item for when it does not hold.
-- A source that lists where a result shows or who gets it (tabs, columns, tooltips, accounts): one item per place the new data reaches, and one negative item for a place or receiver outside the list.
+- A source that lists where a result shows or who gets it (tabs, columns, tooltips, accounts): one item per place the new data reaches, even a place another feature owns, and one negative item for a place or receiver outside the list.
 
 ## Formulas and errors
 
 - A formula: one check per period or variant it names, plus a relation it implies when exact values are hard to read (the sum over 20 days ≥ the sum over 10 days).
-- One item per error class a source names or implies: timeout, 5xx, 4xx, network offline.
+- One item per error class a source names or implies (timeout, 5xx, 4xx, network offline) that has its own expected result. Classes with the same result share one item with a data table.

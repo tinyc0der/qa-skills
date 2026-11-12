@@ -5,7 +5,7 @@ If the user provided example test cases, follow their style first; then apply th
 ## Test Suites
 
 - Formulas, business rules, edge-case reasoning, and feature context live in the suite/test description.
-- Prerequisites common to all test cases go as bullet points in the suite description: the environment, such as role, account type, language, and app settings.
+- Prerequisites common to all test cases go as bullet points in the suite description: the environment, such as role, account type, language, app settings, the screen every test starts on, and tools every test uses (DevTools).
 - Keep test data and the state a test relies on out of the suite description. TestRail shows a case without its section description.
 - Formulas and diagrams relevant to all test cases can be included as code blocks in the suite description.
 
@@ -39,7 +39,7 @@ Avoid:
 
 - Filler prefixes: `Verify that ...`, `Test that ...`, `Check ...`, `Should ...`
 - Words every title would share: a role when the feature has one role, `User sees`, `User can`
-- Multi-intent titles joined by `and` / `then`
+- Multi-intent titles joined by `and` / `then`. A merged item still has one objective; name that objective.
 - Restating the suite name in every title
 - Embedding IDs or numbers: `TC-001: Login`
 - Vague outcomes: `Successful login`, `Login works`
@@ -63,7 +63,7 @@ Good vs bad:
 
 ## Steps
 
-A step consists of an action (with optional test data) and an expected result.
+A step consists of an action (with optional test data) and an expected result. A wait step (`Wait until 10:05`) may have no expected result.
 
 Test steps use the `## Steps` header section with a nested markdown list format:
 
