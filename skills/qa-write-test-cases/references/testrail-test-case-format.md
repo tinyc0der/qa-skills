@@ -45,6 +45,7 @@ Metadata is inside an HTML comment block: `<!-- suite ... -->`.
 | `testrail_section_id` | number | TestRail section ID. Written by the `sync-test-cases-with-testrail` push. Never write it by hand. |
 | `priority`            | string | Default priority for the suite's tests.                                                           |
 | `refs`                | string | Comma-separated references, e.g. ticket keys (`JIR-123, JIR-124`). Default for the suite's tests. |
+| `platform`, `smoke`, `automation`, other mapped keys | string | Defaults for the suite's tests. See Test Metadata. |
 
 ## Test Metadata
 
@@ -55,8 +56,13 @@ Metadata is inside an HTML comment block: `<!-- test ... -->`.
 | `testrail_id` | string | TestRail case ID (e.g. `C123`). Written by the `sync-test-cases-with-testrail` push. Never write it by hand. |
 | `priority`    | string | TestRail priority name. Default values, lowest to highest: `low`, `medium`, `high`, `critical`.               |
 | `refs`        | string | Comma-separated references. Overrides the suite's `refs`.                                                    |
+| `smoke`       | yes/no | The test belongs to the smoke set.                                                                           |
+| `automation`  | yes/no | The test is a candidate for automation.                                                                      |
+| `platform`    | string | Option name of the project's platform field, e.g. `Mobile`, `Web`, `All`.                                     |
 
-If a test has no `priority` or `refs`, the suite's value is used.
+If a test leaves out a key, the suite's value is used.
+
+`smoke`, `automation`, `platform`, and any other key reach TestRail only when `TESTRAIL_FIELDS` maps them to case fields (see the `sync-test-cases-with-testrail` Setup). A dropdown takes the option name; a checkbox takes `yes` or `no`.
 
 ## Formatting Rules
 
@@ -182,12 +188,10 @@ A user should be able to log in with valid credentials.
 
 ## Steps
 
-- Navigate to the login page
-  *Expected*: Login form is displayed with username and password fields
-- Enter a valid username and password
-  *Expected*: Credentials are entered without errors
-- Click the "Login" button
-  *Expected*: User is redirected to the dashboard
+- Navigate to `/auth/login`
+  *Expected*: Login form shows username and password fields
+- Enter the username and password from the test data table and click **Login**
+  *Expected*: Dashboard opens
 ```
 
 ### Test with numbered steps and a code block

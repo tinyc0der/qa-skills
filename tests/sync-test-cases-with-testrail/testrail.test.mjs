@@ -6,7 +6,17 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { buildPriorityMap, checkResults, parseResultsMd, parseTestMd, toCasePayload, writeBackIds, writeBackResults } from '../../skills/sync-test-cases-with-testrail/scripts/testrail.mjs';
+import {
+  buildFieldMap,
+  buildPriorityMap,
+  checkResults,
+  parseFieldSpec,
+  parseResultsMd,
+  parseTestMd,
+  toCasePayload,
+  writeBackIds,
+  writeBackResults,
+} from '../../skills/sync-test-cases-with-testrail/scripts/testrail.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SCRIPT = join(here, '../../skills/sync-test-cases-with-testrail/scripts/testrail.mjs');
@@ -283,6 +293,77 @@ const ctx = { priorityIdByName: priorities, templateId: 7 };
 const emptySuite = { meta: {} };
 const mkTest = (over = {}) => ({ title: 'T', description: '', meta: {}, steps: [], examples: null, ...over });
 
+const FIELD_SPEC = 'smoke:custom_case_smoketest,automation:custom_automation_type,platform:case_platform';
+const CASE_FIELDS = [
+  {
+    system_name: 'custom_case_smoketest',
+    name: 'case_smoketest',
+    type_id: 5,
+    configs: [{ context: { is_global: true, project_ids: null }, options: { is_required: false, default_value: '0' } }],
+  },
+  {
+    system_name: 'custom_automation_type',
+    name: 'automation_type',
+    type_id: 6,
+    configs: [{ context: { is_global: true, project_ids: null }, options: { is_required: true, items: '1, No\n2, Yes' } }],
+  },
+  {
+    system_name: 'custom_case_platform',
+    name: 'case_platform',
+    type_id: 6,
+    configs: [
+      { context: { is_global: false, project_ids: [9] }, options: { items: '1, Desktop' } },
+      { context: { is_global: false, project_ids: [1] }, options: { items: '1, All\n2, Web\n3, Mobile' } },
+    ],
+  },
+];
+
+test('parseFieldSpec reads key:field pairs and rejects malformed ones', () => {
+  assert.deepEqual(
+    [...parseFieldSpec(' smoke:custom_case_smoketest , platform:case_platform ')],
+    [
+      ['smoke', 'custom_case_smoketest'],
+      ['platform', 'case_platform'],
+    ],
+  );
+  assert.equal(parseFieldSpec('').size, 0);
+  assert.equal(parseFieldSpec(undefined).size, 0);
+  assert.throws(() => parseFieldSpec('smoke'), /key:field_name/);
+});
+
+test('buildFieldMap uses the project config of each field and names unknown fields', () => {
+  const fields = buildFieldMap(parseFieldSpec(FIELD_SPEC), CASE_FIELDS, '1');
+  assert.deepEqual(fields.get('platform'), {
+    key: 'platform',
+    systemName: 'custom_case_platform',
+    kind: 'dropdown',
+    options: [
+      [1, 'All'],
+      [2, 'Web'],
+      [3, 'Mobile'],
+    ],
+  });
+  assert.equal(fields.get('smoke').kind, 'checkbox');
+  assert.throws(() => buildFieldMap(parseFieldSpec('owner:custom_owner'), CASE_FIELDS, 1), /no case field "custom_owner"/);
+  assert.throws(() => buildFieldMap(parseFieldSpec('platform:case_platform'), CASE_FIELDS, 5), /not enabled for project 5/);
+});
+
+test('toCasePayload sends mapped fields with suite fallback and rejects values TestRail does not offer', () => {
+  const fieldCtx = { ...ctx, fields: buildFieldMap(parseFieldSpec(FIELD_SPEC), CASE_FIELDS, 1) };
+  const payload = toCasePayload(mkTest({ meta: { smoke: 'yes', automation: 'No' } }), { meta: { platform: 'mobile' } }, fieldCtx);
+  assert.equal(payload.custom_case_smoketest, true);
+  assert.equal(payload.custom_automation_type, 1);
+  assert.equal(payload.custom_case_platform, 3);
+  assert.equal(toCasePayload(mkTest({ meta: { smoke: 'no' } }), emptySuite, fieldCtx).custom_case_smoketest, false);
+  assert.ok(!('custom_case_platform' in toCasePayload(mkTest(), emptySuite, fieldCtx)));
+  assert.throws(() => toCasePayload(mkTest({ meta: { smoke: 'maybe' } }), emptySuite, fieldCtx), /invalid smoke "maybe" in "T"; use yes or no/);
+  assert.throws(
+    () => toCasePayload(mkTest({ meta: { platform: 'Tablet' } }), emptySuite, fieldCtx),
+    /invalid platform "Tablet" in "T"; TestRail options: All, Web, Mobile/,
+  );
+  assert.ok(!('custom_case_smoketest' in toCasePayload(mkTest({ meta: { smoke: 'yes' } }), emptySuite, ctx)));
+});
+
 test('toCasePayload resolves priority names, short names and aliases case-insensitively', () => {
   const cases = { HIGH: 3, med: 2, normal: 2, important: 3, Critical: 4, low: 1 };
   for (const [value, id] of Object.entries(cases)) {
@@ -417,6 +498,8 @@ function startMock(opts = {}) {
             { id: 3, name: 'High', short_name: 'High' },
             { id: 4, name: 'Critical', short_name: 'Critical' },
           ]);
+        case 'get_case_fields':
+          return json(res, 200, CASE_FIELDS);
         case 'get_templates':
           return json(res, 200, [
             { id: 1, name: 'Test Case (Text)', is_default: true },
@@ -584,6 +667,86 @@ test('push creates the section and cases, writes ids back, then only updates on 
     assert.deepEqual(named(mock.state, 'update_case').map((r) => r.id), ['100', '101']);
     assert.equal(readFileSync(file, 'utf8'), written);
     assert.match(second.stdout, /cases added 0, updated 2/);
+  } finally {
+    await mock.close();
+  }
+});
+
+const FIELDS_MD = `<!-- suite
+platform: Mobile
+-->
+
+# Order
+
+<!-- test
+priority: critical
+smoke: yes
+automation: no
+-->
+
+# Place an order
+
+## Steps
+
+- Click **Buy**
+  *Expected*: Order is placed
+
+<!-- test
+priority: low
+-->
+
+# See the order form
+
+## Steps
+
+- Open the form
+  *Expected*: Form is shown
+`;
+
+function fieldsWorkdir(text = FIELDS_MD) {
+  const dir = mkdtempSync(join(tmpdir(), 'testrail-'));
+  writeFileSync(join(dir, 'order.test.md'), text);
+  return dir;
+}
+
+test('push sends mapped metadata as case fields and warns about unmapped keys', async () => {
+  const mock = await startMock();
+  const cwd = fieldsWorkdir();
+  try {
+    const run = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: FIELD_SPEC }), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    const [first, second] = named(mock.state, 'add_case').map((r) => r.body);
+    assert.equal(first.custom_case_smoketest, true);
+    assert.equal(first.custom_automation_type, 1);
+    assert.equal(first.custom_case_platform, 3);
+    assert.equal(second.custom_case_platform, 3);
+    assert.ok(!('custom_case_smoketest' in second));
+    assert.doesNotMatch(run.stdout, /warning/);
+
+    mock.state.requests.length = 0;
+    const unmapped = await runCli(['push', 'order.test.md', '--dry-run'], { env: baseEnv(mock.port), cwd });
+    assert.equal(unmapped.code, 0, unmapped.stderr);
+    assert.match(unmapped.stdout, /warning: smoke, automation, platform not sent/);
+    assert.equal(named(mock.state, 'get_case_fields').length, 0);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push rejects a field value or a field map TestRail cannot take before writing anything', async () => {
+  const mock = await startMock();
+  const cwd = fieldsWorkdir(FIELDS_MD.replace('platform: Mobile', 'platform: Tablet'));
+  try {
+    const run = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: FIELD_SPEC }), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /order\.test\.md: invalid platform "Tablet" in "Place an order"; TestRail options: All, Web, Mobile/);
+    assert.equal(posts(mock.state).length, 0);
+
+    const malformed = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: 'smoke' }), cwd });
+    assert.equal(malformed.code, 1);
+    assert.match(malformed.stderr, /TESTRAIL_FIELDS expects key:field_name pairs/);
+    assert.equal(posts(mock.state).length, 0);
+    assert.doesNotMatch(readFileSync(join(cwd, 'order.test.md'), 'utf8'), /testrail_/);
   } finally {
     await mock.close();
   }
@@ -785,6 +948,15 @@ test('check passes a valid fixture offline and fails broken or empty files', asy
   assert.match(empty.stdout, /0 tests/);
 });
 
+test('check accepts yes/no flags and fails other smoke or automation values', async () => {
+  const good = await runCli(['check', 'order.test.md'], { cwd: fieldsWorkdir() });
+  assert.equal(good.code, 0, good.stdout);
+
+  const bad = await runCli(['check', 'order.test.md'], { cwd: fieldsWorkdir(FIELDS_MD.replace('smoke: yes', 'smoke: maybe')) });
+  assert.equal(bad.code, 1);
+  assert.match(bad.stdout, /invalid smoke "maybe" in "Place an order"; use yes or no/);
+});
+
 const PULL_SECTIONS = [
   { id: 6, name: 'Web Login', parent_id: null, description: 'Login flows.' },
   { id: 7, name: 'SSO', parent_id: 6, description: '' },
@@ -803,6 +975,9 @@ const PULL_CASES = [
       { content: 'Open the login page', expected: 'Form is shown' },
       { content: 'Submit\n```json\n{ "a": 1 }\n```', expected: 'Redirected\nSession cookie set' },
     ],
+    custom_case_smoketest: true,
+    custom_automation_type: 2,
+    custom_case_platform: 3,
   },
   { id: 101, section_id: 6, title: 'Text template case', template_id: 1, priority_id: 2, custom_steps: 'Do it', custom_expected: 'It works' },
   {
@@ -812,6 +987,7 @@ const PULL_CASES = [
     template_id: 2,
     priority_id: 4,
     custom_steps_separated: [{ content: 'Click SSO', expected: 'IdP page opens' }],
+    custom_case_smoketest: false,
   },
 ];
 
@@ -850,6 +1026,27 @@ test('pull writes one file per section that round-trips through check and push -
     const again = await runCli(['pull'], { env: baseEnv(mock.port), cwd });
     assert.equal(again.code, 0, again.stderr);
     assert.match(again.stdout, /unchanged web-login\.test\.md/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('pull writes mapped case fields as metadata that push --dry-run reads back unchanged', async () => {
+  const mock = await startMock({ sections: PULL_SECTIONS, cases: PULL_CASES });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  const env = baseEnv(mock.port, { TESTRAIL_FIELDS: FIELD_SPEC });
+  try {
+    const run = await runCli(['pull'], { env, cwd });
+    assert.equal(run.code, 0, run.stderr);
+    const text = readFileSync(join(cwd, 'test-cases/web-login.test.md'), 'utf8');
+    assert.match(text, /testrail_id: C100\npriority: high\nrefs: JIR-1, JIR-2\nsmoke: yes\nautomation: Yes\nplatform: Mobile\n-->/);
+    assert.doesNotMatch(readFileSync(join(cwd, 'test-cases/web-login--sso.test.md'), 'utf8'), /smoke:/);
+
+    mock.state.requests.length = 0;
+    const files = ['test-cases/web-login.test.md', 'test-cases/web-login--sso.test.md'];
+    const dry = await runCli(['push', ...files, '--dry-run'], { env, cwd });
+    assert.equal(dry.code, 0, dry.stderr);
+    assert.doesNotMatch(dry.stdout, /update case C100|update case C102/);
   } finally {
     await mock.close();
   }

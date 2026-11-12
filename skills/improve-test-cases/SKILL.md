@@ -59,7 +59,7 @@ Ambiguity:
 
 - Rewrite each flagged test to the format and writing rules.
 - Include context from the parent suite in a description when relevant.
-- Keep `priority:` and `refs:` values.
+- Keep `priority:`, `refs:`, `smoke:`, `automation:`, `platform:`, and other metadata values.
 
 ## Step 5: Save and Push
 

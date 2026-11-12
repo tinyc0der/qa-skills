@@ -19,8 +19,10 @@ The script reads these variables from the environment, then from `.env` in the c
 | `TESTRAIL_PROJECT_ID`  | Project ID, the number in `index.php?/projects/overview/<id>`               |
 | `TESTRAIL_SUITE_ID`    | Only for projects with several suites                                       |
 | `TESTRAIL_TEMPLATE_ID` | Only when the project has no template named like "Test Case (Steps)"        |
+| `TESTRAIL_FIELDS`      | Metadata keys to send as case fields, as `key:field_system_name` pairs: `smoke:custom_case_smoketest,automation:custom_automation_type,platform:custom_case_platform` |
 
 - Save values to `.env`. If the folder is a git repo, make sure `.env` is git-ignored.
+- Map every case field the project requires (an owner field, for example) in `TESTRAIL_FIELDS` and set its value once on each suite. The field system names come from **Administration → Customizations**.
 - The API must be enabled in **Administration → Site Settings → API**.
 
 ## Commands
@@ -59,6 +61,7 @@ Rules:
 - `--parent-section` nests the sections under a top-level section, created if missing.
 - A test with `testrail_id:` is updated in place. A test without it is created. Never edit or remove these lines by hand.
 - `priority:` matches the project's priorities by name (`normal` counts as Medium, `important` as High). `push` stops before writing anything if a value matches none of them, and lists the project's priorities.
+- Keys mapped in `TESTRAIL_FIELDS` are sent as case fields. `push` stops before writing anything on a dropdown value the field does not offer, and lists the options. It warns when `smoke`, `automation`, or `platform` is used but not mapped.
 
 ## Pull
 
@@ -70,7 +73,7 @@ Use `list` when titles are enough. Use `pull` when a skill needs full case conte
 Rules:
 
 - One file per section that holds cases. The file name is the section path, slugified and joined with `--` (`web-login--sso.test.md`). The suite title is the section's own name.
-- Each file carries `testrail_section_id`, `testrail_id`, `priority` (lowercase name), `refs`, preconditions, and separated steps with `*Expected*`. A pulled file passes `check`, and `push --dry-run` on it shows no updates for unchanged cases.
+- Each file carries `testrail_section_id`, `testrail_id`, `priority` (lowercase name), `refs`, the keys mapped in `TESTRAIL_FIELDS`, preconditions, and separated steps with `*Expected*`. A pulled file passes `check`, and `push --dry-run` on it shows no updates for unchanged cases.
 - A case from a template without separated steps becomes one step: the Steps text as the action, the Expected text as the result. Pushing it back converts it to the steps template and shows as an update.
 - Pull never replaces a local file that differs from the download. It lists those files and writes nothing. Pass `--overwrite` only after the user agrees to lose the local edits.
 

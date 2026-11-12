@@ -9,6 +9,11 @@ const EXPECTED_RE = /^\s*(?:[-*+]\s+)?\*{1,2}Expected(?:\s+results?)?:?\*{1,2}:?
 const ITEM_RE = /^(?:[-+*]|\d+[.)])\s+/;
 const PRIORITY_ALIASES = { normal: 'medium', important: 'high' };
 const KNOWN_PRIORITIES = ['critical', 'high', 'medium', 'low', 'normal', 'important'];
+const YES_RE = /^(yes|true|1)$/i;
+const NO_RE = /^(no|false|0)$/i;
+const YES_NO_KEYS = ['smoke', 'automation'];
+const STANDARD_KEYS = ['smoke', 'automation', 'platform'];
+const FIELD_KINDS = { 5: 'checkbox', 6: 'dropdown', 12: 'multiselect' };
 
 const USAGE = `Usage: node testrail.mjs <command> [options]
 
@@ -29,6 +34,8 @@ Commands:
 Environment (or .env in the current directory):
   TESTRAIL_URL, TESTRAIL_USER, TESTRAIL_API_KEY, TESTRAIL_PROJECT_ID
   TESTRAIL_SUITE_ID, TESTRAIL_TEMPLATE_ID (optional)
+  TESTRAIL_FIELDS (optional) metadata keys sent as case fields, e.g.
+    smoke:custom_case_smoketest,automation:custom_automation_type,platform:custom_case_platform
 
 Exit codes: 0 ok, 1 usage/validation/config error, 2 API error`;
 
@@ -199,6 +206,72 @@ function resolvePriority(map, value) {
   return undefined;
 }
 
+export function parseFieldSpec(spec) {
+  const map = new Map();
+  for (const part of String(spec ?? '').split(',')) {
+    if (!part.trim()) continue;
+    const i = part.indexOf(':');
+    const key = i > 0 ? part.slice(0, i).trim() : '';
+    const name = i > 0 ? part.slice(i + 1).trim() : '';
+    if (!key || !name) throw new CliError(`TESTRAIL_FIELDS expects key:field_name pairs separated by commas, got "${part.trim()}"`);
+    map.set(key, name);
+  }
+  return map;
+}
+
+const parseItems = (items) =>
+  String(items ?? '')
+    .split(/\r?\n/)
+    .map((line) => line.match(/^\s*(\d+)\s*,\s*(.*?)\s*$/))
+    .filter(Boolean)
+    .map((m) => [Number(m[1]), m[2]]);
+
+export function buildFieldMap(spec, fields, projectId) {
+  const out = new Map();
+  const bare = (name) => String(name ?? '').replace(/^custom_/, '');
+  for (const [key, name] of spec) {
+    const field = fields.find((f) => bare(f.system_name) === bare(name));
+    if (!field) {
+      throw new CliError(`TESTRAIL_FIELDS: TestRail has no case field "${name}"; fields: ${fields.map((f) => f.system_name).join(', ')}`);
+    }
+    const config = (field.configs ?? []).find(
+      (c) => c.context?.is_global || (c.context?.project_ids ?? []).map(Number).includes(Number(projectId)),
+    );
+    if (!config) throw new CliError(`TESTRAIL_FIELDS: case field "${name}" is not enabled for project ${projectId}`);
+    out.set(key, { key, systemName: field.system_name, kind: FIELD_KINDS[field.type_id] ?? 'text', options: parseItems(config.options?.items) });
+  }
+  return out;
+}
+
+function toFieldValue(field, value, title) {
+  const v = String(value).trim();
+  const invalid = (hint) => new CliError(`invalid ${field.key} "${v}" in ${JSON.stringify(title)}; ${hint}`);
+  if (field.kind === 'checkbox') {
+    if (YES_RE.test(v)) return true;
+    if (NO_RE.test(v)) return false;
+    throw invalid('use yes or no');
+  }
+  if (field.kind === 'dropdown' || field.kind === 'multiselect') {
+    const names = field.kind === 'multiselect' ? v.split(',').map((n) => n.trim()).filter(Boolean) : [v];
+    const ids = names.map((n) => {
+      const hit = field.options.find(([, label]) => label.toLowerCase() === n.toLowerCase());
+      if (!hit) throw invalid(`TestRail options: ${field.options.map(([, label]) => label).join(', ')}`);
+      return hit[0];
+    });
+    return field.kind === 'multiselect' ? ids : ids[0];
+  }
+  return v;
+}
+
+function fromFieldValue(field, raw) {
+  if (raw === null || raw === undefined || raw === '') return '';
+  if (field.kind === 'checkbox') return raw ? 'yes' : '';
+  const label = (id) => field.options.find(([oid]) => oid === Number(id))?.[1] ?? String(id);
+  if (field.kind === 'dropdown') return label(raw);
+  if (field.kind === 'multiselect') return (Array.isArray(raw) ? raw : [raw]).map(label).join(', ');
+  return String(raw).replace(/\s*\r?\n\s*/g, ' ').trim();
+}
+
 export function toCasePayload(test, suite, ctx) {
   const payload = { title: test.title, template_id: ctx.templateId };
   const priority = test.meta?.priority ?? suite.meta?.priority;
@@ -212,6 +285,10 @@ export function toCasePayload(test, suite, ctx) {
   }
   const refs = test.meta?.refs ?? suite.meta?.refs;
   if (refs) payload.refs = refs;
+  for (const field of ctx.fields?.values() ?? []) {
+    const value = test.meta?.[field.key] ?? suite.meta?.[field.key];
+    if (value !== undefined && String(value).trim()) payload[field.systemName] = toFieldValue(field, value, test.title);
+  }
   const preconds = [test.description?.trim(), test.examples ? `Test data:\n${test.examples}` : '']
     .filter(Boolean)
     .join('\n\n');
@@ -272,6 +349,20 @@ export function caseMatches(payload, remote) {
   for (const key of ['template_id', 'priority_id']) {
     if (key in payload && Number(payload[key]) !== Number(remote[key])) return false;
   }
+  const sortedIds = (v) => JSON.stringify([...(Array.isArray(v) ? v : [v ?? []].flat())].map(Number).sort((a, b) => a - b));
+  for (const [key, want] of Object.entries(payload)) {
+    if (!key.startsWith('custom_') || key === 'custom_preconds' || key === 'custom_steps_separated') continue;
+    const have = remote[key];
+    const same =
+      typeof want === 'boolean'
+        ? Boolean(have) === want
+        : Array.isArray(want)
+          ? sortedIds(want) === sortedIds(have)
+          : typeof want === 'number'
+            ? Number(have) === want
+            : normText(want) === normText(have);
+    if (!same) return false;
+  }
   if (payload.custom_steps_separated) {
     const have = remote.custom_steps_separated ?? [];
     const want = payload.custom_steps_separated;
@@ -285,7 +376,7 @@ function indentLines(text, pad) {
   return text.split('\n').map((l, i) => (i === 0 || !l ? l : pad + l)).join('\n');
 }
 
-export function serializeSection(section, cases, priorityNames = new Map()) {
+export function serializeSection(section, cases, priorityNames = new Map(), fields = new Map()) {
   const clean = (v) => String(v ?? '').replace(/\r\n/g, '\n').trim();
   const out = [`<!-- suite\ntestrail_section_id: ${section.id}\n-->\n\n# ${section.name}\n`];
   if (clean(section.description)) out.push(`${clean(section.description)}\n`);
@@ -294,6 +385,10 @@ export function serializeSection(section, cases, priorityNames = new Map()) {
     const priority = priorityNames.get(c.priority_id);
     if (priority) meta.push(`priority: ${priority.toLowerCase()}`);
     if (clean(c.refs)) meta.push(`refs: ${clean(c.refs)}`);
+    for (const field of fields.values()) {
+      const value = fromFieldValue(field, c[field.systemName]);
+      if (value) meta.push(`${field.key}: ${value}`);
+    }
     out.push(`<!-- test\n${meta.join('\n')}\n-->\n\n# ${c.title}\n`);
     if (clean(c.custom_preconds)) out.push(`${clean(c.custom_preconds)}\n`);
     let steps = (c.custom_steps_separated ?? []).map((s) => ({ content: clean(s.content), expected: clean(s.expected) }));
@@ -408,7 +503,13 @@ function readConfig(env) {
     projectId: env.TESTRAIL_PROJECT_ID,
     suiteId: env.TESTRAIL_SUITE_ID || null,
     templateId: env.TESTRAIL_TEMPLATE_ID || null,
+    fieldSpec: parseFieldSpec(env.TESTRAIL_FIELDS),
   };
+}
+
+async function loadFields(client, cfg) {
+  if (!cfg.fieldSpec.size) return new Map();
+  return buildFieldMap(cfg.fieldSpec, await client.get('get_case_fields'), cfg.projectId);
 }
 
 function loadFile(file, cwd) {
@@ -452,12 +553,16 @@ function cmdCheck(files, cwd) {
     const unknown = tests
       .map(({ s, t }) => ({ t, p: t.meta.priority ?? s.meta.priority }))
       .filter(({ p }) => p && !KNOWN_PRIORITIES.includes(p.trim().toLowerCase()));
+    const badFlags = tests
+      .flatMap(({ s, t }) => YES_NO_KEYS.map((key) => ({ t, key, v: t.meta[key] ?? s.meta[key] })))
+      .filter(({ v }) => v !== undefined && !YES_RE.test(v.trim()) && !NO_RE.test(v.trim()));
     console.log(`${file}: ${doc.suites.length} suites, ${tests.length} tests`);
+    for (const { t, key, v } of badFlags) console.log(`  invalid ${key} "${v}" in ${JSON.stringify(t.title || '(untitled)')}; use yes or no`);
     if (noSteps.length) console.log(`  tests without steps: ${noSteps.map(({ t }) => JSON.stringify(t.title || '(untitled)')).join(', ')}`);
     if (untitled.length) console.log(`  tests without title: ${untitled.length}`);
     for (const { t, p } of unknown) console.log(`  unknown priority "${p}" in ${JSON.stringify(t.title || '(untitled)')}`);
     if (!tests.length) console.log('  no tests found');
-    if (!tests.length || untitled.length) failed = true;
+    if (!tests.length || untitled.length || badFlags.length) failed = true;
   }
   return failed ? 1 : 0;
 }
@@ -510,6 +615,7 @@ async function cmdPull(opts, cfg, cwd) {
   const fromRun = opts.run ? await loadRunCases(client, runIdOf(opts.run)) : null;
   const suiteId = fromRun ? fromRun.run.suite_id : await resolveSuite(client, cfg);
   const priorityNames = new Map((await client.get('get_priorities')).map((p) => [p.id, p.name]));
+  const fields = await loadFields(client, cfg);
   const raw = await client.getAll(`get_sections/${cfg.projectId}&suite_id=${suiteId}`, 'sections');
   const sections = raw.map((s) => ({ id: s.id, name: s.name, parent_id: s.parent_id ?? null, description: s.description }));
   const byId = new Map(sections.map((s) => [s.id, s]));
@@ -537,7 +643,7 @@ async function cmdPull(opts, cfg, cwd) {
   const files = targets.map((t) => {
     const clash = targets.filter((o) => o.base === t.base).length > 1;
     const name = `${clash ? `${t.base}-${t.section.id}` : t.base}.test.md`;
-    return { name, path: resolve(dir, name), text: serializeSection(t.section, t.cases, priorityNames), count: t.cases.length };
+    return { name, path: resolve(dir, name), text: serializeSection(t.section, t.cases, priorityNames, fields), count: t.cases.length };
   });
   const differing = files.filter((f) => existsSync(f.path) && readFileSync(f.path, 'utf8') !== f.text);
   if (differing.length && !opts.overwrite) {
@@ -712,7 +818,10 @@ async function cmdPush(files, opts, cfg, cwd) {
   const client = createClient(cfg);
   const suiteId = await resolveSuite(client, cfg);
   const templateId = await resolveTemplate(client, cfg);
-  const ctx = { templateId, priorityIdByName: buildPriorityMap(await client.get('get_priorities')) };
+  const ctx = { templateId, priorityIdByName: buildPriorityMap(await client.get('get_priorities')), fields: await loadFields(client, cfg) };
+  const usedKeys = new Set(loaded.flatMap(({ doc }) => doc.suites.flatMap((s) => [s.meta, ...s.tests.map((t) => t.meta)]).flatMap(Object.keys)));
+  const unmapped = STANDARD_KEYS.filter((key) => usedKeys.has(key) && !ctx.fields.has(key));
+  if (unmapped.length) console.log(`warning: ${unmapped.join(', ')} not sent; map them to TestRail case fields in TESTRAIL_FIELDS`);
   const payloads = loaded.map(({ file, doc }) => {
     try {
       return doc.suites.map((suite) => suite.tests.map((test) => toCasePayload(test, suite, ctx)));

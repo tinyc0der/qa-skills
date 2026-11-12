@@ -6,6 +6,7 @@ If the user provided example test cases, follow their style first; then apply th
 
 - Formulas, business rules, edge-case reasoning, and feature context live in the suite/test description.
 - Prerequisites common to all test cases go as bullet points in the suite description.
+- Keep test data out of the suite description. TestRail shows a case without its section description.
 - Formulas and diagrams relevant to all test cases can be included as code blocks in the suite description.
 
 ## Test Cases
@@ -21,23 +22,23 @@ If the user provided example test cases, follow their style first; then apply th
 
 ## Title
 
-Title states the behavior under test from the user's perspective.
+Title states the behavior under test: the object, the condition, and the outcome.
 
-Title structure: `<role> <action> <object> <qualifier>`
+Title structure: `<object> <condition> <outcome>`. Start with a role only when the feature has several roles or the test is about permissions.
 
 Examples:
 
-- Editor can change description of a blogpost in admin panel
-- User can report a bug using widget on a web page
-- Blocked user must not be able to log in to app workspace
-- Admin can invite up to 10 users to a project via Settings Page
-- User can not edit a comment it doesn't own
-- User can retry operation when NetworkError occurs
-- User can not retry operation when network connection is disabled
+- Login with valid email and password opens the dashboard
+- Invalid email format shows an error
+- Interval of 59 seconds shows an error
+- Retry button appears when NetworkError occurs
+- Admin can invite up to 10 users to a project
+- Viewer cannot edit a comment
 
 Avoid:
 
 - Filler prefixes: `Verify that ...`, `Test that ...`, `Check ...`, `Should ...`
+- Words every title would share: a role when the feature has one role, `User sees`, `User can`
 - Multi-intent titles joined by `and` / `then`
 - Restating the suite name in every title
 - Embedding IDs or numbers: `TC-001: Login`
@@ -45,10 +46,10 @@ Avoid:
 
 Good vs bad:
 
-- `Verify successful login` → `User can log in with valid email and password`
-- `Wrong password test` → `User cannot log in with invalid password`
+- `Verify successful login` → `Login with valid email and password opens the dashboard`
+- `Wrong password test` → `Login with invalid password shows an error`
+- `User sees error when email format is invalid` → `Invalid email format shows an error`
 - `Login and update profile` → split into two tests
-- `Email validation` → `User sees error when email format is invalid`
 
 ## Preconditions
 
@@ -56,7 +57,8 @@ Good vs bad:
 - Define the preconditions and initial state of the system as bullet points.
 - If relevant, include the user role.
 - Skip preconditions that are not needed or repeat the suite description.
-- Do not include preconditions like "service is running" unless the user explicitly mentioned them or the test is about them.
+- Give every value the steps rely on that differs from the screen's defaults: form data, time window, account state. Do not point to data written elsewhere.
+- Do not include preconditions like "service is running" or "user is logged in" unless the user explicitly mentioned them or the test is about them.
 
 ## Steps
 
@@ -78,12 +80,10 @@ e.g.
 ```markdown
 ## Steps
 
-- Navigate to the login page
-  *Expected*: Login form is displayed with username and password fields
-- Enter a valid username and password
-  *Expected*: Credentials are entered without errors
-- Click the "Login" button
-  *Expected*: User is redirected to the dashboard
+- Open the *Login* page
+  *Expected*: Login form shows **Email**, **Password** and **Log in**
+- Enter `jane@example.com` and `Secret-123` and click **Log in**
+  *Expected*: Dashboard opens; header shows "Jane Doe"
 ```
 
 Step format rules:
@@ -108,20 +108,24 @@ Step content rules:
 - Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)"; replace them with concrete, literal values.
 - Avoid general statements in steps. Move them to the description.
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.
+- Exception: data entry that only sets up the action under test joins that action (`Enter 59 in **Interval** and click **Create**`) or goes in preconditions.
+- No expected result that only repeats the input (`Field shows 3,050`).
+- No check that another check on the same line implies: an error shown on the form already means the next screen did not open.
 - All step actions must be clear to perform via public API or UI.
 - All checks/verifications/assertions belong in the expected result, not in the step action.
 - A code block may follow a step when it holds an API request or response body.
 
-If an expected result has multiple conditions, split them into separate lines.
+One expected line per screen or state. Separate the checks on it with `; `, each check one verifiable fact. Start a new line when the screen or state changes.
 
 Instead of:
 
-`*Expected*: Comment appears in the Run's comment list with the current user as author`
+`*Expected*: Error "The minimum order interval is 60 seconds." under **Interval**`
+`*Expected*: Red border on **Interval**`
+`*Expected*: Confirmation screen does not open`
 
 Use:
 
-`*Expected*: Comment appears in the Run's comment list`
-`*Expected*: Current user is the author`
+`*Expected*: Error "The minimum order interval is 60 seconds." under **Interval**; red border on **Interval**; confirmation screen does not open`
 
 ### Bold and italic in steps
 

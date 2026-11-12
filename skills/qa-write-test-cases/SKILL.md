@@ -228,31 +228,37 @@ Size it to the tier chosen in Step 2. The tier description lists the categories 
 Derive items with the techniques that fit the feature:
 
 - at least one item per acceptance criterion
+- one item per validation rule and error message a source states, empty required fields included
 - equivalence partitioning and boundary values for inputs and limits
 - decision tables for combined conditions
 - pairwise combinations when several independent options interact
 - state transitions for statuses and lifecycles
 - a role/permission matrix when the feature has roles
 - invalid input combinations and error handling
+- a source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, and values recalculated from other fields
+- a check that can pass on screen and fail at submit: the value changes in between (time passes, the balance is used elsewhere)
 
 Item rules:
 
 - Each item is one test objective. Split items that check several outcomes.
+- Do not drop an item on an assumption no source states, such as "the field always has a value". Record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Cover UI consistency with one item per screen, not one per element.
-- Prefix each item with its TestRail priority: 🔴 critical, 🟠 high, 🟡 medium, 🟢 low. When pulled cases use other priority names, use those.
+- Prefix each item with its TestRail priority: 🔴 critical for the core flow, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
+- Tag `[smoke]` on the items of the critical path: the happy path of each main flow.
+- Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
 
 Example:
 
 ```markdown
-- Signup
-  - 🔴 [critical] Signup with valid email
-  - 🟡 [medium] Signup with valid phone number
+- 1 Signup
+  - 1.1 🔴 [critical] [smoke] Signup with valid email
+  - 1.2 🟡 [medium] Signup with valid phone number
 
-- Login
-  - 🔴 [critical] Login with valid email
-  - 🟡 [medium] Login with valid phone number
-  - 🟠 [high] Login with invalid password
+- 2 Login
+  - 2.1 🔴 [critical] [smoke] Login with valid email
+  - 2.2 🟡 [medium] Login with valid phone number
+  - 2.3 🟠 [high] Login with invalid password
 ```
 
 #### Self review
@@ -261,7 +267,7 @@ Run [Self review](#self-review) on the checklist. Skip it when the user only rem
 
 #### Approval gate
 
-- If a multi-select/checkbox Ask tool is available: present leaf items as checkboxes, prefixed with priority and category (e.g. `🔴 Login: valid email`), with the recommended subset for the chosen tier pre-checked. The ticked items become the test cases in Step 5.
+- If a multi-select/checkbox Ask tool is available: present leaf items as checkboxes, prefixed with number, priority and category (e.g. `2.1 🔴 Login: valid email`), with the recommended subset for the chosen tier pre-checked. The ticked items become the test cases in Step 5.
 - Otherwise: show the markdown checklist and ask the user to add/remove/change items.
 
 Always ask about the amount of cases / level of detail:
@@ -297,10 +303,13 @@ Write test case files to `test-cases/`.
 
 Generation rules:
 
-- Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority.
+- Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority, and `smoke: yes` when the item has `[smoke]`.
+- Set `automation:` on every test: `yes` for repeatable checks with clear data and little UI dependency (validation, boundaries, permission matrix), `no` otherwise.
+- Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`).
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
-- When the user chose to expand an existing section, `pull --section <section>` it, then add the new tests to the pulled file. Never overwrite a pulled file.
+- When the user chose to expand an existing section, `pull --section <section>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
+- When pulled cases carry `platform:`, the project keeps one section tree per feature for all platforms. Add the new platform's tests to those subsections; do not create a section per platform.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.
 
 Format rules:

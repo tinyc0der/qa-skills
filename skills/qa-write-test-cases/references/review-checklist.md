@@ -5,6 +5,7 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 ## Checklist review
 
 - Every acceptance criterion has an item. At the Smoke tier, only criteria on the critical path need one.
+- Every validation rule and error message in the sources has an item, or the context file says why not. Not at the Smoke tier.
 - **Every item comes from a source.** Flag items that test behavior no source states.
 - Items follow the ticket. Where the context file records a conflict, they follow the side it names.
 - The item count and categories fit the tier and the role.
@@ -19,7 +20,7 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 Checklist:
 
 - One new test per approved checklist item. No missing tests, no extra tests.
-- Each test checks its item's objective and has its item's priority.
+- Each test checks its item's objective and has its item's priority and smoke tag.
 - A new test that repeats an existing test in the file or an existing case.
 
 Sources:
@@ -32,7 +33,7 @@ Sources:
 Executable:
 
 - A tester who has not read the sources can run every step with the values given.
-- Preconditions set up every role, record, and state the steps assume.
+- Preconditions set up every role, record, state, and value the steps assume, without pointing to data in the suite description.
 - Each expected result is visible in the UI or a public API response.
 - A test does not depend on another test's data or order.
 
