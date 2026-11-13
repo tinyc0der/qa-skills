@@ -4,14 +4,14 @@ Step 4 derives checklist items with standard test design techniques (ISTQB), spe
 
 ## 1. Risk first
 
-Rate each area of the feature by impact and likelihood before deriving items. High impact in trading: money and orders (price, volume, buying power, fees, P&L), order status and lifecycle, trading sessions and market time, data shown to investors, who can see or do what (account, sub-account, user type), and authentication (OTP, session). Derive items for high-risk areas first and in most depth. A low-risk area gets the requirement coverage items and at most one UI item per screen. A test that is costly to run (a market-hours window, two devices, a wait of an hour) is worth it for a high-risk item; for a lower one, fold the check into a cheaper test or leave it out.
+Rate each area of the feature by impact and likelihood before deriving items. High impact in trading: money and orders (price, volume, buying power, fees, P&L), order status and lifecycle, trading sessions and market time, data shown to investors, who can see or do what (account, sub-account, user type), and authentication (OTP, session). Derive items for high-risk areas first and in most depth. A low-risk area gets the requirement coverage items and at most one UI item per screen. A test that is costly to run (a market-hours window, two devices, a wait of an hour, a run over two days, another team setting a status, a real order placed only to look at the UI) is worth it for a high-risk item; for a lower one, fold the check into a cheaper test or leave it out.
 
 ## 2. Specification-based techniques
 
 **Requirement coverage (traceability)**
 
 - At least one item per acceptance criterion.
-- One item per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome.
+- One item or data row per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome. When a source gives the outcome but not the message, assert the outcome only (the order is not placed). When it is unknown whether a value is kept or cleared, assert that the screen, the next screen, the request, and the saved record agree.
 - A source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, values recalculated from other fields, and the options of an existing field the feature compares with.
 - An acceptance criterion that says "matches screen X" when X reads the same data: one more item checks one record against an independent oracle (recomputed from the formula, or a third screen), since the match passes by construction.
 
