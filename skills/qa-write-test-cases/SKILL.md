@@ -233,7 +233,7 @@ Create a hierarchical, categorized checklist from the gathered context.
 
 Size it to the tier chosen in Step 2. The tier description lists the categories to cover.
 
-Derive items with the [Test Design Techniques](./references/test-design-techniques.md) that fit the feature.
+Derive items with the [Test Design Techniques](./references/test-design-techniques.md) that fit the feature, spending them by risk. Leave out what its "Not worth a test" section lists.
 
 Item rules:
 
@@ -241,7 +241,7 @@ Item rules:
 - Merge items whose tests would share preconditions and steps, items that differ only in test data (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
 - Do not drop an item on an assumption no source states, such as "the field always has a value". Keep the item, mark it `ask`, and record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
-- Cover UI consistency with one item per screen, not one per element. Each theme or language of a screen is one more item, and it checks that longer labels do not overlap or get cut. Message texts in another language are one item with a data table.
+- Cover UI consistency with one item per screen, not one per element. When the ticket adds or changes text or layout on a screen, each other theme or language of it is one more item, which also checks that longer labels do not overlap or get cut. Message texts in another language are one item with a data table.
 - Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.

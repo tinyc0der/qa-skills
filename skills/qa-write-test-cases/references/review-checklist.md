@@ -6,7 +6,8 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 
 - Every acceptance criterion has an item. At the Smoke tier, only criteria on the critical path need one.
 - Every validation rule, edge case, and error message in the sources has an item, or the context file says why not. A missing expected result is not a reason. Not at the Smoke tier.
-- Each [Test Design Technique](./test-design-techniques.md) that fits the feature produced its items.
+- Each [Test Design Technique](./test-design-techniques.md) that fits the feature produced its items, and high-risk areas have the most items.
+- No item falls under "Not worth a test" in Test Design Techniques.
 - **Every item comes from a source.** Flag items that test behavior no source states or implies.
 - Items follow the ticket. Where the context file records a conflict, they follow the side it names.
 - The item count and categories fit the tier and the role.
