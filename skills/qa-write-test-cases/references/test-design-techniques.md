@@ -11,7 +11,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Requirement coverage (traceability)**
 
 - At least one item per acceptance criterion.
-- One item or data row per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome. When a source gives the outcome but not the message, assert the outcome only (the order is not placed). When it is unknown whether a value is kept or cleared, assert that the screen, the next screen, the request, and the saved record agree. An `ask` check whose expected result holds whatever the answer is becomes a step in an existing test, not its own item.
+- One item or data row per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome. When a source gives the outcome but not the message, assert the outcome only (the order is not placed). When it is unknown whether a value is kept or cleared, assert that the screen, the next screen, the request, and the saved record agree. An `ask` check whose expected result holds whatever the answer is becomes a step in an existing test, not its own item. An acceptance criterion that states a property (idempotent, sorted) or a released story of the same module is a source: no `ask`. Input the only client cannot send is a row in the server validation test.
 - A source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, values recalculated from other fields, and the options of an existing field the feature compares with.
 - An acceptance criterion that says "matches screen X" when X reads the same data: one more item checks one record against an independent oracle (recomputed from the formula, or a third screen), since the match passes by construction.
 
@@ -28,6 +28,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - For each stated minimum, maximum, or time limit (lot size, price step, ceiling and floor, session open and close, the last day of a rolling window): one item at the limit and one just outside it. Use the limit in the ticket, even when it changed (minimum 5 → 10).
 - A number shown at fixed precision: a value that rounds to the smallest shown value (0.00) or to zero.
+- Boundaries the feeding client already blocks, and time boundaries finer than a scheduler's interval, are rows in one accept/reject test, not items of their own.
 - A list the feature takes from another story (columns, criteria, result rows): a row at that story's stated maximum, or a count far above the usual one when it says "no limit"; result rows use the largest set (no filter). Add the row to an existing test.
 
 **Decision tables and combinations**
@@ -35,6 +36,8 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - Combined conditions: one item per rule with its own outcome; rules with the same outcome share one item.
 - Pairwise combinations when several independent options interact.
 - Invalid input combinations.
+- An ordering rule: data where creation order, text order, and numeric order all differ (ordinal 2, 5, 10).
+- Content stored per variant (language, app and web image): one row per receiver of each variant, with every field of the source's sample body filled. The language rule for UI text does not exclude this.
 - A rule that picks one of several records (latest period, latest version, effective date): one item where a newer record wins and an older one does not show, and one where a record re-imported while shown leaves no duplicate or mixed rows.
 
 **State transition**
@@ -51,7 +54,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Use case and data flow**
 
 - The main flow end to end, then each alternative flow.
-- Where the result goes: one item per place the new or changed data reaches (another screen, order book, notification, export), even a place another feature owns, and one negative item for a place or receiver outside the list. A changed value or limit: each place that shows it (guide, tooltip, error text).
+- Where the result goes: one item per place the new or changed data reaches (another screen, order book, notification, export), even a place another feature owns, and one negative item for a place or receiver outside the list. A changed value or limit: each place that shows it (guide, tooltip, error text). A place that reads the same record at the same time (app and web list) is a step of one test, not its own item.
 - A BE sub-task gets API items only for results the UI cannot show.
 
 **Role and permission matrix**
