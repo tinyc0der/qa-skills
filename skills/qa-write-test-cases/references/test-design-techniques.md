@@ -13,6 +13,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - At least one item per acceptance criterion.
 - One item per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome.
 - A source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, values recalculated from other fields, and the options of an existing field the feature compares with.
+- An acceptance criterion that says "matches screen X" when X reads the same data: one more item checks one record against an independent oracle (recomputed from the formula, or a third screen), since the match passes by construction.
 
 **Equivalence partitioning**
 
@@ -24,12 +25,14 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Boundary value analysis**
 
 - For each stated minimum, maximum, or time limit (lot size, price step, ceiling and floor, session open and close, the last day of a rolling window): one item at the limit and one just outside it. Use the limit in the ticket, even when it changed (minimum 5 → 10).
+- A number shown at fixed precision: a value that rounds to the smallest shown value (0.00) or to zero.
 
 **Decision tables and combinations**
 
 - Combined conditions: one item per rule with its own outcome; rules with the same outcome share one item.
 - Pairwise combinations when several independent options interact.
 - Invalid input combinations.
+- A rule that picks one of several records (latest period, latest version, effective date): one item where a newer record wins and an older one does not show, and one where a record re-imported while shown leaves no duplicate or mixed rows.
 
 **State transition**
 
@@ -49,17 +52,18 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Role and permission matrix**
 
 - When any source names user types for the screen (Guest, logged-in, account tiers, experiment groups), even if the ticket names none: one item per user type that the new behavior works for it; user types with the same result share one item with a data table. Access rules another story defines stay with that story.
+- A screen open to more users than the data's source screen (public screen, restricted source): one item that the response for the least privileged user carries only the fields the screen shows.
 
 ## 3. Experience-based techniques
 
 **Error guessing**
 
 - One item per error class a source names or implies (timeout, 5xx, 4xx, network offline) that has its own expected result. Classes with the same result share one item with a data table.
-- Each precondition a source states (user logged in, session valid, OTP valid): one item for when it does not hold.
+- Each precondition a source states (user logged in, session valid, OTP valid): one item for when it does not hold. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
 
 **Regression**
 
-- A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features.
+- A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features. Its expected result is the previous version's result on the same data (values and row count), not only "no error". When a field is removed or becomes null, the data has one row per value the field used to hold (each exchange, each type).
 
 ## 4. Not worth a test
 
@@ -67,7 +71,7 @@ Leave these out, unless the user asks for them or a source says the ticket chang
 
 - Behavior the ticket does not change, such as validation an earlier story owns (one regression item covers a changed shared component).
 - Cosmetic details: colors, fonts, spacing, alignment, icon shapes, animation, picker wheel positions. One UI item per screen compares the screen with the design.
-- A separate theme or language item for a screen whose text and layout the ticket leaves unchanged.
+- A separate theme item, or a language item for a screen whose text the ticket leaves unchanged.
 - One item per field label, tooltip line, or data row that one item with a data table covers.
 - Generic platform behavior: the keyboard opens, scrolling, the back gesture, pull to refresh.
 - A negative place no user would expect the feature in (another product's screen the ticket never mentions).
