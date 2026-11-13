@@ -11,13 +11,14 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Requirement coverage (traceability)**
 
 - At least one item per acceptance criterion.
-- One item or data row per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome. When a source gives the outcome but not the message, assert the outcome only (the order is not placed). When it is unknown whether a value is kept or cleared, assert that the screen, the next screen, the request, and the saved record agree.
+- One item or data row per validation rule, edge case, and error message a source names, empty required fields included. An edge case a source names without its result still gets an item, marked `ask`: its expected result checks what any correct answer keeps (no error page, no NaN or blank value, the count matches the list), and must fail on at least one wrong outcome. When a source gives the outcome but not the message, assert the outcome only (the order is not placed). When it is unknown whether a value is kept or cleared, assert that the screen, the next screen, the request, and the saved record agree. An `ask` check whose expected result holds whatever the answer is becomes a step in an existing test, not its own item.
 - A source that says "same as the existing X": items for the parts of X the feature shows, such as limits, defaults, values recalculated from other fields, and the options of an existing field the feature compares with.
 - An acceptance criterion that says "matches screen X" when X reads the same data: one more item checks one record against an independent oracle (recomputed from the formula, or a third screen), since the match passes by construction.
 
 **Equivalence partitioning**
 
 - One item per valid class and per invalid class of each input; values of one class share one item with a data table.
+- Each way a source names to do one action (drag and drop or a move button, a click or a keyboard shortcut) is one row.
 - Number inputs: negative and zero when the data can be negative, decimals, each accepted suffix in upper and lower case (`1.5B`, `1b`), malformed numbers (`1.2.3`, `--5`), a range with one bound empty.
 - A message with placeholders: each value a placeholder takes (Buy/Sell) appears in at least one test of that message.
 - An input the ticket adds or changes where the app formats time, date, or numbers at run time: the device setting that changes the format (12-hour clock, region format) is one class. Read-only values with a fixed format and fixed labels are not.
@@ -39,7 +40,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **State transition**
 
 - Statuses and lifecycles (order states): each valid transition and each blocked one.
-- A screen or form: invalid → fixed, failed → retried, a second record picked while the first is shown, one field of an active condition changed while the others keep their values, and the form left and opened again (values kept or cleared; with no source for the result, an `ask` item).
+- A screen or form: invalid → fixed, failed → retried, a second record picked while the first is shown, one field of an active condition changed while the others keep their values, and the form left and opened again (values kept or cleared; with no source for the result, an `ask` item). Kept-or-cleared applies to values that reach a request or a saved record; sort, page, and page size get an item only when a source gives the result or the new result makes the old state invalid (fewer rows than the current page).
 - A state an acceptance criterion names (after the drawer closes, logged out, including by session expiry during the action): one row per way to reach it; ways no source states are `ask` rows.
 - A trigger (status change, market or exchange event): the result arrives at the trigger's time, does not repeat while the state stays, and holds for each state the record can be in when it fires (already cancelled, edited).
 - Several records hit by the same trigger at once: each gets its own result with its own values.
@@ -65,11 +66,12 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - One item per error class a source names or implies (timeout, 5xx, 4xx, network offline) that has its own expected result. Classes with the same result share one item with a data table.
 - Each precondition the feature itself checks (OTP at submit, session at an action that saves data): one item for when it does not hold. A read-only screen does not get one for the login precondition every ticket carries. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
+- A new instance of a shared component (a new tab with the same table, a new export): each bug fixed on the other instances is a row or step for the new one.
 - An intermittent bug (race, timing): repeat the repro about 3/p times for a reported rate p (1 in 15 → 45 rounds), 10 times when no source gives a rate, and the same count for every repro of that bug.
 
 **Regression**
 
-- A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features. Its expected result is the previous version's result on the same data (values and row count), not only "no error"; when no source states it, the preconditions give the values recorded before the deploy for a fixed past date. It checks only the part the sub-task changed. When a field is removed or becomes null, the data has one row per value the field used to hold (each exchange, each type).
+- A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features. Its expected result is the previous version's result on the same data (values and row count), not only "no error"; when no source states it and the change is not deployed yet, the preconditions give the values recorded before the deploy for a fixed past date; after the deploy, the oracle is the spec formula, another screen, or an export. It checks only the part the sub-task changed. When a field is removed or becomes null, the data has one row per value the field used to hold (each exchange, each type).
 - A ticket that adds or changes gesture or touch handling (a fix, a pannable chart inside a scrolling screen): one item for the gestures that share its area (back swipe on a pushed screen, scroll), `ask` when no source gives the result.
 
 ## 4. Not worth a test
