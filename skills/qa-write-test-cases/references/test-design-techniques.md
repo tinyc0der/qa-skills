@@ -21,6 +21,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - Number inputs: negative and zero when the data can be negative, decimals, each accepted suffix in upper and lower case (`1.5B`, `1b`), malformed numbers (`1.2.3`, `--5`), a range with one bound empty.
 - A message with placeholders: each value a placeholder takes (Buy/Sell) appears in at least one test of that message.
 - A field the ticket adds or changes that shows time, date, or numbers: the device setting that changes its format (12-hour clock, region format) is one class.
+- A fix whose root cause names the components it changes (gesture handler, touch handler, button type): one class per component, each tested with its highest-risk example (the order button).
 
 **Boundary value analysis**
 
@@ -38,6 +39,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - Statuses and lifecycles (order states): each valid transition and each blocked one.
 - A screen or form: invalid → fixed, failed → retried, a second record picked while the first is shown, one field of an active condition changed while the others keep their values, and the form left and opened again (values kept or cleared; with no source for the result, an `ask` item).
+- A state an acceptance criterion names (after the drawer closes, after login): one row per way to reach it; ways no source states are `ask` rows.
 - A trigger (status change, market or exchange event): the result arrives at the trigger's time, does not repeat while the state stays, and holds for each state the record can be in when it fires (already cancelled, edited).
 - Several records hit by the same trigger at once: each gets its own result with its own values.
 - A check that can pass on screen and fail at submit: the value changes in between (time passes, the balance is used elsewhere).
@@ -51,7 +53,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 **Role and permission matrix**
 
-- When any source names user types for the screen (Guest, logged-in, account tiers, experiment groups), even if the ticket names none: one item per user type that the new behavior works for it; user types with the same result share one item with a data table. Access rules another story defines stay with that story.
+- When any source names user types for the screen (Guest, logged-in, account tiers, experiment groups), even if the ticket names none: one item per user type whose result can differ (the behavior reads login state, tier, or group); user types with the same result share one item with a data table. A fix that does not read the user type needs no user-type rows. Access rules another story defines stay with that story.
 - A screen open to more users than the data's source screen (public screen, restricted source): one item that the response for the least privileged user carries only the fields the screen shows.
 
 ## 3. Experience-based techniques
@@ -60,10 +62,12 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - One item per error class a source names or implies (timeout, 5xx, 4xx, network offline) that has its own expected result. Classes with the same result share one item with a data table.
 - Each precondition a source states (user logged in, session valid, OTP valid): one item for when it does not hold. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
+- An intermittent bug (race, timing): repeat the repro about 3/p times for a reported rate p (1 in 15 → 45 rounds), 10 times when no source gives a rate, and the same count for every repro of that bug.
 
 **Regression**
 
 - A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features. Its expected result is the previous version's result on the same data (values and row count), not only "no error". When a field is removed or becomes null, the data has one row per value the field used to hold (each exchange, each type).
+- A fix to gestures or touch handling on a container: one item for the gestures that share its area (back swipe on a pushed screen, scroll), `ask` when no source gives the result.
 
 ## 4. Not worth a test
 
@@ -73,5 +77,5 @@ Leave these out, unless the user asks for them or a source says the ticket chang
 - Cosmetic details: colors, fonts, spacing, alignment, icon shapes, animation, picker wheel positions. One UI item per screen compares the screen with the design.
 - A separate theme item, or a language item for a screen whose text the ticket leaves unchanged.
 - One item per field label, tooltip line, or data row that one item with a data table covers.
-- Generic platform behavior: the keyboard opens, scrolling, the back gesture, pull to refresh.
+- Generic platform behavior: the keyboard opens, scrolling, the back gesture, pull to refresh, unless the ticket changes gesture or touch handling.
 - A negative place no user would expect the feature in (another product's screen the ticket never mentions).

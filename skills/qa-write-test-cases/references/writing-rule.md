@@ -64,7 +64,7 @@ Good vs bad:
 
 ## Steps
 
-A step consists of an action (with optional test data) and an expected result. A wait step (`Wait until 10:05`) may have no expected result.
+A step consists of an action (with optional test data) and an expected result. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
 
 Test steps use the `## Steps` header section with a nested markdown list format:
 

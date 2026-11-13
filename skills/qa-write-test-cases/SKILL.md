@@ -239,7 +239,7 @@ Derive items with the [Test Design Techniques](./references/test-design-techniqu
 Item rules:
 
 - Each item is one test objective: one action or flow and the state it reaches. Split items that check outcomes of different actions.
-- Merge items whose tests would share preconditions and steps, items that differ only in test data (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
+- Merge items whose tests would share preconditions and steps, items that differ only in test data and share a priority and smoke tag (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
 - Do not drop an item on an assumption no source states, such as "the field always has a value". Keep the item, mark it `ask`, and record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Cover UI consistency with one item per screen, not one per element. When the ticket adds or changes text on a screen, each other language of it is one more item, which also checks that longer labels do not overlap or get cut; another theme is one more step in the screen's UI item. Message texts in another language are one item with a data table.
