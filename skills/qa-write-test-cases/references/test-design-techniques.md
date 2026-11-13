@@ -27,6 +27,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - For each stated minimum, maximum, or time limit (lot size, price step, ceiling and floor, session open and close, the last day of a rolling window): one item at the limit and one just outside it. Use the limit in the ticket, even when it changed (minimum 5 → 10).
 - A number shown at fixed precision: a value that rounds to the smallest shown value (0.00) or to zero.
+- A list the feature takes from another story (columns, criteria, result rows): a row at that story's stated maximum, or a count far above the usual one when it says "no limit"; result rows use the largest set (no filter). Add the row to an existing test.
 
 **Decision tables and combinations**
 
@@ -39,7 +40,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - Statuses and lifecycles (order states): each valid transition and each blocked one.
 - A screen or form: invalid → fixed, failed → retried, a second record picked while the first is shown, one field of an active condition changed while the others keep their values, and the form left and opened again (values kept or cleared; with no source for the result, an `ask` item).
-- A state an acceptance criterion names (after the drawer closes, after login): one row per way to reach it; ways no source states are `ask` rows.
+- A state an acceptance criterion names (after the drawer closes, logged out, including by session expiry during the action): one row per way to reach it; ways no source states are `ask` rows.
 - A trigger (status change, market or exchange event): the result arrives at the trigger's time, does not repeat while the state stays, and holds for each state the record can be in when it fires (already cancelled, edited).
 - Several records hit by the same trigger at once: each gets its own result with its own values.
 - A check that can pass on screen and fail at submit: the value changes in between (time passes, the balance is used elsewhere).
@@ -55,6 +56,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Role and permission matrix**
 
 - When any source names user types for the screen (Guest, logged-in, account tiers, experiment groups), even if the ticket names none: one item per user type whose result can differ (the behavior reads login state, tier, or group); user types with the same result share one item with a data table. A fix that does not read the user type needs no user-type rows. Access rules another story defines stay with that story.
+- A permission the server checks: one API item with a row per user type it denies, no session included.
 - A screen open to more users than the data's source screen (public screen, restricted source): one item that the response for the least privileged user carries only the fields the screen shows.
 
 ## 3. Experience-based techniques

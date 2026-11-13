@@ -240,11 +240,11 @@ Derive items with the [Test Design Techniques](./references/test-design-techniqu
 Item rules:
 
 - Each item is one test objective: one action or flow and the state it reaches. Split items that check outcomes of different actions.
-- Merge items whose tests would share preconditions and steps, items that differ only in test data and share a priority and smoke tag (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
+- Merge items whose tests would share preconditions and steps, items that differ only in test data and share a priority and smoke tag with no `ask` part (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
 - Do not drop an item on an assumption no source states, such as "the field always has a value". Keep the item, mark it `ask`, and record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Cover UI consistency with one item per screen, not one per element. When the ticket adds or changes text on a screen, each other language of it is one more item, which also checks that longer labels do not overlap or get cut; another theme is one more step in the screen's UI item. Message texts in another language are one item with a data table.
-- Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
+- Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. An `ask` item keeps the priority of its impact. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
 

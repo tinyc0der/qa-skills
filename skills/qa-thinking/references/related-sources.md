@@ -6,6 +6,7 @@ Search for sources not read yet only when the given sources leave a gap:
 - an undefined term, flow, or state
 - an unclear expected result
 - a referenced feature or screen that no source read so far describes, including each screen a ticket applies to ("all screens with field X")
+- a ticket that says an existing X stays unchanged without linking X (template, file layout, screen): find X, the oracle of its regression item
 - an API endpoint a test would mock or check: confirm in the sub-tasks of the ticket and of related stories which endpoint serves the data now
 
 Search through the Atlassian MCP:
