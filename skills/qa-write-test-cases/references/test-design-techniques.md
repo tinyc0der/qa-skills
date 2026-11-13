@@ -23,7 +23,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 **Boundary value analysis**
 
-- For each stated minimum, maximum, or time limit (lot size, price step, ceiling and floor, session open and close): one item at the limit and one just outside it. Use the limit in the ticket, even when it changed (minimum 5 → 10).
+- For each stated minimum, maximum, or time limit (lot size, price step, ceiling and floor, session open and close, the last day of a rolling window): one item at the limit and one just outside it. Use the limit in the ticket, even when it changed (minimum 5 → 10).
 
 **Decision tables and combinations**
 
@@ -48,7 +48,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 **Role and permission matrix**
 
-- When any source names user types for the screen (Guest, logged-in, account tiers, experiment groups), even if the ticket names none: one item per user type that the new behavior works for it. Access rules another story defines stay with that story.
+- When any source names user types for the screen (Guest, logged-in, account tiers, experiment groups), even if the ticket names none: one item per user type that the new behavior works for it; user types with the same result share one item with a data table. Access rules another story defines stay with that story.
 
 ## 3. Experience-based techniques
 

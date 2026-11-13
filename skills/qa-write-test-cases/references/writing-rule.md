@@ -19,6 +19,7 @@ If the user provided example test cases, follow their style first; then apply th
 - Focus on black-box testing: every action and observable result goes through public APIs or UI (unless the user specifies otherwise).
 - Prefer UI over public APIs when possible. When the app can show a value (add a column, open details), read it there. Use DevTools or an API only for what the UI cannot show, and cover every page of a paged list.
 - Add system checks only when it is not clear how to test via public APIs or UI. This is not a unit test; usually no direct server or code access is allowed.
+- Mock or check an endpoint only when a source names it as the one serving the data. Otherwise describe the data state in preconditions (`Most searched has 2 tickers`).
 
 ## Title
 
