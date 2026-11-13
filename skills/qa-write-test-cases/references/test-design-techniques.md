@@ -4,7 +4,7 @@ Step 4 derives checklist items with standard test design techniques (ISTQB), spe
 
 ## 1. Risk first
 
-Rate each area of the feature by impact and likelihood before deriving items. High impact in trading: money and orders (price, volume, buying power, fees, P&L), order status and lifecycle, trading sessions and market time, data shown to investors, who can see or do what (account, sub-account, user type), and authentication (OTP, session). Derive items for high-risk areas first and in most depth. A low-risk area gets the requirement coverage items and at most one UI item per screen.
+Rate each area of the feature by impact and likelihood before deriving items. High impact in trading: money and orders (price, volume, buying power, fees, P&L), order status and lifecycle, trading sessions and market time, data shown to investors, who can see or do what (account, sub-account, user type), and authentication (OTP, session). Derive items for high-risk areas first and in most depth. A low-risk area gets the requirement coverage items and at most one UI item per screen. A test that is costly to run (a market-hours window, two devices, a wait of an hour) is worth it for a high-risk item; for a lower one, fold the check into a cheaper test or leave it out.
 
 ## 2. Specification-based techniques
 
@@ -20,7 +20,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - One item per valid class and per invalid class of each input; values of one class share one item with a data table.
 - Number inputs: negative and zero when the data can be negative, decimals, each accepted suffix in upper and lower case (`1.5B`, `1b`), malformed numbers (`1.2.3`, `--5`), a range with one bound empty.
 - A message with placeholders: each value a placeholder takes (Buy/Sell) appears in at least one test of that message.
-- A field the ticket adds or changes that shows time, date, or numbers: the device setting that changes its format (12-hour clock, region format) is one class.
+- A field the ticket adds or changes where the app formats time, date, or numbers at run time: the device setting that changes the format (12-hour clock, region format) is one class. Fixed labels a source lists are not.
 - A fix whose root cause names the components it changes (gesture handler, touch handler, button type): one class per component, each tested with its highest-risk example (the order button).
 
 **Boundary value analysis**
@@ -50,6 +50,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - The main flow end to end, then each alternative flow.
 - Where the result goes: one item per place the new or changed data reaches (another screen, order book, notification, export), even a place another feature owns, and one negative item for a place or receiver outside the list. A changed value or limit: each place that shows it (guide, tooltip, error text).
+- A BE sub-task gets API items only for results the UI cannot show.
 
 **Role and permission matrix**
 
@@ -66,8 +67,8 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 **Regression**
 
-- A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features. Its expected result is the previous version's result on the same data (values and row count), not only "no error". When a field is removed or becomes null, the data has one row per value the field used to hold (each exchange, each type).
-- A fix to gestures or touch handling on a container: one item for the gestures that share its area (back swipe on a pushed screen, scroll), `ask` when no source gives the result.
+- A sub-task that changes a shared component other features read (engine, API, table, tab bar): one regression item for those features. Its expected result is the previous version's result on the same data (values and row count), not only "no error"; when no source states it, the preconditions give the values recorded before the deploy for a fixed past date. It checks only the part the sub-task changed. When a field is removed or becomes null, the data has one row per value the field used to hold (each exchange, each type).
+- A ticket that adds or changes gesture or touch handling (a fix, a pannable chart inside a scrolling screen): one item for the gestures that share its area (back swipe on a pushed screen, scroll), `ask` when no source gives the result.
 
 ## 4. Not worth a test
 

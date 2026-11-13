@@ -85,6 +85,7 @@ Source priority:
 - A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket and the ticket does not link it. A released story that built the same screen describes current behavior, not an `ask`.
 - A typo, missing space, or bold in the ticket's message text is not behavior: use the text another source writes correctly, and raise an `ask`.
 - UI labels and layout follow the design, or without a readable design, the screen spec's field table or existing cases. Behavior and messages follow the ticket. An order or position that behavior depends on (the first button a row click opens, the default tab) is behavior.
+- When parts of the ticket conflict (description, sub-tasks, comments), a later implementation sub-task or comment wins over an earlier plan: record the conflict, no `ask`.
 - When sources other than the ticket conflict, follow the one updated most recently, record the conflict, and mark the items that depend on it `ask`.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
 
