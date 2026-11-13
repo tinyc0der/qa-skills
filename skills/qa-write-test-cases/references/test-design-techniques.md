@@ -13,6 +13,7 @@ Step 4 derives checklist items with the techniques that fit the feature. An item
 
 - Equivalence partitioning and boundary values: for each stated minimum or maximum, one item at the limit and one just outside it.
 - Number inputs: negative and zero when the data can be negative, decimals, each accepted suffix in upper and lower case (`1.5B`, `1b`), malformed numbers (`1.2.3`, `--5`), a range with one bound empty.
+- A time, date, or number input or display: one item with the device setting that changes its format (12-hour clock, region format).
 - A message with placeholders: each value a placeholder takes (Buy/Sell) appears in at least one test of that message.
 - Decision tables for combined conditions; pairwise combinations when several independent options interact.
 - Invalid input combinations.
@@ -24,12 +25,16 @@ Step 4 derives checklist items with the techniques that fit the feature. An item
 - Several records hit by the same trigger at once: each gets its own result with its own values.
 - A check that can pass on screen and fail at submit: the value changes in between (time passes, the balance is used elsewhere).
 - An input that calls the server while typing: changing the keyword before the results arrive shows only the latest keyword's results.
+- A form left and opened again (another tab, Back, another screen): one item for the values it keeps or clears and whether its empty state (placeholder, default) returns. With no source for the result, the item is `ask`.
+- A change that moves, renames, or removes something the previous app version saved (last selected tab, filter, setting): one item that updates over the previous version with that state saved.
 
 ## Who and where
 
 - A role/permission matrix when any source names user types for the screen (Guest, logged-in, account tiers), even if the ticket names none: one item per user type that the new behavior works for it. Access rules another story defines stay with that story.
 - Each precondition a source states (user logged in, session valid): one item for when it does not hold.
 - A source that lists where a result shows or who gets it (tabs, columns, tooltips, accounts): one item per place the new data reaches, even a place another feature owns, and one negative item for a place or receiver outside the list.
+- A value or limit the ticket changes (minimum 5 → 10): one item per place that shows it (guide, tooltip, error text), even where the ticket leaves the text unchanged.
+- An input whose UI or empty state the ticket changes: one item that the entered value still reaches each screen that shows it (confirmation, order book).
 
 ## Formulas and errors
 

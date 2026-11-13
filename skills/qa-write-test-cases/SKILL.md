@@ -94,6 +94,7 @@ Learn the UI pages, components, and API endpoints from Figma, Confluence, and th
 - If the feature is deployed, ask the user for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill.
 - In the live app, navigate only. Submit nothing that saves data unless the user agrees.
 - Use screenshots of related pages when the user shares them.
+- In Figma, read the frames of each component the ticket changes or gives a new state (picker, sheet, keyboard), not only the screen frames. Context files of related features from earlier runs list frames already found.
 
 #### QA workspace
 
@@ -240,7 +241,7 @@ Item rules:
 - Merge items whose tests would share preconditions and steps, items that differ only in test data (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
 - Do not drop an item on an assumption no source states, such as "the field always has a value". Keep the item, mark it `ask`, and record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
-- Cover UI consistency with one item per screen, not one per element. Each theme or language of a screen is one more item. Message texts in another language are one item with a data table.
+- Cover UI consistency with one item per screen, not one per element. Each theme or language of a screen is one more item, and it checks that longer labels do not overlap or get cut. Message texts in another language are one item with a data table.
 - Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
