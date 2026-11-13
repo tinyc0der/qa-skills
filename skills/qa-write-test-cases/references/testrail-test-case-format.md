@@ -102,7 +102,7 @@ If a test leaves out a key, the suite's value is used.
 - **Table format:** rows must start with `| ` and end with ` |`.
 - **Headers:** first row after `<!-- example -->` is header.
 - **Separator:** next row must contain `---` (3+ dashes) in each cell to mark headers.
-- **Data rows:** rows after the separator are example rows.
+- **Data rows:** rows after the separator are example rows. The steps run once per row, with that row's values in the `${column}` placeholders. Records that must exist together go in preconditions, not in an example table.
 
 ### 7. Steps
 

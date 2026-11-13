@@ -20,7 +20,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - One item per valid class and per invalid class of each input; values of one class share one item with a data table.
 - Number inputs: negative and zero when the data can be negative, decimals, each accepted suffix in upper and lower case (`1.5B`, `1b`), malformed numbers (`1.2.3`, `--5`), a range with one bound empty.
 - A message with placeholders: each value a placeholder takes (Buy/Sell) appears in at least one test of that message.
-- A field the ticket adds or changes where the app formats time, date, or numbers at run time: the device setting that changes the format (12-hour clock, region format) is one class. Fixed labels a source lists are not.
+- An input the ticket adds or changes where the app formats time, date, or numbers at run time: the device setting that changes the format (12-hour clock, region format) is one class. Read-only values with a fixed format and fixed labels are not.
 - A fix whose root cause names the components it changes (gesture handler, touch handler, button type): one class per component, each tested with its highest-risk example (the order button).
 
 **Boundary value analysis**
@@ -64,7 +64,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 **Error guessing**
 
 - One item per error class a source names or implies (timeout, 5xx, 4xx, network offline) that has its own expected result. Classes with the same result share one item with a data table.
-- Each precondition a source states (user logged in, session valid, OTP valid): one item for when it does not hold. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
+- Each precondition the feature itself checks (OTP at submit, session at an action that saves data): one item for when it does not hold. A read-only screen does not get one for the login precondition every ticket carries. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
 - An intermittent bug (race, timing): repeat the repro about 3/p times for a reported rate p (1 in 15 → 45 rounds), 10 times when no source gives a rate, and the same count for every repro of that bug.
 
 **Regression**

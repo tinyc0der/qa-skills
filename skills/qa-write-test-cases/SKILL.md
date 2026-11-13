@@ -79,12 +79,13 @@ Information sources:
 Source priority:
 
 - A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, parent ticket, sub-tasks, and linked issues. Linked bugs record behavior settled after the ticket was written.
+- Read the ticket's description history (`expand: changelog`). A phrase removed after the first draft is a decision against that behavior, not silence. Date every source by its last content change, not by Jira `updated`, which moves on status changes.
 - Ticket images the Atlassian MCP cannot download, and ticket sections that come back empty: ask the user for screenshots, or record them as not read.
 - From linked documents, use only the parts within the ticket's scope, plus rules that apply to every result of the screen (which records it lists).
 - Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and record the conflict in the context file.
-- A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket and the ticket does not link it. A released story that built the same screen describes current behavior, not an `ask`.
-- A typo, missing space, or bold in the ticket's message text is not behavior: use the text another source writes correctly, and raise an `ask`.
-- UI labels and layout follow the design, or without a readable design, the screen spec's field table or existing cases. Behavior and messages follow the ticket. An order or position that behavior depends on (the first button a row click opens, the default tab) is behavior. Labels on a screen another story built follow that story.
+- A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket and the ticket does not link it. A released story that built the same screen or component, and its fixed bugs, describe current behavior, not an `ask`; for parts the ticket does not change they rank above a spec page.
+- A typo, missing space, or bold in the ticket's text is not behavior: use the text another source writes correctly. Raise an `ask` only when no source writes it correctly.
+- UI labels (the names of fields, buttons, and tabs) and layout follow the design, or without a readable design, the screen spec's field table or existing cases. Behavior and messages follow the ticket; a field's displayed value, the set of fields, and the filter criteria are behavior. An order or position that behavior depends on (the first button a row click opens, the default tab) is behavior. Labels on a screen another story built follow that story.
 - When parts of the ticket conflict (description, sub-tasks, comments), a later implementation sub-task or comment wins over an earlier plan: record the conflict, no `ask`.
 - When sources other than the ticket conflict, follow the one updated most recently, record the conflict, and mark the items that depend on it `ask`.
 - If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
@@ -245,7 +246,7 @@ Item rules:
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Cover UI consistency with one item per screen, not one per element. A screen where the ticket only adds a row or field gets its UI and language check as a step in the flow test that already reaches it. When the ticket adds or changes text on a screen, each other language of it is one more item, which also checks that longer labels do not overlap or get cut; another theme is one more step in the screen's UI item. Message texts in another language are one item with a data table.
 - Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. An `ask` item keeps the priority of its impact. When pulled cases use other priority names, use those.
-- Tag `[smoke]` on the items of the critical path: the happy path of each main flow that one tester can run alone in one session.
+- Tag `[smoke]` on the items of the critical path: the happy path of each main flow that one tester can run alone in one session. Smoke and critical items have no `ask` part; a doubtful check that shares their steps goes into its own item.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
 
 Example:
