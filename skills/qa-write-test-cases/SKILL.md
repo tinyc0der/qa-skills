@@ -78,17 +78,16 @@ Information sources:
 
 Source priority:
 
-- A ticket, when given, is the primary source: its description, acceptance criteria, images, comments, parent ticket, sub-tasks, and linked issues. Linked bugs record behavior settled after the ticket was written.
-- Read the ticket's description history (`expand: changelog`). A phrase removed in an edit that kept the rest of the text is a decision against that behavior, not silence. After a full rewrite, the old draft is an earlier plan. Date every source by its last content change, not by Jira `updated`, which moves on status changes.
-- Ticket images the Atlassian MCP cannot download, and ticket sections that come back empty: ask the user for screenshots, or record them as not read.
-- From linked documents, use only the parts within the ticket's scope, plus rules that apply to every result of the screen (which records it lists).
-- Expected results follow the ticket. When another source contradicts it, keep the ticket's behavior and record the conflict in the context file.
-- A ticket silent on a behavior another source states does not contradict it: write the item from that source, as an `ask` when that source predates the ticket and the ticket does not link it. A released story that built the same screen or component, and its fixed bugs, describe current behavior, not an `ask`; for parts the ticket does not change they rank above a spec page. When the ticket adds a new instance of a shared component, the released instance is current behavior for what the shared front end does and for a template the ticket names; output of the new instance's own API stays `ask`.
-- A typo, missing space, or bold in the ticket's text is not behavior: use the text another source writes correctly. Raise an `ask` only when no source writes it correctly.
-- UI labels (the names of fields, buttons, and tabs) and layout follow the design, or without a readable design, the screen spec's field table or existing cases. Behavior and messages follow the ticket; a field's displayed value, the set of fields, and the filter criteria are behavior. An order or position that behavior depends on (the first button a row click opens, the default tab) is behavior. Labels on a screen another story built follow that story.
-- When parts of the ticket conflict (description, sub-tasks, comments), a later implementation sub-task or comment that refines or narrows an earlier plan wins: record the conflict, no `ask`. One that reverses an acceptance criterion's outcome for the same input gets one `ask` item whose expected result is what both sides keep. A part that lists fewer options than another is silent on the rest, not in conflict.
-- When sources other than the ticket conflict, follow the one updated most recently, record the conflict, and mark the items that depend on it `ask`.
-- If the user gave no ticket, document, or feature description, ask once for the ticket or its description and acceptance criteria. If they decline, continue from the prompt.
+- The ticket is the primary source: description, acceptance criteria, images, comments, parent, sub-tasks, and linked issues. Linked bugs record behavior settled later.
+- Read the description history (`expand: changelog`). A phrase removed while the rest stayed is a decision against it; a full rewrite makes the old draft an earlier plan. Date sources by their last content change, not Jira `updated`.
+- Images the MCP cannot download and sections that come back empty: ask for screenshots, or record them as not read.
+- From linked documents, use only the parts in the ticket's scope and rules for every result of the screen.
+- Expected results follow the ticket. Record each conflict with another source in the context file.
+- Silence is not conflict: write the item from the source that states the behavior, as `ask` when that source predates the ticket and is not linked. Released stories of the same screen and their fixed bugs are current behavior, ranking above spec pages for parts the ticket does not change.
+- Labels and layout follow the design, else the spec's field table or existing cases. Behavior and messages follow the ticket; displayed values, the set of fields, filters, and orders behavior depends on are behavior. Labels on a screen another story built follow that story.
+- Ticket parts in conflict: a later sub-task or comment that narrows the plan wins, recorded, no `ask`. One that reverses an acceptance criterion gets one `ask` item that checks what both sides keep. A part listing fewer options is silent on the rest.
+- Other sources in conflict: follow the newest, record it, and mark dependent items `ask`.
+- No ticket, document, or description given: ask once for one, then continue from the prompt.
 
 Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
 
@@ -241,10 +240,9 @@ Derive items with the [Test Design Techniques](./references/test-design-techniqu
 Item rules:
 
 - Each item is one test objective: one action or flow and the state it reaches. Split items that check outcomes of different actions.
-- Merge items whose tests would share preconditions and steps, items that differ only in test data and share a priority and smoke tag with no `ask` part (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline (after the 3rd and the 5th child order).
+- Merge items whose tests would share preconditions and steps, items that differ only in test data and share a priority and smoke tag with no `ask` part (one item with a data table), causes a source groups under one rule, and checkpoints on one timeline.
 - Do not drop an item on an assumption no source states, such as "the field always has a value". Keep the item, mark it `ask`, and record the doubt as an open question in the context file.
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
-- Cover UI consistency with one item per screen, not one per element. A screen where the ticket only adds a row or field gets its UI and language check as a step in the flow test that already reaches it. Without a readable design, the UI item checks only what sources state and flow tests do not already check, or is left out. When the ticket adds or changes text on a screen, each other language of it is one more item, which also checks that longer labels do not overlap or get cut; another theme is one more step in the screen's UI item. Message texts in another language are one item with a data table.
 - Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. An `ask` item keeps the priority of its impact. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow that one tester can run alone in one session. Smoke and critical items have no `ask` part; a doubtful check that shares their steps goes into its own item.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
@@ -305,7 +303,7 @@ Write test case files to `test-cases/`.
 Generation rules:
 
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority, and `smoke: yes` when the item has `[smoke]`.
-- Set `automation:` on every test: `yes` when a script can read the expected result (a value, message, or state), even if the flow waits on market time; `no` for layout, visual, and judgment checks.
+- Set `automation:` on every test: `yes` when a script can read the expected result (a value, message, or state), even if the flow waits; `no` for layout, visual, and judgment checks.
 - Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`). Without pulled cases, use `All` for behavior every platform shares, else the platform the ticket names.
 - Name files `feature-name.test.md` (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
@@ -319,25 +317,8 @@ Format rules:
 - Strictly follow [Test Case Format](./references/testrail-test-case-format.md) for suites, tests, and steps. Only exception: the user specifies their own format in the prompt.
 - Strictly follow [Writing Rules](./references/writing-rule.md) for suite/test descriptions, preconditions, steps, expected results, and anti-patterns.
 - Set `refs:` to the Jira key on every test case that comes from a Jira issue. When the whole file covers one issue, set `refs:` once on the suite instead.
-- If reasonable, add preconditions and test data based on the analyzed context.
-- Use concrete, executable values. **Do NOT introduce `${...}` placeholders in first-pass generation.** Parametrize only genuinely reused or data-driven values, and environment data no source gives that the tester supplies (test account, customer name); format them as `${variable}` in backticks.
-- **NEVER generate test or suite IDs of any kind:**
-  - Do NOT write `testrail_id:` or `testrail_section_id:`. The TestRail push writes them. Keep them when editing a file.
-  - Do NOT include custom/random IDs (e.g. `TC-001`, `TC-R001`, `SUITE-01`) in metadata, titles, or anywhere else.
-
-#### Matching existing test case formats
-
-When the user provides an existing test case example or asks for "similar" test cases:
-
-DO match:
-
-- writing style and level of detail
-- field structure (Priority, Preconditions, Type, Test Data, etc.)
-
-DON'T copy:
-
-- any IDs from the example: TestRail IDs (`testrail_id:`, `C<id>`) or custom prefixes (e.g. `TC-R001`, `TC-001`)
-- original test case intent
+- **Never write IDs:** no `testrail_id:` or `testrail_section_id:` (the TestRail push writes them; keep existing ones when editing), and no custom IDs (`TC-001`) anywhere.
+- Example test cases from the user: match their style, detail, and fields, not their IDs or intent.
 
 ### Step 6: Review test cases
 

@@ -120,7 +120,7 @@ Test steps use the `## Steps` header section with a nested markdown list format:
 **Step format rules:**
 
 - Steps must be under a `## Steps` heading
-- Use nested markdown lists (bulleted `*` or numbered `1.`)
+- Use nested markdown lists (bulleted `-` or numbered `1.`)
 - Top-level items describe the action to perform
 - Nested items with `*Expected*` (or `*Expected*:`, `*Expected result*`) describe the observable behavior
 - Expected results should be specific and verifiable
@@ -150,7 +150,7 @@ Tests for login functionality.
 <!-- test
 -->
 
-# Successful Login
+# Login with valid credentials opens the dashboard
 
 User can log in with valid credentials.
 ```
@@ -170,7 +170,7 @@ This suite contains manual tests for the login process.
 priority: high
 -->
 
-# User can log in with valid credentials
+# Login with each account role opens the dashboard
 
 A user should be able to log in with valid credentials.
 
@@ -208,9 +208,9 @@ Tests for REST API endpoints.
 priority: critical
 -->
 
-# Client can create a user via API
+# POST /api/users creates a user
 
-Verify that a new user can be created via POST request.
+A new user can be created via POST request.
 
 ## Steps
 
@@ -218,8 +218,7 @@ Verify that a new user can be created via POST request.
    ```json
    { "email": "jane@example.com", "name": "Jane" }
    ```
-   *Expected*: Response status code is 201
-   *Expected*: Response includes `id` and `createdAt` fields
+   *Expected*: Response status code is 201; response includes `id` and `createdAt` fields
 2. Send GET request to `/api/users/{id}` with the returned `id`
    *Expected*: User data matches the data sent in POST request
 ````

@@ -35,16 +35,14 @@ Sources:
 Executable:
 
 - A tester who has not read the sources can run every step with the values given.
-- Each expected result passes or fails on the point the test is about: no "either X or Y", no "record whether X".
 - Preconditions set up every role, record, state, and value the steps assume, without pointing to data in the suite description.
-- Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy. Behavior with no UI (tracking, counters, scheduled jobs) is read in the data store or log the BE team opens to QC; the preconditions name that access.
+- Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy. Behavior with no UI (tracking, counters, scheduled jobs) is read in the data store or log the backend team opens to QC; the preconditions name that access.
 - Every precondition can be set up on the day of the run (no past dates the UI rejects). Past data the UI cannot create comes from seeded test data; the precondition line of that record names who seeds it. Records a tester can create in the UI need no seeding note.
 - A test does not depend on another test's data or order.
 
 Rules:
 
-- Every rule in Test Case Format and Writing Rules.
-- No `testrail_id:`, `testrail_section_id:`, or custom IDs in new tests.
+- Every rule in Test Case Format and Writing Rules, and the ID rule in Step 5.
 - No test of a linked feature the user did not ask for.
 
 ## Findings

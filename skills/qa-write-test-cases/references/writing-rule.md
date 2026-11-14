@@ -1,7 +1,5 @@
 # Test Writing Rules
 
-If the user provided example test cases, follow their style first; then apply these rules.
-
 ## Test Suites
 
 - Formulas, business rules, edge-case reasoning, and feature context live in the suite/test description.
@@ -65,48 +63,13 @@ Good vs bad:
 
 ## Steps
 
-A step consists of an action (with optional test data) and an expected result. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
+A step is an action (with optional test data) and an expected result, in the format of [Test Case Format](./testrail-test-case-format.md) §7. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
 
-Test steps use the `## Steps` header section with a nested markdown list format:
-
-```markdown
-## Steps
-
-- (Step Action)
-  *Expected*: ... (Observable behavior)
-- ...
-  *Expected*: ...
-```
-
-e.g.
-
-```markdown
-## Steps
-
-- Open the *Login* page
-  *Expected*: Login form shows **Email**, **Password** and **Log in**
-- Enter `jane@example.com` and `Secret-123` and click **Log in**
-  *Expected*: Dashboard opens; header shows "Jane Doe"
-```
-
-Step format rules:
-
-- Steps must be under a `## Steps` heading.
-- Use nested markdown lists (bulleted `-`/`*` or numbered `1.`).
-- Top-level items describe the action to perform.
-- Nested items with `*Expected*` (or `*Expected*:`, `*Expected result*`) describe the observable behavior.
-- Expected results should be specific and verifiable.
 - Each expected result passes or fails: no "either X or Y", no "record whether X". An outcome no source gives is an `ask` item, not two accepted outcomes.
-
-Step content rules:
-
 - Each step is a simple sentence. Avoid commas and sub-sentences.
 - Steps are mechanical: click, send, read, assert.
 - Each step includes exact instructions with concrete, realistic values a tester can act on directly.
-- Do NOT parametrize by default — first-pass test cases should read as executable manual steps, not templates.
-- Use a placeholder variable like `${domain}` only when the value is genuinely reused across steps or is data-driven (see the Examples section in the format reference). A plain UI/API acceptance step needs concrete values, not placeholders.
-- Do not turn data unrelated to the test into placeholders.
-- Do not add preconditions as placeholders.
+- Use a `${variable}` placeholder, in backticks, only for a value reused across steps, a data-driven value (the examples table), or environment data no source gives that the tester supplies (test account, customer name). Never for other data or preconditions.
 - Prefer URL paths over full URLs, e.g. `/auth/login`.
 - Use specific values when they are important for the scenario (boundary values, format validation, locale-specific input).
 - Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)"; replace them with concrete, literal values.
