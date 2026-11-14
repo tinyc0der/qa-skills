@@ -946,6 +946,18 @@ export function parseResultsMd(text) {
   return { runs: blocks.filter((b) => b.kind === 'run'), results: blocks.filter((b) => b.kind === 'result') };
 }
 
+const RUN_AT_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+const STEP_RE = /^(\d+) (passed|failed|not observed)\b/;
+const stepsOf = (observed) => String(observed ?? '').split(/\s+·\s+(?=\d+\s)/).map((s) => s.trim()).filter(Boolean);
+const CONTENT_FIELDS = new Set(['preconds', 'steps_separated', 'steps', 'expected']);
+const STALE_GRACE_SECONDS = 60;
+const runAtSeconds = (value) => Math.floor(new Date(`${value.slice(0, 10)}T${value.slice(11)}`).getTime() / 1000);
+const pad2 = (n) => String(n).padStart(2, '0');
+function formatLocal(seconds) {
+  const d = new Date(seconds * 1000);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
 export function checkResults(doc, dir) {
   const problems = [];
   const [run] = doc.runs;
@@ -963,6 +975,17 @@ export function checkResults(doc, dir) {
     else seen.add(caseNum(r.meta.case));
     if (!status) problems.push(`${where}: missing status`);
     if (r.meta.elapsed && !ELAPSED_RE.test(r.meta.elapsed)) problems.push(`${where}: elapsed must look like 1m 30s, got "${r.meta.elapsed}"`);
+    if (r.meta.run_at && !(RUN_AT_RE.test(r.meta.run_at) && Number.isFinite(runAtSeconds(r.meta.run_at)))) {
+      problems.push(`${where}: run_at must look like 2026-11-10 10:14, got "${r.meta.run_at}"`);
+    }
+    if (status === 'passed' && !r.meta.testrail_result_id) {
+      const steps = stepsOf(r.meta.observed);
+      const notPassed = steps.map((s) => s.match(STEP_RE)).filter((m) => m && m[2] !== 'passed');
+      if (!steps.length) problems.push(`${where}: a passed result needs observed, each step and what was seen`);
+      else if (!steps.every((s) => STEP_RE.test(s))) problems.push(`${where}: observed must read like "1 passed (form shown) · 2 passed", got "${r.meta.observed}"`);
+      else if (notPassed.length) problems.push(`${where}: passed, but observed has ${notPassed.map((m) => `step ${m[1]} ${m[2]}`).join(', ')}`);
+      if (listOf(r.meta.evidence).length && !r.meta.checked) problems.push(`${where}: a passed result with evidence needs checked, what the screenshot check found`);
+    }
     if (r.meta.testrail_result_id && !runId) problems.push(`${where}: has testrail_result_id but the run has no testrail_run_id`);
     if (r.meta.testrail_result_id && status === 'untested') problems.push(`${where}: TestRail cannot set a posted result back to untested`);
     for (const f of listOf(r.meta.evidence)) {
@@ -1000,6 +1023,34 @@ async function resolveMilestone(client, cfg, name) {
   throw new CliError(`${found.length ? 'Several milestones' : 'No milestone'} named ${JSON.stringify(name)}. Milestones:\n${listing}`);
 }
 
+async function refuseStaleCases(client, cfg, suiteId, doc, plan) {
+  const runAtOf = new Map(doc.results.filter((r) => r.meta.case).map((r) => [caseNum(r.meta.case), r.meta.run_at]));
+  const checked = plan.filter((p) => p.action === 'add' || p.action === 'correct');
+  const missing = checked.filter((p) => !runAtOf.get(p.caseId));
+  if (missing.length) {
+    throw new CliError(missing.map((p) => `C${p.caseId}: add run_at (when the case ran) before pushing its result`).join('\n'));
+  }
+  if (!checked.length) return;
+  const ranAt = new Map(checked.map((p) => [p.caseId, runAtSeconds(runAtOf.get(p.caseId))]));
+  const since = Math.min(...ranAt.values());
+  const cases = await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}&updated_after=${since}`, 'cases');
+  const stale = [];
+  for (const c of cases) {
+    const ran = ranAt.get(c.id);
+    if (ran === undefined || !(c.updated_on > ran)) continue;
+    const entries = await client.getAll(`get_history_for_case/${c.id}`, 'history');
+    const edits = entries
+      .map((e) => ({ at: e.timestamp ?? e.created_on, fields: (e.changes ?? []).map((ch) => String(ch.field).replace(/^custom_/, '')).filter((f) => CONTENT_FIELDS.has(f)) }))
+      .filter((e) => e.fields.length && e.at >= ran + STALE_GRACE_SECONDS && !(c.created_on > ran && e.at <= c.created_on))
+      .sort((a, b) => a.at - b.at);
+    if (edits.length) {
+      const fields = [...new Set(edits.flatMap((e) => e.fields))];
+      stale.push(`C${c.id}: ${fields.join(', ')} changed on TestRail at ${formatLocal(edits[0].at)}, after the case ran at ${formatLocal(ran)}. Run it again before pushing its result.`);
+    }
+  }
+  if (stale.length) throw new CliError(stale.join('\n'));
+}
+
 async function cmdResults(files, opts, cfg, cwd) {
   if (files.length !== 1) throw new CliError('results needs exactly one results file');
   const path = resolve(cwd, files[0]);
@@ -1031,26 +1082,16 @@ async function cmdResults(files, opts, cfg, cwd) {
   let runId = run.meta.testrail_run_id ? runIdOf(run.meta.testrail_run_id) : null;
   let tests = [];
   let posted = new Map();
+  let suiteId;
   if (runId) {
     const loaded = await loadRunCases(client, runId);
     if (loaded.run.is_completed) throw new CliError(`Run R${runId} is closed; TestRail does not take results for a closed run`);
     const missing = caseIds.filter((id) => !loaded.caseIds.has(id));
     if (missing.length) throw new CliError(`Not in run R${runId}: ${missing.map((id) => `C${id}`).join(', ')}`);
     tests = loaded.tests;
+    suiteId = loaded.run.suite_id;
     if (doc.results.some((r) => r.meta.testrail_result_id)) {
       posted = new Map((await client.getAll(`get_results_for_run/${runId}`, 'results')).map((r) => [String(r.id), r]));
-    }
-  } else {
-    const body = { suite_id: await resolveSuite(client, cfg), name: run.title, include_all: false, case_ids: caseIds };
-    if (run.text) body.description = run.text;
-    if (run.meta.refs) body.refs = run.meta.refs;
-    if (run.meta.milestone) body.milestone_id = await resolveMilestone(client, cfg, run.meta.milestone);
-    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`].filter(Boolean);
-    console.log(`${tag}create run ${JSON.stringify(run.title)} with ${caseIds.length} cases${extras.length ? ` (${extras.join(', ')})` : ''}`);
-    if (!dry) {
-      runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
-      persist({ run: { testrail_run_id: `R${runId}` } });
-      tests = (await loadRunCases(client, runId)).tests;
     }
   }
 
@@ -1080,6 +1121,23 @@ async function cmdResults(files, opts, cfg, cwd) {
     if (keys(prev.defects) !== keys(r.meta.defects)) return { ...item, action: 'defects', result: { ...result, comment: 'Defects updated.' } };
     return { ...item, action: 'in sync' };
   });
+
+  suiteId ??= await resolveSuite(client, cfg);
+  await refuseStaleCases(client, cfg, suiteId, doc, plan);
+
+  if (!runId) {
+    const body = { suite_id: suiteId, name: run.title, include_all: false, case_ids: caseIds };
+    if (run.text) body.description = run.text;
+    if (run.meta.refs) body.refs = run.meta.refs;
+    if (run.meta.milestone) body.milestone_id = await resolveMilestone(client, cfg, run.meta.milestone);
+    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`].filter(Boolean);
+    console.log(`${tag}create run ${JSON.stringify(run.title)} with ${caseIds.length} cases${extras.length ? ` (${extras.join(', ')})` : ''}`);
+    if (!dry) {
+      runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
+      persist({ run: { testrail_run_id: `R${runId}` } });
+      tests = (await loadRunCases(client, runId)).tests;
+    }
+  }
 
   const verbs = { add: 'add', correct: 'correct', defects: 'update defects of' };
   for (const p of plan) {

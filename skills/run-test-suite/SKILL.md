@@ -11,6 +11,7 @@ References:
 
 - [Results Format](./references/results-format.md) defines `results.md` and how the `results` command of `sync-test-cases-with-testrail` maps it to TestRail.
 - [Automation Lessons](./references/automation-lessons.md) defines the per-app lesson files and what belongs in them.
+- [UI Checks](./references/ui-checks.md) defines how to read displayed values, transient states, and screenshots.
 - [Test Case Format](../qa-write-test-cases/references/testrail-test-case-format.md) of `qa-write-test-cases` defines the `*.test.md` cases this skill runs.
 
 TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync skill>/scripts/testrail.mjs <command>`, with the setup that skill describes.
@@ -75,9 +76,15 @@ Run only after the user approves. The approval covers the data changes the liste
 
 ### Step 3: Run the cases
 
-Runner subagents run the cases, one batch of up to 10 cases at a time, in the same named session. Each runner gets its cases, the `results.md` path, the run folder, the lesson file, [Results Format](./references/results-format.md), and the rules below. It returns its results, lesson candidates (what was slow or broke, and the fix that worked), and user actions still needed.
+Runner subagents run the cases, one batch of up to 10 cases at a time, in the same named session. Each runner gets its cases, the `results.md` path, the run folder, the lesson file, [Results Format](./references/results-format.md), [UI Checks](./references/ui-checks.md), and the rules below. It returns its results, lesson candidates (what was slow or broke, and the fix that worked), and user actions still needed. Runners never push to TestRail or file bugs: the main session reviews every result first.
 
-Parallel lanes only when the user gives one test account per lane and the lanes share no data. Each lane gets its own session and writes its blocks to `results-<n>.md`. The main session merges them into `results.md`.
+Parallel lanes only when each lane has its own test account, the lanes share no data, and the accounts share no OTP device. A sequence that builds on itself (create, edit, cancel) stays in one lane. Each lane:
+
+- opens its own session, `agent-browser --session <app>-qa-<n> --restore`, and never shares a `--profile` or `--state` file with another lane: shared cookies are one server session, so the lanes sign each other out.
+- logs in once at the start and keeps the session: repeated logins can lock the account.
+- writes its blocks to `results-<n>.md`.
+
+Start with two small lanes and check that the first is still signed in before handing out the rest. The main session merges the lanes into `results.md`. A case with no block after the merge stays `untested`: name the lane that missed it and rerun the case.
 
 Without subagents, run the batches yourself.
 
@@ -85,10 +92,10 @@ Per case:
 
 - Follow the steps as written from the first step. A step that passes only after a reload, retry, or other action not in the case is failed. Put the extra action in the result: it is how to reproduce.
 - Rerun a step only when its first attempt failed from the agent's own mistake (stale ref, page not loaded yet). Say so in the runner's report, not in the result.
-- Read values from the page with `get text` or `eval` and compare them with Expected. Never judge from a screenshot or from the absence of an error.
-- Status from the worst step: a failed step → `failed`; a step that cannot run because of a verified blocker → `blocked`; steps that do not match the app or have no checkable Expected → `blocked` with "case needs fix"; every step observed and passed → `passed`. A step not observed for another reason leaves the case `untested` with the reason.
-- Take the screenshot at the moment of the verdict: `agent-browser screenshot --full <run folder>/C<id>.png`. Add `C<id>-02.png` for scrolled areas. Open it before leaving the case: readable, right state, shows the value judged.
-- Write the result block right after the case, not at the end of the batch. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
+- Read each value from the page per [UI Checks](./references/ui-checks.md) and compare it with Expected. Never judge from a screenshot or from the absence of an error. A step right after switching context or submitting a form also needs its transient frames captured.
+- Record every step in `observed` as passed, failed, or not observed, with the value read. Status from the worst step: a failed step → `failed`; a step that cannot run because of a verified blocker → `blocked`; steps that do not match the app or have no checkable Expected → `blocked` with "case needs fix"; every step observed and passed → `passed`. A step not observed for another reason leaves the case `untested` with the reason.
+- Take the screenshot at the moment of the verdict: `agent-browser screenshot --full <run folder>/C<id>.png`. Add `C<id>-02.png` for scrolled areas. Open it before leaving the case: readable, right state, shows the value judged. Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
+- Write the result block right after the case, not at the end of the batch. Set `run_at` to the time of the verdict. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
 - **The first cases all fail → check sign-in, role, data, and build before trusting any result.**
 - A blocker stops only the cases that depend on it. Run every independent case.
 - OTP, MFA, CAPTCHA, or a step only a person can do: send the user one short message (case, step, what to do) and run other cases meanwhile. Still not done at the end → `blocked`, owner the user.
@@ -112,7 +119,7 @@ node <sync skill>/scripts/testrail.mjs results <run folder>/results.md --dry-run
 node <sync skill>/scripts/testrail.mjs results <run folder>/results.md
 ```
 
-1. Run `--dry-run` and fix what it reports.
+1. Run `--dry-run` and fix what it reports. A case changed on TestRail after its `run_at`: run it again, or set its block back to `untested` with the reason "case changed on <date>".
 2. Show the plan: the run to create (name, refs, milestone, case count) or the existing run, results by status, files to attach.
 3. **Push only after the user confirms the plan.** It writes to a shared TestRail project.
 4. Run the push. It writes the IDs back into `results.md` and posts only what TestRail does not have yet, as [Results Format](./references/results-format.md) describes.

@@ -524,8 +524,13 @@ function startMock(opts = {}) {
             sections: slice,
           });
         }
-        case 'get_cases':
-          return json(res, 200, { offset: 0, limit: 250, size: state.cases.length, _links: { next: null, prev: null }, cases: state.cases });
+        case 'get_cases': {
+          const after = Number(query.get('updated_after') ?? 0);
+          const cases = state.cases.filter((c) => !after || (c.updated_on ?? 0) >= after);
+          return json(res, 200, { offset: 0, limit: 250, size: cases.length, _links: { next: null, prev: null }, cases });
+        }
+        case 'get_history_for_case':
+          return json(res, 200, { _links: { next: null }, history: opts.history?.[id] ?? [] });
         case 'add_section': {
           const s = { id: state.nextSection++, suite_id: body.suite_id, name: body.name, parent_id: body.parent_id ?? null };
           state.sections.push(s);
@@ -1288,6 +1293,9 @@ build: staging · 2.14.3
 case: C11
 status: passed
 elapsed: 1m 10s
+run_at: 2026-11-10 10:14
+observed: 1 passed (login form) · 2 passed · 3 passed (dashboard, header "qa-admin")
+checked: 1 screenshot, nothing wrong
 evidence: C11.png
 -->
 
@@ -1297,6 +1305,7 @@ evidence: C11.png
 case: C12
 status: failed
 elapsed: 2m 15s
+run_at: 2026-11-10 10:20
 evidence: C12.png, C12-02.png
 -->
 
@@ -1352,6 +1361,7 @@ test('checkResults reports every problem in one pass', () => {
     'C5: has testrail_result_id but the run has no testrail_run_id',
     'C5: TestRail cannot set a posted result back to untested',
     'C5: duplicate case',
+    'C5: a passed result needs observed, each step and what was seen',
   ]);
   assert.deepEqual(checkResults(parseResultsMd(RESULTS_MD), dir), []);
 });
@@ -1364,7 +1374,7 @@ test('checkResults refuses evidence outside the results folder', () => {
   writeFileSync(secret, 'TESTRAIL_API_KEY=secret-key');
   writeFileSync(join(dir, 'shots', 'C1.png'), 'png');
   symlinkSync(secret, join(dir, 'link.png'));
-  const doc = parseResultsMd(`<!-- run -->\n\n# R\n\n<!-- result\ncase: C1\nstatus: passed\nevidence: shots/C1.png, ../.env, ${secret}, link.png\n-->\n`);
+  const doc = parseResultsMd(`<!-- run -->\n\n# R\n\n<!-- result\ncase: C1\nstatus: failed\nevidence: shots/C1.png, ../.env, ${secret}, link.png\n-->\n`);
   assert.deepEqual(checkResults(doc, dir), [
     'C1: evidence must be a file in the results folder: ../.env',
     `C1: evidence must be a file in the results folder: ${secret}`,
@@ -1548,7 +1558,7 @@ test('results adds to an existing open run without creating one', async () => {
     assert.equal(run.code, 0, run.stderr);
     assert.deepEqual(named(mock.state, 'add_run'), []);
     assert.equal(named(mock.state, 'add_results_for_cases')[0].id, '40');
-    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /case: C11\nstatus: passed\nelapsed: 1m 10s\nevidence: C11\.png\ntestrail_result_id: 7000/);
+    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /case: C11\nstatus: passed\nelapsed: 1m 10s\nrun_at: 2026-11-10 10:14\nobserved: [^\n]+\nchecked: [^\n]+\nevidence: C11\.png\ntestrail_result_id: 7000/);
   } finally {
     await mock.close();
   }
@@ -1580,6 +1590,136 @@ test('list --run prints the run cases with status; pull --run keeps only the run
     assert.match(bad.stderr, /Invalid run ID "run-40"/);
   } finally {
     await mock.close();
+  }
+});
+
+const localSeconds = (value) => Math.floor(new Date(`${value.slice(0, 10)}T${value.slice(11)}`).getTime() / 1000);
+const RAN = localSeconds('2026-11-10 10:14');
+const staleCase = (extra = {}) => ({ id: 11, section_id: 1, title: 'Successful login', created_on: RAN - 86400, updated_on: RAN + 86400, ...extra });
+const historyEntry = (field, at) => ({ timestamp: at, type_id: 2, user_id: 1, changes: [{ field, old_value: 'a', new_value: 'b' }] });
+
+test('results checks staleness in the suite of an existing run without TESTRAIL_SUITE_ID', async () => {
+  const tests = { 40: [11, 12, 13].map((c, i) => ({ id: 100 + i, case_id: c, status_id: 3 })) };
+  const mock = await resultsMock({
+    suites: [{ id: 1, name: 'Web' }, { id: 2, name: 'Mobile' }],
+    runs: [{ id: 40, name: 'Open', suite_id: 2, is_completed: false }],
+    tests,
+  });
+  const cwd = resultsDir(RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: R40\n'));
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'get_cases')[0].query.get('suite_id'), '2');
+    assert.equal(named(mock.state, 'add_results_for_cases').length, 1);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results refuses a case whose steps changed on TestRail after it ran, before any write', async () => {
+  const edited = localSeconds('2026-11-11 09:30');
+  for (const args of [[], ['--dry-run']]) {
+    const mock = await resultsMock({
+      cases: [staleCase()],
+      history: { 11: [historyEntry('custom_steps_separated', edited), historyEntry('title', edited + 10)] },
+    });
+    const cwd = resultsDir();
+    try {
+      const run = await runCli(['results', 'results.md', ...args], { env: baseEnv(mock.port), cwd });
+      assert.equal(run.code, 1);
+      assert.match(run.stderr, /C11: steps_separated changed on TestRail at 2026-11-11 09:30, after the case ran at 2026-11-10 10:14\. Run it again before pushing its result\./);
+      assert.deepEqual(posts(mock.state), []);
+      assert.equal(readFileSync(join(cwd, 'results.md'), 'utf8'), RESULTS_MD);
+    } finally {
+      await mock.close();
+    }
+  }
+});
+
+test('results still pushes when only metadata changed after the case ran', async () => {
+  const mock = await resultsMock({
+    cases: [staleCase()],
+    history: { 11: [historyEntry('refs', RAN + 3600), historyEntry('priority_id', RAN + 3700), historyEntry('section_id', RAN + 3800)] },
+  });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'add_results_for_cases').length, 1);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results still pushes a case created on TestRail after it ran', async () => {
+  const mock = await resultsMock({
+    cases: [staleCase({ created_on: RAN + 3600, updated_on: RAN + 3600 })],
+    history: { 11: [historyEntry('custom_steps_separated', RAN + 3600)] },
+  });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'add_results_for_cases').length, 1);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results refuses an edit made after a case created later was first saved', async () => {
+  const mock = await resultsMock({
+    cases: [staleCase({ created_on: RAN + 3600, updated_on: RAN + 7200 })],
+    history: { 11: [historyEntry('custom_expected', RAN + 7200)] },
+  });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /C11: expected changed on TestRail/);
+    assert.deepEqual(posts(mock.state), []);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results needs run_at for every result it would post, but not for untested ones', async () => {
+  const mock = await resultsMock();
+  const cwd = resultsDir(RESULTS_MD.replace('run_at: 2026-11-10 10:14\n', ''));
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /C11: add run_at \(when the case ran\) before pushing its result/);
+    assert.deepEqual(posts(mock.state), []);
+    assert.doesNotMatch(run.stderr, /C13/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('checkResults keeps a passed result to what the steps observed and the screenshot check', () => {
+  const dir = resultsDir();
+  const withC11 = (lines) => parseResultsMd(RESULTS_MD.replace(/observed: [^\n]+\nchecked: [^\n]+\n/, lines));
+  assert.deepEqual(checkResults(withC11('observed: 1 passed · 2 passed (build staging · 2.14.3)\nchecked: nothing wrong\n'), dir), []);
+  assert.deepEqual(checkResults(withC11(''), dir), [
+    'C11: a passed result needs observed, each step and what was seen',
+    'C11: a passed result with evidence needs checked, what the screenshot check found',
+  ]);
+  assert.deepEqual(checkResults(withC11('observed: 1 passed · 2 passed after reload · 3 not observed (toast gone)\nchecked: nothing wrong\n'), dir), [
+    'C11: passed, but observed has step 3 not observed',
+  ]);
+  assert.deepEqual(checkResults(withC11('observed: all good\nchecked: nothing wrong\n'), dir), [
+    'C11: observed must read like "1 passed (form shown) · 2 passed", got "all good"',
+  ]);
+  assert.deepEqual(checkResults(withC11('observed: 1 passed · 2 failed (old value)\nchecked: nothing wrong\n'), dir), [
+    'C11: passed, but observed has step 2 failed',
+  ]);
+});
+
+test('checkResults rejects a run_at that is not YYYY-MM-DD HH:MM', () => {
+  const dir = resultsDir();
+  for (const bad of ['yesterday', '2026-11-10', '2026-11-10T10:14', '2026-13-45 99:99']) {
+    const doc = parseResultsMd(RESULTS_MD.replace('run_at: 2026-11-10 10:14', `run_at: ${bad}`));
+    assert.deepEqual(checkResults(doc, dir), [`C11: run_at must look like 2026-11-10 10:14, got "${bad}"`]);
   }
 });
 
