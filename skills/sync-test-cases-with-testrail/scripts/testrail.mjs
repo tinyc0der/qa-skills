@@ -797,7 +797,7 @@ async function cmdPush(files, opts, cfg, cwd) {
   const byPath = new Map();
   for (const f of files) {
     const loadedFile = loadFile(f, cwd);
-    const real = realpathSync(loadedFile.path);
+    const real = realpathSync.native(loadedFile.path);
     if (!byPath.has(real)) byPath.set(real, loadedFile);
   }
   const loaded = [...byPath.values()];

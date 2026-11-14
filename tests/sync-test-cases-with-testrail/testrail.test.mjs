@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -874,11 +874,12 @@ test('push clears preconditions, refs and steps that were removed from the file'
   }
 });
 
-test('push sends a file named twice only once', async () => {
+test('push sends a file named twice only once, also in another letter case on a case-insensitive disk', async () => {
   const mock = await startMock();
   const cwd = workdir();
+  const otherCase = existsSync(join(cwd, 'LOGIN.test.md')) ? ['LOGIN.test.md'] : [];
   try {
-    const run = await runCli(['push', 'login.test.md', './login.test.md'], { env: baseEnv(mock.port), cwd });
+    const run = await runCli(['push', 'login.test.md', './login.test.md', ...otherCase], { env: baseEnv(mock.port), cwd });
     assert.equal(run.code, 0, run.stderr);
     assert.equal(named(mock.state, 'add_case').length, 2);
     assert.equal(run.stdout.match(/cases added/g).length, 1);
