@@ -64,4 +64,4 @@ Save it as [Context File](./references/context-file.md) describes.
 
 ### 5. Report
 
-Report the file's path, the sources not read, and at most five conflicts or open questions that change expected behavior. The file holds the rest. Do not ask for approval.
+Report the file's path, the sources not read, and the conflicts and open questions that change expected behavior. The file holds the rest. Do not ask for approval.

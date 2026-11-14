@@ -29,16 +29,16 @@ One or two sentences on what the skill does.
 ## Workflow / Rules / Steps (whatever fits)
 ```
 
-- The frontmatter `description` is the only text used for activation — put all trigger phrases there.
+- The frontmatter `description` is the only text used for activation — put the triggers there, as categories of intent (what the user wants done, on which sources), not a growing list of example phrasings.
 - Do not repeat triggers in the body. "When to Use" sections are redundant.
 - One H1. Steps as H2/H3. No "NAME SKILL: What I do" headings.
 - Keep detail in `references/*.md`, orchestration in SKILL.md. Link each reference where it is used. State each fact in one place only.
 
 ## Style
 
-- Prefer bullet points over prose. Bullets are easier to maintain.
+- Bullets for reference data, checklists, and formats. A rule keeps its reason on the same line ("avoid X: it breaks Y"), so later edits cannot separate them.
 - Short sentences. One idea per line.
-- One line per rule — "avoid X" is enough; don't elaborate edge cases that may never happen.
+- Don't elaborate edge cases that may never happen.
 - Bold 2–3 critical points per skill, no more — when half the lines are bold, none stand out.
 - Emoji only inside user-facing output templates.
 - No decorative `---` separators — headings already divide sections.

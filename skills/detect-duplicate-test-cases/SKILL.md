@@ -20,22 +20,9 @@ Detect duplicate and low-value test cases in TestRail. Recommend cleanup actions
 
 ### 2. Analyze Duplicates
 
-Normalize test content before comparison:
-- Convert titles to lowercase.
-- Remove punctuation and formatting differences.
-- Normalize step wording where possible.
-- Treat parameterized values (emails, IDs, usernames) as variable data.
+Compare cases by what they test: title, steps, expected results, preconditions, refs, and section. Differences in wording, formatting, and test data values (emails, IDs, usernames) do not make two cases different.
 
-Compare tests using multiple similarity signals:
-- Title similarity.
-- Step similarity.
-- Expected result similarity.
-- Preconditions or setup.
-- Shared refs.
-- Section.
-
-Score each pair using the scoring rules in `./references/DUPLICATE_INSTRUCTIONS.md`.
-Classify each pair into a detection level (defined in the same reference):
+Classify each pair into a detection level (defined in `./references/DUPLICATE_INSTRUCTIONS.md`):
 - Level 1: exact duplicates.
 - Level 2: semantic duplicates.
 - Level 3: overlapping / subset tests.
@@ -44,7 +31,6 @@ Classify each pair into a detection level (defined in the same reference):
 Build duplicate groups where multiple tests represent the same testing intent.
 Each group includes:
 - All related tests.
-- Similarity score.
 - Detection level.
 - Proposed canonical test.
 
@@ -58,7 +44,6 @@ Recommend `Remove`, `Merge`, or `Simplify` for each.
 Follow the report template in `./references/DUPLICATE_INSTRUCTIONS.md`. Include:
 - Summary statistics (total scanned, duplicates found by category, low-value cases).
 - Each duplicate group with `C<id>`, section, and title of every case.
-- Similarity percentage.
 - Recommendation for each group (`keep`/`merge`/`remove`).
 - Low-value cases with the business-value problem of each.
 

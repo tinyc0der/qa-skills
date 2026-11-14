@@ -26,8 +26,8 @@ Run the [`gather-context`](../gather-context/SKILL.md) skill first. List each so
 Write only the sections below, with their headings exactly as written. Write each section as a numbered list.
 
 - Section `👷 Must be acknowledged`: brief summary. Potential correlation with other areas. Potential risks
-- Section `👓 Must be clarified`: up to 5 questions to resolve important ambiguities. Start each with "What if".
-- Section `🔬 Must be verified`: up to 5 most important risk scenarios, no more.
+- Section `👓 Must be clarified`: only questions whose answer would change expected behavior. Start each with "What if".
+- Section `🔬 Must be verified`: only risk scenarios with a concrete consequence, highest impact first.
 - Prefer simple wording and short sentences.
 
 ## Next actions

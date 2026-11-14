@@ -1,6 +1,6 @@
 ---
 name: report-bug
-description: Create a Jira Bug from a failed TestRail case or a defect found in the live app. Find the user story it belongs to, search Jira for duplicates first, write reproducible steps with Expected vs Actual per failing step, link the Bug to the story and the TestRail case, and read it back after creating. Use when the user says "create a bug", "log a bug", "report this in Jira", "this case failed, file a bug", "write a bug report", "raise a defect for PROJ-123", or describes wrong behavior they want recorded, including when they only share a screenshot of the error. Not for retesting a fixed bug.
+description: Create a Jira Bug from a failed TestRail case or a defect found in the live app. Find the user story it belongs to, search Jira for duplicates first, write reproducible steps with Expected vs Actual per failing step, link the Bug to the story and the TestRail case, and read it back after creating. Use when the user asks to create, log, file, or raise a bug or defect in Jira, write a bug report, or record a failed case or wrong behavior, including when they only share a screenshot of the error. Not for retesting a fixed bug.
 ---
 
 # Report Bug
@@ -10,7 +10,7 @@ Creates a Jira Bug that a developer can reproduce on the first read without aski
 References:
 
 - [Bug Report Format](./references/bug-report-format.md) defines the title, fields, and description, and maps each part to Jira.
-- [Writing Rules](../qa-write-test-cases/references/writing-rule.md) of `qa-write-test-cases` cover steps, expected results, and AI writing patterns to avoid.
+- [Writing Rules](../qa-write-test-cases/references/writing-rule.md) of `qa-write-test-cases` cover steps, expected results, and tone.
 
 ## Workflow
 
@@ -78,7 +78,7 @@ Format rules:
 
 Writing rules:
 
-- Follow the Steps and AI Writing Patterns sections of [Writing Rules](../qa-write-test-cases/references/writing-rule.md). Where they differ from the Bug Report Format, the format wins.
+- Follow the Steps and Tone sections of [Writing Rules](../qa-write-test-cases/references/writing-rule.md). Where they differ from the Bug Report Format, the format wins.
 - Write in the language the user asks for. Otherwise use the language of the project's existing Bugs. Keep Jira field names as Jira shows them.
 - Setup steps hold only the account, data, and settings the defect depends on. Never passwords.
 - Actual holds observations only: values, messages, error codes, requests. Never a guessed cause.

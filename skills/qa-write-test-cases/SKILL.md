@@ -1,6 +1,6 @@
 ---
 name: qa-write-test-cases
-description: Generate checklists and manual test cases in TestRail format (`*.test.md`) from Jira tickets, Confluence pages, Figma designs, and the live app. Use this skill whenever the user asks to create test cases, test scenarios, test plans, checklists (high-level test cases), or QA documentation, or says "write test cases for PROJ-123", "write test cases from a Jira ticket", "create test cases from this Confluence page", "write test cases from this Figma design", "write test cases for TestRail", "create a test checklist", "generate test scenarios from requirements", or similar. It also works from the user prompt alone.
+description: Generate checklists and manual test cases in TestRail format (`*.test.md`) from Jira tickets, Confluence pages, Figma designs, the live app, or the user prompt alone. Use this skill whenever the user asks to create or write test cases, test scenarios, test plans, checklists (high-level test cases), or QA documentation, for a ticket, a page, a design, a feature, or TestRail.
 ---
 
 # Test Case & Checklist Generator
@@ -10,7 +10,7 @@ Generates test cases and checklists for software testing from the context the us
 References:
 
 - [Test Case Format](./references/testrail-test-case-format.md) defines the markdown for suites, tests, and steps, and maps each part to TestRail.
-- [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and AI writing patterns to avoid.
+- [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and tone.
 - [Test Design Techniques](./references/test-design-techniques.md) lists how Step 4 derives checklist items.
 - [Review Checklist](./references/review-checklist.md) lists what Self review checks.
 
@@ -226,7 +226,7 @@ Run [Self review](#self-review) on the new test cases. Before each review, run `
 
 ### Step 7: Show summary
 
-- Show a concise summary (markdown table works well): number of test cases and suites, generated files.
+- Show the number of test cases and suites, and the generated files.
 - Ask the user to review the files and request changes if needed.
 - List the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as suggested additions and questions.
 - Suggest pushing the test cases to TestRail with the `sync-test-cases-with-testrail` skill.

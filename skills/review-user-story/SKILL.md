@@ -64,11 +64,10 @@ Do not:
 - Link risks to evidence where available.
 - Distinguish reported defects from hypothetical risks.
 - Do not invent severity or business-impact ratings without supporting context.
-- Keep this section short; normally no more than four risks.
 
 ### 5. Propose acceptance criteria
 
-- Provide up to ten observable outcomes covering the story.
+- Provide the observable outcomes that cover the story.
 - State what must happen, not a detailed test procedure or implementation design.
 - Ground criteria in the story, its comments, and explicit decisions.
 - Do not invent thresholds, mappings, credentials, formats, or policy decisions.
@@ -111,10 +110,10 @@ Use exactly these four headings, in this order. Do not add an executive summary,
 
 Output constraints:
 - Story quality: one bullet per failed check from step 2, or "No gaps found."
-- Ambiguities & Contradictions: at most five items; use fewer when appropriate.
+- Ambiguities & Contradictions: only the material ones from step 3.
 - Follow-up review (an earlier QA review comment is on the story): raise only what it did not raise, the `asked` items the user asks to send again, and criteria an answer changed. Leave out the headings with none.
 - Risks: concise and specific.
-- Acceptance Criteria: a numbered list with at most ten points.
+- Acceptance Criteria: a numbered list.
 - Use plain, direct language. Every bullet must teach the reader something about the story, a decision, a consequence, or an acceptance outcome.
 - Do not repeat the same concern across sections without a distinct purpose: quality = how the story is written; ambiguity = unresolved decision; risk = consequence; criterion = observable expected result.
 - Do not edit issues, create subtasks, rewrite the story, or execute tests. The approved Jira comment and the context file update (step 6) are the only writes.

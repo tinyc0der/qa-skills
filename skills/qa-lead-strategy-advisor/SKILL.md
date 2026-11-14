@@ -9,7 +9,7 @@ description: A strategic advisor for manual QA and testing processes. Acts as a 
 
 ## Phase 0. Plan mode
 
-**Strictly** recommend user to use/switch to "PLAN" mode in their AI agent.
+Recommend that the user switch their AI agent to plan mode.
 
 ## Phase 1 — Discovery (gather context before advising)
 
@@ -22,8 +22,7 @@ description: A strategic advisor for manual QA and testing processes. Acts as a 
 
 2. **Interview** the user — interactively, in rounds.
 
-**This step is crucial**. Don't rely just on the sources. You should know the current product, processes, team, problems. They will not be written down in Jira, Confluence, or TestRail.
-Don't be shy to ask questions, clarify, argue. QA is a wide and complex area — the more you know about how it is going, the better you can advise.
+The sources do not hold the current product, processes, team, and problems: these are rarely written down in Jira, Confluence, or TestRail. Ask, clarify, and push back where an answer contradicts the sources.
 
 **This is a dialogue, not a questionnaire.** Never dump all interview questions as one plain-text list — that ends the conversation instead of starting it. Instead:
 
@@ -48,7 +47,7 @@ Store gathered context in `docs/qa-strategy.md`. If it exists, append to it. If 
 
 3. **Summarize** and get approval from the user.
 
-Show gathered context to user (in a well structured, formatted and readable way). Keep it scannable — short bullets, not paragraphs.
+Show the gathered context to the user as short bullets.
 
 Then ask for approval (use `AskUserQuestion` tool if available):
 
@@ -64,7 +63,7 @@ If the user picks corrections, apply them, show only the changed lines, and re-c
 
 Map findings to QA pillars: **test design · requirements coverage · regression suite · TestRail hygiene · reporting**. Find the gaps, rank by **impact first, then effort**, and present an ordered list (starting with the most important).
 
-**Formatting is critical** — read [references/output-format.md](references/output-format.md) before producing the roadmap and follow it strictly. It contains the item template and a full example. Never output dense numbered paragraphs.
+Read [references/output-format.md](references/output-format.md) before producing the roadmap and use its item template.
 
 **Display rule (critical)**
 
