@@ -29,7 +29,7 @@ A screenshot is evidence, not the check. Read each displayed value from the page
 
 Only for what the page cannot report: text drawn on a canvas, icon shape, overlap the boxes do not show.
 
-- Open the image and add `(from screenshot)` to the step's `observed` entry.
+- Take `C<id>-step<n>.png` at that step, open it, and add `(from screenshot)` to the step's `observed` entry.
 - The image cannot tell two states apart (disabled grey and light grey, for example): the step is `not observed`. Never pass a borderline call.
 - Animations and transitions: only a video proves them. Without one the step is `not observed`.
 
@@ -47,7 +47,7 @@ A `failed` step based on a count, an absence, an empty field, or a missing toolt
 
 A step that reads a value right after switching context (record, tab, filter, account, language) or submitting a form can pass on the final value while a stale frame showed wrong data first.
 
-- Capture the change: `record start <run folder>/C<id>-<step>.webm` before the action and `record stop` once it settles, or screenshots at about 0, 250, 500, 1000 and 2000 ms named `C<id>-<step>-<ms>.png`.
+- Capture the change: `record start <run folder>/C<id>-step<n>.webm` before the action and `record stop` once it settles, or screenshots at about 0, 250, 500, 1000 and 2000 ms named `C<id>-step<n>-<ms>.png`.
 - A frame showing the previous context's data or a wrong state (an empty form, a "new" state flashing) fails the step, even when the final value is right. Put the frame and its time in the result.
 
 ## Check the Screenshots

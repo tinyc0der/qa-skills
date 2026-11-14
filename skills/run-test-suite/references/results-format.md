@@ -40,7 +40,7 @@ status: failed
 run_at: 2026-11-10 10:20
 elapsed: 2m 15s
 observed: 1 passed · 2 passed · 3 failed ("Invalid password")
-evidence: C12.png, C12-02.png
+evidence: C12-step3.png, C12.png
 defects: PROJ-9
 -->
 

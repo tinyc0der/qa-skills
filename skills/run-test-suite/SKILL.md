@@ -94,7 +94,10 @@ Per case:
 - Rerun a step only when its first attempt failed from the agent's own mistake (stale ref, page not loaded yet). Say so in the runner's report, not in the result.
 - Read each value from the page per [UI Checks](./references/ui-checks.md) and compare it with Expected. Never judge from a screenshot or from the absence of an error. A step right after switching context or submitting a form also needs its transient frames captured.
 - Record every step in `observed` as passed, failed, or not observed, with the value read. Status from the worst step: a failed step → `failed`; a step that cannot run because of a verified blocker → `blocked`; steps that do not match the app or have no checkable Expected → `blocked` with "case needs fix"; every step observed and passed → `passed`. A step not observed for another reason leaves the case `untested` with the reason.
-- Take the screenshot at the moment of the verdict: `agent-browser screenshot --full <run folder>/C<id>.png`. Add `C<id>-02.png` for scrolled areas. Open it before leaving the case: readable, right state, shows the value judged. Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
+- Take screenshots with `agent-browser screenshot --full <run folder>/<file>`. Open each before the next step: readable, right state, shows the value judged.
+  - `C<id>-step<n>.png` right after a step that fails, a step judged from a screenshot, or a step whose value a later step replaces.
+  - `C<id>.png` for the final state. Add `C<id>-02.png` for scrolled areas.
+- Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
 - Write the result block right after the case, not at the end of the batch. Set `run_at` to the time of the verdict. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
 - **The first cases all fail → check sign-in, role, data, and build before trusting any result.**
 - A blocker stops only the cases that depend on it. Run every independent case.
