@@ -5,11 +5,11 @@ description: How a runner picks an Android or iOS device, opens the app with age
 
 # Device Session
 
-Mobile cases run with the `agent-device` skill: Android on a real device or an emulator, iOS on a simulator or a real iPhone.
+Mobile cases run with the `agent-device` skill: Android on a real device or an emulator, iOS on a simulator or a real iPhone. Command shapes, flags, and platform limits are in `agent-device help manual-qa`, `help physical-device`, and `help <command>`. This file holds only what a QA run decides.
 
 ## Tools
 
-- Drive the app, read values, and take evidence only with `agent-device`. Read `agent-device help manual-qa` before the first command, `agent-device help physical-device` for a real device, and `agent-device help <command>` for exact flags.
+- Drive the app, read values, and take evidence only with `agent-device`.
 - Other tools only read: `adb` on Android; `xcrun simctl`, `xcrun devicectl`, and `plutil` on iOS. Never drive the app with `adb shell input`, Appium, Maestro, or XCUITest scripts: refs, sessions, and evidence must all come from one driver.
 - A platform's tool missing: that platform's cases are `blocked`, owner the user. The other platforms run on.
 
@@ -21,14 +21,13 @@ Mobile cases run with the `agent-device` skill: Android on a real device or an e
 
 Several devices and none named: ask the user once.
 
-A real iPhone needs a one-time runner signing setup, described in `agent-device help physical-device`. Not set up: the iPhone's cases are `blocked`, owner the user. A simulator stands in only when the user agrees, since camera, push, and hardware behavior differ.
+A real iPhone needs the one-time setup in `help physical-device`. Not set up: the iPhone's cases are `blocked`, owner the user. A simulator stands in only when the user agrees, since camera, push, and hardware behavior differ.
 
 ## Open the App
 
 - Android: `agent-device open <package> --platform android --serial <serial> --session <app>-qa-android --foreground`.
 - iOS: `agent-device open <bundle-id> --platform ios --udid <udid> --session <app>-qa-ios --foreground`.
-- Add `--relaunch` when a case needs fresh app state.
-- The app is missing or on the wrong build: install only a build the user gives, with `agent-device install <package-or-bundle-id> <path> --platform <android|ios>` plus `--serial` or `--udid`. Android takes an `.apk`, an iOS simulator an `.app`, an iPhone an `.ipa`.
+- The app is missing or on the wrong build: install only a build the user gives.
 - Check sign-in on the screen first. Signed out: ask the user to sign in on the device with that platform's account. `agent-device` has no credential vault, and passwords never go in commands.
 - Keep the device's orientation, text size, display size, and appearance. Write the model, OS version, and orientation in the run description. A case that needs its own orientation, text size, or dark mode sets it with `agent-device orientation` or `agent-device settings`, and restores it after.
 
@@ -45,8 +44,7 @@ Read it again after the app is reinstalled.
 ## Evidence
 
 - Screenshots: `agent-device screenshot <run folder>/<file> --session <name>`. There is no full-page mode: scroll and add `C<id>-02.png`.
-- Transient states: `agent-device record start <run folder>/C<id>-step<n>.mp4 --session <name>`, then `agent-device record stop --session <name>`.
-- An element to judge from the screenshot: add `--crop-on <selector>`. It works on emulators, iOS simulators, and recent iPhones.
+- Transient states: a video `C<id>-step<n>.mp4` with `agent-device record`.
 
 ## Network
 
@@ -54,20 +52,15 @@ A case that needs to see the app's network traffic: use `agent-device network du
 
 ## Steps Only the User Can Do
 
-Unlocking, biometrics on a real device, SIM or SMS steps, and anything physical: message the user as Step 3 of the skill says, and run other cases meanwhile. On an iOS simulator, `agent-device settings faceid match` or `touchid match` stands in for the user.
+Unlocking, biometrics on a real device, SIM or SMS steps, and anything physical: message the user as Step 3 of the skill says, and run other cases meanwhile. On an iOS simulator, `agent-device settings` simulates Face ID and Touch ID in the user's place.
 
 ## Device Problems
 
-| Problem                                         | What to do                                                                                      |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Android device not listed                       | Ask the user to plug a data cable straight into the computer, turn on USB debugging, and pick File transfer mode |
-| `adb devices` shows `unauthorized`              | Ask the user to unlock the device and allow USB debugging for this computer                     |
-| iPhone not listed                               | Ask the user to connect and unlock it, tap Trust, and turn on Developer Mode                    |
-| Runner fails with a `signing_` reason, or `device_developer_mode_disabled` | Ask the user to finish the setup in `agent-device help physical-device`. The iPhone's cases wait |
-| `offline`, or the device drops mid-run          | Ask the user to reconnect it. Rerun the interrupted case from its first step                   |
-| `DEVICE_IN_USE`                                 | Check `agent-device session list`. Close the run's own leftover session; leave another job's and tell the user |
-| Screen locks mid-run                            | Ask the user to unlock it, and to keep the screen awake while the run lasts                     |
+- Device not listed, not authorized, or the runner fails to start: follow `help physical-device` and the error's hint. A fix that needs hands on the device (cable, USB debugging, Trust, Developer Mode, signing) is a message to the user, and the device's cases wait.
+- The device drops mid-run: ask the user to reconnect it, then rerun the interrupted case from its first step.
+- `DEVICE_IN_USE`: check `agent-device session list`. Close the run's own leftover session; leave another job's and tell the user.
+- The screen locks mid-run: ask the user to unlock it and keep it awake while the run lasts.
 
 ## Close
 
-`agent-device close --session <name>`. Add `--shutdown` when the run booted the emulator or simulator. Then check `agent-device session list` for leftovers, as Step 3 of the skill says.
+Close each session per `help manual-qa`, with `--session <name>`. Then check `agent-device session list` for leftovers, as Step 3 of the skill says.
