@@ -35,6 +35,8 @@ Sources:
 Executable:
 
 - A tester who has not read the sources can run every step with the values given.
+- Steps run in the order given.
+- Each expected result follows from its own step's action.
 - Preconditions set up every role, record, state, and value the steps assume, without pointing to data in the suite description.
 - Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy. Behavior with no UI (tracking, counters, scheduled jobs) is read in the data store or log the backend team opens to QC; the preconditions name that access.
 - Every precondition can be set up on the day of the run (no past dates the UI rejects). Past data the UI cannot create comes from seeded test data; the precondition line of that record names who seeds it. Records a tester can create in the UI need no seeding note.
@@ -43,6 +45,7 @@ Executable:
 Rules:
 
 - Every rule in Test Case Format and Writing Rules, and the ID rule in Step 5.
+- The same thing has the same name in every test.
 - No test of a linked feature the user did not ask for.
 
 ## Findings

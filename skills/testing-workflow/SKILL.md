@@ -54,7 +54,7 @@ User: is assigned a ticket, or asks to test one from start to finish
 4. 💬 PO replied → re-run `gather-context`, then update the `ask` test cases from the context file's `Answers`
 5. ⬆️ Push to TestRail (with `sync-test-cases-with-testrail` skill)
 6. ▶️ Build ready → run the cases (with `run-test-suite` skill)
-7. 🐞 File a Jira Bug for each failed case (with `report-bug` skill)
+7. 🐞 File a Jira Bug for each failed case (with `report-bug` skill). Fix the cases marked "case needs fix" (with `improve-test-cases` skill).
 ```
 
 ### Test Generation Flow

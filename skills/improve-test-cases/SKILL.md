@@ -28,25 +28,7 @@ The target format and rules are owned by the `qa-write-test-cases` skill:
 
 ## Step 2: Analyze Test Quality
 
-Read each test and flag every place it breaks the format or the writing rules. Also flag:
-
-Steps and expected results:
-- Missing expected results.
-- Unclear actions.
-- Steps not ordered logically.
-- Expected results not relevant to the steps.
-- Missing pass/fail criteria.
-
-Formatting:
-- Broken markdown syntax.
-- Missing sections.
-- Inconsistent header hierarchy.
-
-Ambiguity:
-- Generic or subjective terms ("should work", "might fail").
-- Vague language that could be interpreted multiple ways.
-- Steps that cannot be verified objectively.
-- Missing specific values, data, or conditions.
+Read each test and flag every place it breaks a check in the "Executable" and "Rules" sections of the [Review Checklist](../qa-write-test-cases/references/review-checklist.md). Skip its other sections: they need the sources and an approved checklist.
 
 ## Step 3: Show Summary to User
 
