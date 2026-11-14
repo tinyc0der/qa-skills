@@ -9,7 +9,7 @@
 
 ## Test Cases
 
-- A test case consists of a description and steps.
+- A test case consists of an optional description and steps.
 - Golden rule: "why" in the description, "what" in the steps.
 - Add the intent to the description if the title is not enough to explain it.
 - Keep the description clear and concise.

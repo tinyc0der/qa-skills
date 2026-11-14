@@ -19,7 +19,7 @@ The target format and rules are owned by the `qa-write-test-cases` skill:
 **DO NOT CHANGE:**
 - `testrail_id:` and `testrail_section_id:` lines.
 - Original test intent.
-- Original language (fix only clarity, grammar, typos).
+- The natural language the tests are written in.
 
 ## Step 1: Get Test Cases
 
@@ -40,6 +40,7 @@ Run `check` of the `sync-test-cases-with-testrail` skill on the files and flag w
 ## Step 4: Improve Tests
 
 - Rewrite each flagged test to the format and writing rules.
+- A fact the test needs and no file or user answer gives (an error text, how to cause a failure) stays a question. Do not invent it.
 - Include context from the parent suite in a description when relevant.
 - Keep `priority:`, `refs:`, `smoke:`, `automation:`, `platform:`, and other metadata values.
 

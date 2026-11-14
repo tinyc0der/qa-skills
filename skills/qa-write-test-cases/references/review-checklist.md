@@ -27,6 +27,7 @@ Checklist:
 
 Sources:
 
+- No test of a linked feature the user did not ask for.
 - **Every expected result comes from a source.** Flag error texts, limits, redirects, and UI copy that no source states.
 - Expected results follow the ticket. Where the context file records a conflict, they follow the side it names.
 - UI labels, messages, and values match the source word for word.
@@ -44,9 +45,8 @@ Executable:
 
 Rules:
 
-- Every rule in Test Case Format and Writing Rules, and the ID rule in Step 5.
+- Every rule in Test Case Format and Writing Rules, and the ID rule in `qa-write-test-cases` Step 5.
 - The same thing has the same name in every test.
-- No test of a linked feature the user did not ask for.
 
 ## Findings
 
