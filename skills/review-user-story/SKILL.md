@@ -1,6 +1,6 @@
 ---
 name: review-user-story
-description: Review a Jira user story with its subtasks, comments, parent epic, linked Confluence pages, and linked Figma frames, and draft QA feedback for the product owner. Produce story quality gaps (atomic, clear, complete, consistent, testable), material ambiguities, concrete risks, and proposed acceptance criteria; post the approved feedback as a Jira comment. Use when a user supplies a Jira story or ticket and asks to review it, check its testability or acceptance criteria, or give feedback to the PO. Accept Jira links, Confluence pages, and pasted text.
+description: Review a Jira user story with its subtasks, comments, parent epic, linked Confluence pages, and linked Figma frames, and draft QA feedback for the product owner. Produce story quality gaps (atomic, clear, complete, consistent, testable, ready to test), material ambiguities, concrete risks, and proposed acceptance criteria; post the approved feedback as a Jira comment. Use when a user supplies a Jira story or ticket and asks to review it, check its testability or acceptance criteria, or give feedback to the PO. Accept Jira links, Confluence pages, and pasted text.
 ---
 
 # Review User Story
@@ -17,7 +17,7 @@ The deliverable is a brief, useful review, not a sentence-by-sentence audit or a
 - Read the parent epic for context only: rules and decisions that apply to this story. Do not review the epic.
 - Read linked Confluence pages and Figma frames when they define the behavior.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the story's feature. Cite a known mismatch instead of raising it as new.
-- If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists.
+- If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists. Its open questions and gaps are Ready to test candidates.
 - When these sources leave a gap, search as [Related Sources](../qa-thinking/references/related-sources.md) describes. An answer found only in a source the story does not link is still a Story quality finding (Complete): name the source and ask the PO to link it.
 - Read Jira and Confluence through the Atlassian MCP and Figma through the Figma MCP. Missing connection → stop and ask for it.
 - If tool output is truncated, retrieve the omitted content before drawing conclusions.
@@ -26,13 +26,23 @@ The deliverable is a brief, useful review, not a sentence-by-sentence audit or a
 
 ### 2. Check story quality
 
-Report only the checks the story fails, each quoting the story text it concerns:
+Report only the checks the story fails, each quoting the story text it concerns or naming what is missing:
 
 - **Atomic**: one actor, one capability.
 - **Clear**: no vague words that make a criterion untestable (`fast`, `relevant`, `user-friendly`, `should work`, `as needed`).
 - **Complete**: actor, trigger, outcome, and business rules; acceptance criteria cover the empty, error, and permission paths.
 - **Consistent**: the same terms throughout; no contradictions with comments, the parent epic, linked pages, or designs.
 - **Testable**: every acceptance criterion has a measurable pass/fail.
+- **Ready to test**: a tester can write every expected result and set up every test without guessing. Name each missing item a test of this story needs and no source gives:
+  - message texts, validation rules (format, length, required), limits with units
+  - scope: what is out, platforms, screens
+  - what each role sees and can do, when roles differ
+  - what happens to existing data; which existing features change
+  - setup: environment, feature flag or config, test accounts and data
+  - where a backend, API, or async result shows (screen, email, log, API response)
+  - designs for the loading, empty, and error states
+  - dependencies: third-party APIs, other teams, release order
+  - languages, time zones, notifications, analytics events, accessibility, when the story touches them
 
 ### 3. Identify material ambiguities and contradictions
 
@@ -45,7 +55,7 @@ For each item:
 - Check that a comment or linked page has not already answered it.
 
 Do not:
-- Enumerate minor UI details, exact wording, exhaustive validation cases, or arbitrary edge cases.
+- Enumerate minor UI details, copy edits, every validation case, or arbitrary edge cases. A message text or validation rule a test needs and no source gives is a Ready to test gap.
 - Demand ticket restructuring, extra subtasks, or traceability matrices without a demonstrated functional need.
 - Treat existing defects as unresolved decisions when their expected behavior is already explicit.
 - Invent concerns just to fill the section. If none are material, say so.
@@ -83,6 +93,7 @@ Use exactly these four headings, in this order. Do not add an executive summary,
 ## Story quality
 
 - **Testable:** "results load fast" has no measurable pass/fail.
+- **Ready to test:** no error text for an expired card; no limit on saved cards per user.
 
 ## Ambiguities & Contradictions
 
@@ -112,7 +123,8 @@ Output constraints:
 ## Quality check before responding
 
 - Did I read the comments, subtasks, and linked pages, including truncated content?
-- Does each story-quality item quote the story text?
+- Does each story-quality item quote the story text or name what is missing?
+- Does each Ready to test gap block an expected result or a test setup, with no source filling it?
 - Is every ambiguity genuinely unanswered in the sources?
 - Is each concern consequential rather than cosmetic or procedural?
 - Are acceptance criteria grounded, observable, and free of invented decisions?
