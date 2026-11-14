@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -379,9 +379,9 @@ test('toCasePayload falls back to the suite priority, omits a missing one and re
   assert.ok(!('priority_id' in toCasePayload(mkTest(), emptySuite, ctx)));
 });
 
-test('toCasePayload builds preconditions, refs and steps and omits empty fields', () => {
+test('toCasePayload builds preconditions, refs and steps and sends empty ones so TestRail clears them', () => {
   const bare = toCasePayload(mkTest(), emptySuite, ctx);
-  assert.deepEqual(bare, { title: 'T', template_id: 7 });
+  assert.deepEqual(bare, { title: 'T', template_id: 7, refs: '', custom_preconds: '', custom_steps_separated: [] });
 
   const full = toCasePayload(
     mkTest({
@@ -845,6 +845,73 @@ test('push rejects a priority TestRail does not have before writing anything', a
   }
 });
 
+test('push clears preconditions, refs and steps that were removed from the file', async () => {
+  const stale = { refs: 'OLD-1', custom_preconds: 'Old precondition', custom_steps_separated: [{ content: 'Old step', expected: 'Old result' }] };
+  const mock = await startMock({
+    sections: [{ id: 6, name: 'S', parent_id: null }],
+    cases: [{ id: 50, section_id: 6, title: 'T', template_id: 2, ...stale }],
+  });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  writeFileSync(join(cwd, 'a.test.md'), '<!-- suite\ntestrail_section_id: 6\n-->\n\n# S\n\n<!-- test\ntestrail_id: C50\n-->\n\n# T\n');
+  try {
+    const first = await runCli(['push', 'a.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(first.code, 0, first.stderr);
+    const [update] = named(mock.state, 'update_case');
+    assert.equal(update?.id, '50', first.stdout);
+    assert.deepEqual(
+      { refs: update.body.refs, custom_preconds: update.body.custom_preconds, custom_steps_separated: update.body.custom_steps_separated },
+      { refs: '', custom_preconds: '', custom_steps_separated: [] },
+    );
+
+    mock.state.cases[0] = { id: 50, section_id: 6, title: 'T', template_id: 2, refs: null, custom_preconds: null, custom_steps_separated: null };
+    mock.state.requests.length = 0;
+    const second = await runCli(['push', 'a.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(second.code, 0, second.stderr);
+    assert.equal(named(mock.state, 'update_case').length, 0);
+    assert.match(second.stdout, /updated 0, unchanged 1/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push sends a file named twice only once', async () => {
+  const mock = await startMock();
+  const cwd = workdir();
+  try {
+    const run = await runCli(['push', 'login.test.md', './login.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'add_case').length, 2);
+    assert.equal(run.stdout.match(/cases added/g).length, 1);
+    const written = readFileSync(join(cwd, 'login.test.md'), 'utf8');
+    assert.deepEqual(written.match(/testrail_id: C\d+/g), ['testrail_id: C100', 'testrail_id: C101']);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push rejects two tests with the same testrail_id, in one file or across files, before calling TestRail', async () => {
+  const mock = await startMock();
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  const testBlock = (id, title) => `<!-- test\ntestrail_id: ${id}\n-->\n\n# ${title}\n\n`;
+  writeFileSync(join(cwd, 'a.test.md'), `<!-- suite -->\n\n# S\n\n${testBlock('C50', 'A')}${testBlock('C50', 'A copy')}`);
+  writeFileSync(join(cwd, 'b.test.md'), `<!-- suite -->\n\n# S2\n\n${testBlock('C60', 'B')}`);
+  writeFileSync(join(cwd, 'c.test.md'), `<!-- suite -->\n\n# S3\n\n${testBlock('c60', 'B old copy')}`);
+  try {
+    const inFile = await runCli(['push', 'a.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(inFile.code, 1);
+    assert.match(inFile.stderr, /a\.test\.md: "A copy" has testrail_id C50, which "A" in a\.test\.md already has/);
+
+    const across = await runCli(['push', 'b.test.md', 'c.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(across.code, 1);
+    assert.match(across.stderr, /c\.test\.md: "B old copy" has testrail_id C60, which "B" in b\.test\.md already has/);
+
+    assert.equal(mock.state.requests.length, 0);
+    assert.doesNotMatch(readFileSync(join(cwd, 'a.test.md'), 'utf8') + readFileSync(join(cwd, 'b.test.md'), 'utf8'), /testrail_section_id/);
+  } finally {
+    await mock.close();
+  }
+});
+
 test('a next-page link that repeats stops with an API error instead of looping', async () => {
   const mock = await startMock({ stuckNext: true, sections: [{ id: 6, name: 'Login', parent_id: null }] });
   try {
@@ -1286,6 +1353,22 @@ test('checkResults reports every problem in one pass', () => {
     'C5: duplicate case',
   ]);
   assert.deepEqual(checkResults(parseResultsMd(RESULTS_MD), dir), []);
+});
+
+test('checkResults refuses evidence outside the results folder', () => {
+  const parent = mkdtempSync(join(tmpdir(), 'testrail-evidence-'));
+  const dir = join(parent, 'run');
+  const secret = join(parent, '.env');
+  mkdirSync(join(dir, 'shots'), { recursive: true });
+  writeFileSync(secret, 'TESTRAIL_API_KEY=secret-key');
+  writeFileSync(join(dir, 'shots', 'C1.png'), 'png');
+  symlinkSync(secret, join(dir, 'link.png'));
+  const doc = parseResultsMd(`<!-- run -->\n\n# R\n\n<!-- result\ncase: C1\nstatus: passed\nevidence: shots/C1.png, ../.env, ${secret}, link.png\n-->\n`);
+  assert.deepEqual(checkResults(doc, dir), [
+    'C1: evidence must be a file in the results folder: ../.env',
+    `C1: evidence must be a file in the results folder: ${secret}`,
+    'C1: evidence must be a file in the results folder: link.png',
+  ]);
 });
 
 test('writeBackResults sets several keys on one block without corrupting the next', () => {

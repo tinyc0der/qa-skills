@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { basename, dirname, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -283,19 +283,15 @@ export function toCasePayload(test, suite, ctx) {
     }
     payload.priority_id = priorityId;
   }
-  const refs = test.meta?.refs ?? suite.meta?.refs;
-  if (refs) payload.refs = refs;
+  payload.refs = test.meta?.refs ?? suite.meta?.refs ?? '';
   for (const field of ctx.fields?.values() ?? []) {
     const value = test.meta?.[field.key] ?? suite.meta?.[field.key];
     if (value !== undefined && String(value).trim()) payload[field.systemName] = toFieldValue(field, value, test.title);
   }
-  const preconds = [test.description?.trim(), test.examples ? `Test data:\n${test.examples}` : '']
+  payload.custom_preconds = [test.description?.trim(), test.examples ? `Test data:\n${test.examples}` : '']
     .filter(Boolean)
     .join('\n\n');
-  if (preconds) payload.custom_preconds = preconds;
-  if (test.steps?.length) {
-    payload.custom_steps_separated = test.steps.map((s) => ({ content: s.content, expected: s.expected }));
-  }
+  payload.custom_steps_separated = (test.steps ?? []).map((s) => ({ content: s.content, expected: s.expected }));
   return payload;
 }
 
@@ -798,7 +794,14 @@ async function cmdRuns(opts, cfg) {
 
 async function cmdPush(files, opts, cfg, cwd) {
   if (!files.length) throw new CliError('push needs at least one file');
-  const loaded = files.map((f) => loadFile(f, cwd));
+  const byPath = new Map();
+  for (const f of files) {
+    const loadedFile = loadFile(f, cwd);
+    const real = realpathSync(loadedFile.path);
+    if (!byPath.has(real)) byPath.set(real, loadedFile);
+  }
+  const loaded = [...byPath.values()];
+  const owners = new Map();
   for (const { file, doc } of loaded) {
     for (const suite of doc.suites) {
       if (!suite.title) throw new CliError(`${file}: a test appears before any suite or a suite has no title`);
@@ -806,9 +809,19 @@ async function cmdPush(files, opts, cfg, cwd) {
       if (sid && !/^\d+$/.test(sid)) throw new CliError(`${file}: invalid testrail_section_id "${sid}"`);
       for (const t of suite.tests) {
         if (!t.title) throw new CliError(`${file}: a test in suite "${suite.title}" has no title`);
-        if (t.meta.testrail_id && !/^C?\d+$/i.test(t.meta.testrail_id)) {
+        if (!t.meta.testrail_id) continue;
+        if (!/^C?\d+$/i.test(t.meta.testrail_id)) {
           throw new CliError(`${file}: invalid testrail_id "${t.meta.testrail_id}" in "${t.title}"`);
         }
+        const id = Number(t.meta.testrail_id.replace(/^C/i, ''));
+        const owner = owners.get(id);
+        if (owner) {
+          throw new CliError(
+            `${file}: ${JSON.stringify(t.title)} has testrail_id C${id}, which ${JSON.stringify(owner.title)} in ${owner.file} already has. ` +
+              'Remove the testrail_id from the test that is not that case, so push creates a new case for it',
+          );
+        }
+        owners.set(id, { file, title: t.title });
       }
     }
   }
@@ -952,7 +965,15 @@ export function checkResults(doc, dir) {
     if (r.meta.elapsed && !ELAPSED_RE.test(r.meta.elapsed)) problems.push(`${where}: elapsed must look like 1m 30s, got "${r.meta.elapsed}"`);
     if (r.meta.testrail_result_id && !runId) problems.push(`${where}: has testrail_result_id but the run has no testrail_run_id`);
     if (r.meta.testrail_result_id && status === 'untested') problems.push(`${where}: TestRail cannot set a posted result back to untested`);
-    for (const f of listOf(r.meta.evidence)) if (!existsSync(resolve(dir, f))) problems.push(`${where}: evidence file not found: ${f}`);
+    for (const f of listOf(r.meta.evidence)) {
+      const path = resolve(dir, f);
+      if (!existsSync(path)) {
+        problems.push(`${where}: evidence file not found: ${f}`);
+        continue;
+      }
+      const rel = relative(realpathSync(dir), realpathSync(path));
+      if (rel.split(sep)[0] === '..' || isAbsolute(rel)) problems.push(`${where}: evidence must be a file in the results folder: ${f}`);
+    }
   }
   return problems;
 }
