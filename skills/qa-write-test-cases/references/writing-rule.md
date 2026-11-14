@@ -72,7 +72,7 @@ A step is an action (with optional test data) and an expected result, in the for
 - Use a `${variable}` placeholder, in backticks, only for a value reused across steps, a data-driven value (the examples table), or environment data no source gives that the tester supplies (test account, customer name). Never for other data or preconditions.
 - Prefer URL paths over full URLs, e.g. `/auth/login`.
 - Use specific values when they are important for the scenario (boundary values, format validation, locale-specific input).
-- Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)"; replace them with concrete, literal values.
+- Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)", and subjective outcomes like "should work" or "might fail"; replace them with concrete, literal values.
 - For data that changes with time (market prices, the clock, balances), give the rule to derive it from what the screen shows: `ceiling price + 0.10`, `current time − 7 minutes`.
 - Avoid general statements in steps. Move them to the description.
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.

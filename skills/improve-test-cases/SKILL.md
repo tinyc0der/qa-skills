@@ -28,7 +28,7 @@ The target format and rules are owned by the `qa-write-test-cases` skill:
 
 ## Step 2: Analyze Test Quality
 
-Read each test and flag every place it breaks a check in the "Executable" and "Rules" sections of the [Review Checklist](../qa-write-test-cases/references/review-checklist.md). Skip its other sections: they need the sources and an approved checklist.
+Run `check` of the `sync-test-cases-with-testrail` skill on the files and flag what it reports. Then read each test and flag every place it breaks a check in the "Executable" and "Rules" sections of the [Review Checklist](../qa-write-test-cases/references/review-checklist.md). Skip its other sections: they need the sources and an approved checklist.
 
 ## Step 3: Show Summary to User
 
