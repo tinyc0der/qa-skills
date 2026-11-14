@@ -22,8 +22,8 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 Checklist:
 
 - One new test per approved checklist item. No missing tests, no extra tests.
-- Each test checks its item's objective and has its item's priority and smoke tag.
-- A new test that repeats an existing test in the file or an existing case.
+- Each test checks its item's objective and has its item's priority and `smoke:` value.
+- No new test repeats an existing test in the file or an existing case.
 
 Sources:
 

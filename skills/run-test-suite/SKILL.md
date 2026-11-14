@@ -42,7 +42,7 @@ Scope by kind of run:
 - New feature: every case of the story.
 - Fix verification: the failed cases, plus cases in the same flow.
 - Regression: cases in the sections the change touches. Ask which areas changed when no ticket says.
-- Smoke: cases tagged `smoke`, or the ones the user names.
+- Smoke: cases with `smoke: yes`, or the ones the user names.
 
 Order the cases so setup is shared: group by precondition and start page, and put cases that delete or reset data last in their group.
 

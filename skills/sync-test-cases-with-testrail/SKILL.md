@@ -1,6 +1,6 @@
 ---
 name: sync-test-cases-with-testrail
-description: Push Markdown test cases (`*.test.md`) to TestRail through its API, pull (download, export) existing TestRail cases into `*.test.md` files, list TestRail sections and cases, and push a test run's results (`results.md` from `run-test-suite`). Use when the user wants to upload, push, import, or sync test cases to TestRail, pull, download, or export cases from TestRail, check which TestRail cases already exist for a feature, or push test run results.
+description: Push Markdown test cases (`*.test.md`) to TestRail through its API, pull (download, export) existing TestRail cases into `*.test.md` files, list TestRail sections and cases, and push a test run's results (`results.md` from `run-test-suite`). Use when the user wants to upload, push, import, or sync test cases to TestRail, pull, download, or export cases from TestRail, check which TestRail cases already exist for a feature, push test run results, or see the status and pass rate of test runs for a ticket, milestone, or date.
 ---
 
 # Sync Test Cases with TestRail
@@ -38,12 +38,14 @@ node <skill>/scripts/testrail.mjs push <files...> --dry-run [--parent-section <n
 node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>]
 node <skill>/scripts/testrail.mjs results <results.md> --dry-run
 node <skill>/scripts/testrail.mjs results <results.md>
+node <skill>/scripts/testrail.mjs runs [--refs <keys>] [--milestone <name>] [--since <YYYY-MM-DD>] [--active] [--details]
 ```
 
 - `check` validates the files offline. It needs no credentials.
 - `list` prints the section tree and case titles with their `C<id>`. `list --run` prints a run's cases with their status in the run.
 - `pull` downloads cases into `*.test.md` files. `--out` defaults to `test-cases/`. `--run` keeps only the run's cases.
 - `results` pushes a run's results. The `run-test-suite` skill owns the flow and the [Results Format](../run-test-suite/references/results-format.md).
+- `runs` prints status counts, executed share, and pass rate of the matching runs, plan runs included. It needs at least one filter, and filters combine with AND. `--details` also lists the tests that did not pass, with their latest result. It only reads TestRail.
 - Use only the options listed here.
 
 ## Push

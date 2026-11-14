@@ -112,7 +112,7 @@ A catalog's README `Type` names its source. Default folders: `catalog/` and `mis
 
 Find the TestRail cases that already test the feature, with the `sync-test-cases-with-testrail` skill:
 
-- TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases added after the catalog `Date`.
+- TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases the catalog does not link yet.
 - No catalog: run `list` and match sections and case titles to the feature.
 - TestRail not set up: ask for its Setup, or continue without the check and record TestRail as not read.
 - Do not `pull` here. Step 5 pulls the section the user chooses to expand.

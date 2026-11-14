@@ -1,6 +1,6 @@
 ---
 name: testing-workflow
-description: Orchestrate the manual test case lifecycle from requirements in Jira, Confluence, and Figma to test cases in TestRail. Review requirements, write user stories, catalog features, compare sources, analyze risks, generate test cases and checklists, improve them, find duplicates, check behavior on the live app, run test cases and record results in TestRail, and push, list, or pull TestRail cases. Use this skill when you need to manage the whole testing workflow or do one of these tasks. This is the tactical/execution layer triggered by concrete task verbs. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
+description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the user asks to manage the whole testing workflow, a request spans several QA skills, or the user asks what to do next. A request for a single task goes to that task's skill. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
 ---
 
 # Testing Workflow
@@ -29,7 +29,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - Flows are examples, not exhaustive. Combine or extend them when a request spans several tasks.
 - When suggesting next steps, take into account the flows, context, user request, and results of previous steps.
 - **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
-- **Catalog features of a source** (a Jira project, a Confluence space, a Figma file, a TestRail suite, the live app) → route to the `catalog-features` skill.
+- **Catalog features of a source** (a Jira project, a Confluence space, a TestRail suite, the live app) → route to the `catalog-features` skill.
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
 - **Run test cases** (a suite, a ticket's cases, regression, smoke, a TestRail run) → route to the `run-test-suite` skill.
 - **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
