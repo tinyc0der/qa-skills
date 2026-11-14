@@ -100,7 +100,8 @@ run_at: 2026-11-10 10:31
 - Failed: one block per failing step: a bold line `**Step <n> failed: <what differs>**`, then `- Expected: …` and `- Actual: …`. No passing steps.
 - Blocked: a bold line `**Blocked: <what blocks>**`, then `- Owner: …` and `- Unblocks when: …`. A case that needs fixing says "case needs fix" and what is wrong with it.
 - Untested: the reason it did not run. Not sent to TestRail.
-- Leave out the build, account, and environment already in the run block, reruns after the agent's own mistakes, and file lists.
+- Leave out the build, account, and environment already in the run block, reruns after the agent's own mistakes, file lists, and the run time.
+- The push ends each comment of a result that is not passed with `Ran <run_at>`, since TestRail shows only when the result was pushed.
 
 ## Mapping to TestRail
 

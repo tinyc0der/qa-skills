@@ -1112,8 +1112,10 @@ async function cmdResults(files, opts, cfg, cwd) {
     const version = r.meta.build || run.meta.build;
     if (version) result.version = version;
     if (r.meta.defects) result.defects = r.meta.defects;
+    const ran = status === 'passed' ? '' : `Ran ${r.meta.run_at}`;
     if (!item.resultId) {
-      if (r.text) result.comment = r.text;
+      const comment = [r.text, ran].filter(Boolean).join('\n\n');
+      if (comment) result.comment = comment;
       if (r.meta.elapsed) result.elapsed = r.meta.elapsed;
       return { ...item, action: 'add', result };
     }
@@ -1122,7 +1124,7 @@ async function cmdResults(files, opts, cfg, cwd) {
     if (prev.status_id !== result.status_id) {
       item.attached = [];
       item.files = listOf(r.meta.evidence);
-      return { ...item, action: 'correct', result: { ...result, comment: ['Corrected result.', r.text].filter(Boolean).join('\n\n') } };
+      return { ...item, action: 'correct', result: { ...result, comment: ['Corrected result.', r.text, ran].filter(Boolean).join('\n\n') } };
     }
     const keys = (v) => splitKeys(v).sort().join();
     if (keys(prev.defects) !== keys(r.meta.defects)) return { ...item, action: 'defects', result: { ...result, comment: 'Defects updated.' } };
@@ -1152,7 +1154,15 @@ async function cmdResults(files, opts, cfg, cwd) {
     if (!dry) {
       runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
       persist({ run: { testrail_run_id: `R${runId}` } });
-      tests = (await loadRunCases(client, runId)).tests;
+      const created = await loadRunCases(client, runId);
+      tests = created.tests;
+      const missing = caseIds.filter((id) => !created.caseIds.has(id));
+      const extra = [...created.caseIds].filter((id) => !caseIds.includes(id));
+      if (missing.length || extra.length) {
+        const ids = (list) => list.map((id) => `C${id}`).join(', ');
+        const diff = [missing.length && `missing ${ids(missing)}`, extra.length && `extra ${ids(extra)}`].filter(Boolean).join('; ');
+        throw new CliError(`Run R${runId} was created with the wrong cases (${diff}). Fix the run in TestRail, then push again.`);
+      }
     }
   }
 

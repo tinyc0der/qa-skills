@@ -35,7 +35,7 @@ Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. Find
 | ------------------- | ------------------------------------------------------------------------------------------ |
 | `*.test.md` files   | Use them as they are.                                                                      |
 | TestRail section    | `pull --section <name> --out <run folder>/cases`                                           |
-| Ticket key          | Cases whose `refs` include the key, in `test-cases/` or a pull.                            |
+| Ticket key          | Cases whose `refs` include the key, in `test-cases/` or a pull. None found → tell the user the story's cases lack refs; never swap in a whole section on your own. |
 | TestRail run `R<id>` | `list --run <id>` for statuses, then `pull --run <id> --out <run folder>/cases`. Default scope: cases Untested or Retest in the run. |
 | TestRail link       | Case link: that case. Section link: its `group_id` is the section ID that `list` prints; pull that section. A run link the user gives as the case list for a new run: `pull --run <id>`, without `testrail_run_id`. |
 
@@ -66,7 +66,7 @@ Show the plan:
 - environment URL, account, role, build
 - cases that save, change, or delete data
 - run order, and parallel lanes if any
-- estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Count the cases with no number.
+- estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Add the last run's setup and waiting: its run time minus the sum of its `elapsed`. Count the cases with no number.
 
 ```
 ❓ Do you want to:
@@ -101,7 +101,7 @@ Per case:
 - Record every step in `observed` as passed, failed, or not observed, with the value read. Status from the worst step: a failed step → `failed`; a step that cannot run because of a verified blocker → `blocked`; steps that do not match the app or have no checkable Expected → `blocked` with "case needs fix"; every step observed and passed → `passed`. A step not observed for another reason leaves the case `untested` with the reason.
 - Take screenshots with `agent-browser screenshot --full <run folder>/<file>`. Open each before the next step: readable, right state, shows the value judged.
   - `C<id>-step<n>.png` right after a step that fails, a step judged from a screenshot, or a step whose value a later step replaces.
-  - `C<id>.png` for the final state. Add `C<id>-02.png` for scrolled areas.
+  - `C<id>.png` for the final state. Add `C<id>-02.png` for scrolled areas. Never zoom out or widen the viewport to fit a screenshot: it hides real overflow bugs.
 - Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
 - Write the result block right after the case, not at the end of the batch. Set `run_at` to the time of the verdict. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
 - After a reload, a new session, or a deploy notice, read the build again. Changed → set `build:` on the results after the change.
@@ -110,7 +110,7 @@ Per case:
 - OTP, MFA, CAPTCHA, or a step only a person can do: send the user one short message (case, step, what to do) and run other cases meanwhile. Still not done at the end → `blocked`, owner the user.
 - Never write a `passed` the runner did not observe.
 
-After the last batch, close the run's session: `agent-browser --session <name> close`. Never `close --all`.
+After the last batch, close every session the run opened, lanes included: `agent-browser --session <name> close`. Then check `agent-browser session list` and close any the run left behind, such as a lane whose runner stopped. A session where the user is still signing in or entering an OTP stays open until they finish. Never `close --all`: it closes other work's sessions.
 
 ### Step 4: Review the results
 
@@ -140,6 +140,8 @@ Every later push, after a status change or new Bug keys, goes through these step
 Exit code 2 with "may have saved" means TestRail may hold the write without its ID in `results.md`. Check with `list --run <id>`, or the run list in TestRail, before pushing again. A blind rerun posts duplicates.
 
 The user asked to run only, not push → keep the results local and say so in the report.
+
+The user asks only to create the run → Step 1, then this step with every block `untested`. The run gets its cases and no results.
 
 ### Step 6: Hand failed cases to report-bug
 

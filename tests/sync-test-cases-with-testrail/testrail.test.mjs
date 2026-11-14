@@ -564,7 +564,7 @@ function startMock(opts = {}) {
         case 'add_run': {
           const run = { id: state.nextRun++, ...body, is_completed: false };
           state.runs.push(run);
-          state.tests[run.id] = body.case_ids.map((caseId) => ({ id: state.nextTest++, case_id: caseId, status_id: 3, title: `Case ${caseId}` }));
+          state.tests[run.id] = (opts.runCases ? opts.runCases(body.case_ids) : body.case_ids).map((caseId) => ({ id: state.nextTest++, case_id: caseId, status_id: 3, title: `Case ${caseId}` }));
           return json(res, 200, run);
         }
         case 'add_results_for_cases': {
@@ -1433,7 +1433,7 @@ test('results creates the run, posts results, attaches evidence, writes IDs back
         case_id: 12,
         status_id: 5,
         version: 'staging · 2.14.3',
-        comment: '**Step 3 failed: lock message**\n- Expected: "Account locked" message\n- Actual: "Invalid password" message',
+        comment: '**Step 3 failed: lock message**\n- Expected: "Account locked" message\n- Actual: "Invalid password" message\n\nRan 2026-11-10 10:20',
         elapsed: '2m 15s',
       },
     ]);
@@ -1476,7 +1476,7 @@ test('results posts a correction for a changed status and a defects-only result 
     const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
     assert.equal(run.code, 0, run.stderr);
     assert.deepEqual(named(mock.state, 'add_results_for_cases')[0].body.results, [
-      { case_id: 11, status_id: 2, version: 'staging · 2.14.3', comment: 'Corrected result.\n\n**Blocked: SSO page down**' },
+      { case_id: 11, status_id: 2, version: 'staging · 2.14.3', comment: 'Corrected result.\n\n**Blocked: SSO page down**\n\nRan 2026-11-10 10:14' },
       { case_id: 12, status_id: 5, version: 'staging · 2.14.3', defects: 'PROJ-9', comment: 'Defects updated.' },
     ]);
     assert.deepEqual(mock.state.uploads.slice(3), [{ resultId: 7002, name: 'C11.png' }]);
@@ -1485,6 +1485,67 @@ test('results posts a correction for a changed status and a defects-only result 
     assert.match(written, /testrail_result_id: 7003\n/);
     assert.match(run.stdout, /correct C11 blocked/);
     assert.match(run.stdout, /update defects of C12 failed \(defects PROJ-9\)/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results ends a failed or blocked comment with the run time, and leaves passed results and defects updates without it', async () => {
+  const mock = await resultsMock();
+  const text = RESULTS_MD.replace('case: C13\nstatus: untested', 'case: C13\nstatus: blocked\nrun_at: 2026-11-11 09:05');
+  const cwd = resultsDir(text);
+  const file = join(cwd, 'results.md');
+  try {
+    assert.equal((await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd })).code, 0);
+    const [first] = named(mock.state, 'add_results_for_cases');
+    const byCase = (results, id) => results.find((r) => r.case_id === id);
+    assert.equal(byCase(first.body.results, 11).comment, undefined);
+    assert.ok(byCase(first.body.results, 12).comment.endsWith('\n\nRan 2026-11-10 10:20'));
+    assert.equal(byCase(first.body.results, 13).comment, 'Not run: the reset email never arrived.\n\nRan 2026-11-11 09:05');
+
+    writeFileSync(
+      file,
+      readFileSync(file, 'utf8')
+        .replace('case: C11\nstatus: passed', 'case: C11\nstatus: failed')
+        .replace('case: C12\nstatus: failed', 'case: C12\nstatus: failed\ndefects: PROJ-9')
+        .replace('case: C13\nstatus: blocked\nrun_at: 2026-11-11 09:05', 'case: C13\nstatus: blocked\nrun_at: 2026-11-11 09:05\ndefects: PROJ-8'),
+    );
+    mock.state.requests.length = 0;
+    assert.equal((await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd })).code, 0);
+    const second = named(mock.state, 'add_results_for_cases')[0].body.results;
+    assert.equal(byCase(second, 11).comment, 'Corrected result.\n\nRan 2026-11-10 10:14');
+    assert.equal(byCase(second, 12).comment, 'Defects updated.');
+    assert.equal(byCase(second, 13).comment, 'Defects updated.');
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results stops when the created run holds other cases than asked for, keeps the run id, and posts nothing', async () => {
+  const mock = await resultsMock({ runCases: (ids) => [...ids.filter((id) => id !== 12 && id !== 13), 99] });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.equal(
+      run.stderr.trim(),
+      'Run R500 was created with the wrong cases (missing C12, C13; extra C99). Fix the run in TestRail, then push again.',
+    );
+    assert.deepEqual(named(mock.state, 'add_results_for_cases'), []);
+    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /testrail_run_id: R500\n-->/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results names only the extra cases when the created run has nothing missing', async () => {
+  const mock = await resultsMock({ runCases: (ids) => [...ids, 98] });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.equal(run.stderr.trim(), 'Run R500 was created with the wrong cases (extra C98). Fix the run in TestRail, then push again.');
+    assert.deepEqual(named(mock.state, 'add_results_for_cases'), []);
   } finally {
     await mock.close();
   }
