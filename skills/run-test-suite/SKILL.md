@@ -34,9 +34,9 @@ Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. Find
 
 | Source              | Cases                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------ |
-| `*.test.md` files   | Use them as they are.                                                                      |
+| `*.test.md` files   | Files with `testrail_id`: run `push --dry-run` on them first. A case it would update differs from TestRail: ask which copy is current. TestRail's → pull it into `<run folder>/cases` and run that; the local one → push it first. |
 | TestRail section    | `pull --section <name> --out <run folder>/cases`                                           |
-| Ticket key          | Cases whose `refs` include the key, in `test-cases/` or a pull. None found → tell the user the story's cases lack refs; never swap in a whole section on your own. |
+| Ticket key          | Cases whose `refs` include the key, in the story's ticket folder or a pull. None found → tell the user the story's cases lack refs; never swap in a whole section on your own. |
 | TestRail run `R<id>` | `list --run <id>` for statuses, then `pull --run <id> --out <run folder>/cases`. Default scope: cases Untested or Retest in the run. |
 | TestRail link       | Case link: that case. Section link: its `group_id` is the section ID that `list` prints; pull that section. A run link the user gives as the case list for a new run: `pull --run <id>`, without `testrail_run_id`. |
 
@@ -121,14 +121,14 @@ After the last batch, close every session the run opened, lanes included: `agent
 
 ### Step 4: Review the results
 
-The main session reviews every block once, before the push, with the feature's context file (`test-cases/<feature>.context.md`, per [Context File](../gather-context/references/context-file.md)) at hand:
+The main session reviews every block once, before the push, with the ticket's context file ([Ticket Folder](../gather-context/references/ticket-folder.md)) at hand:
 
 - Each `failed`: reopen the evidence. It must show the failing step. If it does not, rerun the case, or set it back to `untested` with the reason.
 - A difference the context file's `Conflicts` or `Answers` settles follows that entry.
 - Text that differs from Expected is `failed` when a source (story, design, spec) fixes the text. It is "case needs fix" only when the sources leave the text open.
 - A product defect seen outside the case's steps is not a result. Keep it for the report, for `report-bug` or a question to the PO.
 - A failed case the user judges "case wrong, not product wrong" becomes `blocked` with "case needs fix". Fix the case later with `improve-test-cases`.
-- The user decides a rule or accepts a difference between the app and a source → record it in the context file: the rule in `Answers`, with who decided and where; the accepted difference in `Conflicts`, with the side followed. The next case written and the next run then follow it.
+- The user decides a rule or accepts a difference between the app and a source → record it in the context file: the rule in `Answers`, with who decided and where; the accepted difference in `Conflicts`, with the side followed. Other QCs see only TestRail and Jira: offer to post it as a comment on the story, and keep the comment's link.
 
 ### Step 5: Push to TestRail
 

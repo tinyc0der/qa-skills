@@ -26,7 +26,7 @@ References:
 **Every Bug links to a user story. Do not create a Bug until the story is known.**
 
 - Jira ticket: a story is used as is. For a subtask or another issue, find the story through `parent`, issue links, and keys in the text. Never use a subtask, task, bug, or epic in place of the story.
-- TestRail case `C<id>`: if a local `*.test.md` holds it (`test-cases/`, or `cases/` in a run folder), read its `refs` there. Otherwise, with the `sync-test-cases-with-testrail` skill, run `list` to find its section, then `pull --section <section> --out <scratch dir>`. Read the case's `refs`, preconditions, and steps from the pulled file, and resolve the story from `refs`.
+- TestRail case `C<id>`: if a local `*.test.md` holds it (the story's folder under `tickets/`, or `cases/` in a run folder), read its `refs` there. Otherwise, with the `sync-test-cases-with-testrail` skill, run `list` to find its section, then `pull --section <section> --out <scratch dir>`. Read the case's `refs`, preconditions, and steps from the pulled file, and resolve the story from `refs`.
 - Any other source: use only a story key it names. Never guess the story from a title, screen, or section name.
 - No story, several candidates, or conflicting sources → ask the user for the story key and list the candidates. Check duplicates and draft meanwhile.
 
@@ -58,7 +58,7 @@ On a match, propose the action and write only after the user approves:
 
 - Check the expected behavior against the story, its comments, and its linked pages. Behavior descoped there is not a bug.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
-- If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists.
+- If the story has a context file (`tickets/<KEY>-*/context.md`), read it and the sources it lists.
 - The expected behavior is not obvious and the story does not define it → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
   - Read the app's file in `automation-lessons/` first, if there is one.

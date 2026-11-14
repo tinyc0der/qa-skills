@@ -23,8 +23,8 @@ The target format and rules are owned by the `qa-write-test-cases` skill:
 
 ## Step 1: Get Test Cases
 
-- Use the local `test-cases/*.test.md` files the user points at.
-- Otherwise download the cases with the `pull` command of the `sync-test-cases-with-testrail` skill.
+- Use the local `*.test.md` files the user points at.
+- Otherwise download the cases with the `pull` command of the `sync-test-cases-with-testrail` skill, into the ticket's folder ([Ticket Folder](../gather-context/references/ticket-folder.md)).
 
 ## Step 2: Analyze Test Quality
 

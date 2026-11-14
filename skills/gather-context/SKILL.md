@@ -1,6 +1,6 @@
 ---
 name: gather-context
-description: Gather what every source says about a Jira ticket or feature and save it to a context file (`test-cases/<feature-name>.context.md`) with the sources read and not read, existing TestRail cases, conflicts between sources and the side followed, and open questions. Reads the ticket with its history, comments, sub-tasks, and linked issues, plus Confluence, Figma, TestRail, the live app, and the QA workspace. It is the first step of `review-user-story`, `qa-thinking`, and `qa-write-test-cases`. Use when the user asks what is known about a ticket or feature, asks to collect, refresh, or re-check its context, or asks for the sources a ticket does not link.
+description: Gather what every source says about a Jira ticket or feature and save it to a context file (`tickets/<KEY>-<slug>/context.md`) with the sources read and not read, existing TestRail cases, conflicts between sources and the side followed, and open questions. Reads the ticket with its history, comments, sub-tasks, and linked issues, plus Confluence, Figma, TestRail, the live app, and the QA workspace. It is the first step of `review-user-story`, `qa-thinking`, and `qa-write-test-cases`. Use when the user asks what is known about a ticket or feature, asks to collect, refresh, or re-check its context, or asks for the sources a ticket does not link.
 ---
 
 # Gather Context
@@ -11,7 +11,7 @@ Collect what every source says about one ticket or feature, decide which source 
 
 ### 1. Start from the context file
 
-- The context file in `test-cases/*.context.md` that names the ticket or the feature is the starting point: read the sources it lists, search only for gaps still open, and check its conflicts and open questions again.
+- The ticket's context file, found as [Ticket Folder](./references/ticket-folder.md) says, is the starting point: read the sources it lists, search only for gaps still open, and check its conflicts and open questions again.
 - A context file written in this session is current: use it without re-reading its sources, unless the user says a source changed.
 - Do not ask the user again about a source under `Not read`, unless the user offers it.
 - Ignore the context file when the user asks for an independent run.
@@ -25,7 +25,7 @@ Sources may come as pasted text, links, or MCP tools. Read Jira and Confluence t
 - Read the description history (`expand: changelog`). A phrase removed while the rest stayed is a decision against it; a full rewrite makes the old draft an earlier plan. Date sources by their last content change, not Jira `updated`. Pasted text has no history: record the history as not read.
 - Images the MCP cannot download and sections that come back empty: ask for screenshots, or record them as not read.
 - Linked documents: only the parts in the ticket's scope, and rules for every result of the screen.
-- Figma: screens, states, and UI copy. Read the frames of each component the ticket changes or gives a new state (picker, sheet, keyboard), not only the screen frames. Context files of related features list frames already found.
+- Figma: screens, states, and UI copy. Read the frames of each component the ticket changes or gives a new state (picker, sheet, keyboard), not only the screen frames. Context files of related tickets list frames already found.
 - Live app: if the feature or the screens it changes are deployed, ask for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill. Navigate only; submit nothing that saves data unless the user agrees. Use screenshots the user shares. Declined → record the live app as not read.
 - Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app.
 - When these sources leave a gap, search as [Related Sources](./references/related-sources.md) describes.
@@ -60,7 +60,7 @@ Find the TestRail cases that already test the feature, with the `sync-test-cases
 
 ### 4. Save the context file
 
-Save it as [Context File](./references/context-file.md) describes.
+Save it in the ticket's folder ([Ticket Folder](./references/ticket-folder.md)), as [Context File](./references/context-file.md) describes.
 
 ### 5. Report
 

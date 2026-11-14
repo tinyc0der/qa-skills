@@ -198,16 +198,16 @@ If Step 1 found existing cases, ask:
 2. 🆕 Create a new section
 ```
 
-Write test case files to `test-cases/`.
+Write test case files to the ticket's folder ([Ticket Folder](../gather-context/references/ticket-folder.md)).
 
 Generation rules:
 
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority, and `smoke: yes` when the item has `[smoke]`.
 - Set `automation:` on every test: `yes` when a script can read the expected result (a value, message, or state), even if the flow waits; `no` for layout, visual, and judgment checks.
 - Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`). Without pulled cases, use `All` for behavior every platform shares, else the platform the ticket names.
-- Name files `<feature-name>.test.md` with the context file's feature name (always the `.test.md` extension).
+- Name the file `<slug>.test.md` after the folder's slug (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
-- When the user chose to expand an existing section, `pull --section <section>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
+- When the user chose to expand an existing section, `pull --section <section> --out <ticket folder>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
 - When pulled cases carry `platform:`, the project keeps one section tree per feature for all platforms. Add the new platform's tests to those subsections; do not create a section per platform.
 - A new section with several suites: tell the user to push with `--parent-section "<feature name>"` so the suites nest under one section.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.

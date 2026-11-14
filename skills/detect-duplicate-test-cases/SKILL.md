@@ -13,7 +13,7 @@ Detect duplicate and low-value test cases in TestRail. Recommend cleanup actions
 
 - Input, one of:
   - cases downloaded with the `pull` command of the `sync-test-cases-with-testrail` skill
-  - local `test-cases/*.test.md` files
+  - local `*.test.md` files
   - a TestRail CSV export the user provides
 - Parse each case to extract: `C<id>`, section, title, preconditions, steps, expected results, priority, and refs.
 - Identify each case by `C<id>` and section. A local case without `testrail_id:` is identified by file and title.

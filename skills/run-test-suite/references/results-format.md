@@ -19,7 +19,7 @@ build: staging · 2.14.3 (18212)
 # PROJ-1 Login
 
 - Environment: https://staging.example.com, account `qa-admin`, viewport 1920×1080
-- Cases: `test-cases/login.test.md`
+- Cases: `tickets/PROJ-1-login/login.test.md`
 - Run time: 2026-11-10 10:02–10:41
 
 <!-- result

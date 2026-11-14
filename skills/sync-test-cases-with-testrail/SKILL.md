@@ -44,7 +44,7 @@ node <skill>/scripts/testrail.mjs runs [--refs <keys>] [--milestone <name>] [--s
 
 - `check` validates the files offline. It needs no credentials.
 - `list` prints the section tree and case titles with their `C<id>`. `list --run` prints a run's cases with their status in the run. Both add TestRail's forecast or estimate time to a case's line when it has one.
-- `pull` downloads cases into `*.test.md` files. `--out` defaults to `test-cases/`. `--run` keeps only the run's cases.
+- `pull` downloads cases into `*.test.md` files. Pass `--out` with the ticket's folder ([Ticket Folder](../gather-context/references/ticket-folder.md)); it defaults to `test-cases/`. `--run` keeps only the run's cases.
 - `results` pushes a run's results. A run it creates gets the current TestRail user as owner and now as start date. An existing run gets any `refs` from the run block that it lacks. The `run-test-suite` skill owns the flow and the [Results Format](../run-test-suite/references/results-format.md).
 - `runs` prints status counts, executed share, and pass rate of the matching runs, plan runs included. It needs at least one filter, and filters combine with AND. `--details` also lists the tests that did not pass, with their latest result. It only reads TestRail.
 - Use only the options listed here.

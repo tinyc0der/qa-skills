@@ -25,8 +25,9 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 | Figma      | Screens, states, copy                        | Figma MCP server                                                                                     |
 | TestRail   | Test cases                                   | `.env` with the variables listed in [`sync-test-cases-with-testrail`](./skills/sync-test-cases-with-testrail/SKILL.md) |
 | Live app   | Exploring and checking actual behavior       | A staging URL and [agent-browser](https://github.com/vercel-labs/agent-browser): `npm i -g agent-browser && agent-browser install`, then `npx skills add vercel-labs/agent-browser` |
+| Mobile app | Running cases on Android and iOS             | A device, emulator, or simulator and [agent-device](https://github.com/callstack/agent-device): `npm i -g agent-device` |
 
-Keep test cases (`test-cases/`), test run results (`test-runs/`), automation lessons (`automation-lessons/`), and `.env` in one shared QA workspace repo. `automation-lessons/` holds one file per app with the deep links, waits, and session tips that make the next run faster.
+Each QC keeps their own QA workspace, with no shared repo: one folder per ticket under `tickets/` (context file and test cases), test run results (`test-runs/`), automation lessons (`automation-lessons/`), and `.env`. TestRail holds the cases every QC shares, and Jira holds the decisions. `automation-lessons/` holds one file per app and platform with the deep links, waits, and session tips that make the next run faster. See [Ticket Folder](./skills/gather-context/references/ticket-folder.md).
 
 ## Skills
 
