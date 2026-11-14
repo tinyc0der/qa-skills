@@ -37,6 +37,7 @@ Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. Find
 | TestRail section    | `pull --section <name> --out <run folder>/cases`                                           |
 | Ticket key          | Cases whose `refs` include the key, in `test-cases/` or a pull.                            |
 | TestRail run `R<id>` | `list --run <id>` for statuses, then `pull --run <id> --out <run folder>/cases`. Default scope: cases Untested or Retest in the run. |
+| TestRail link       | Case link: that case. Section link: its `group_id` is the section ID that `list` prints; pull that section. A run link the user gives as the case list for a new run: `pull --run <id>`, without `testrail_run_id`. |
 
 Scope by kind of run:
 
@@ -47,7 +48,7 @@ Scope by kind of run:
 
 Order the cases so setup is shared: group by precondition and start page, and put cases that delete or reset data last in their group.
 
-Write `results.md` per [Results Format](./references/results-format.md): one run block, then one `untested` result block per case in run order. For a TestRail run, set `testrail_run_id: R<id>` in the run block; without it, the push creates a new run. A case without `testrail_id` gets an empty `case:` and stays local; push it first with `sync-test-cases-with-testrail` to get its result onto TestRail.
+Write `results.md` per [Results Format](./references/results-format.md): one run block, then one `untested` result block per case in run order. For a TestRail run, set `testrail_run_id: R<id>` in the run block; without it, the push creates a new run. Set `milestone:` to the TestRail milestone named after the story's sprint, picked as `report-bug` picks it, or after the release for a regression. No milestone of that name → leave it out and say so in the plan. A case without `testrail_id` gets an empty `case:` and stays local; push it first with `sync-test-cases-with-testrail` to get its result onto TestRail.
 
 ### Step 2: Prepare the session
 
@@ -55,8 +56,9 @@ Write `results.md` per [Results Format](./references/results-format.md): one run
 2. Load the `agent-browser` skill. Its `SKILL.md` is a stub: run `agent-browser skills get core` before the first command.
 3. Environment: a non-production URL, test account, and role, from the user or the lesson file. **Never run on production.**
 4. Open one named session for the run with restore, as the lesson file says. Without a lesson, open `agent-browser --session <app>-qa --restore open <url>`.
-5. Check sign-in from the UI before logging in. A restored session can be signed out, and a live one needs no login. Log in with `agent-browser auth login <alias>` from the auth vault. Never put passwords in commands or files.
-6. Read the build from the app (version string or bundle), not from the environment name. Write it to `build:` in `results.md`.
+5. Set the viewport the lesson file names, else `agent-browser set viewport 1920 1080`. Read the real size with `eval '[innerWidth, innerHeight]'` and write it in the run description. A case with its own viewport sets it and restores the run's after.
+6. Check sign-in from the UI before logging in. A restored session can be signed out, and a live one needs no login. Log in with `agent-browser auth login <alias>` from the auth vault. Never put passwords in commands or files.
+7. Read the build from the app, not from the environment name: the version string it shows, else the version or hash in its script bundle URL, from `eval 'performance.getEntriesByType("resource").map(e => e.name)'`. Write it to `build:` in `results.md`.
 
 Show the plan:
 
@@ -64,6 +66,7 @@ Show the plan:
 - environment URL, account, role, build
 - cases that save, change, or delete data
 - run order, and parallel lanes if any
+- estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Count the cases with no number.
 
 ```
 ❓ Do you want to:
@@ -77,6 +80,8 @@ Run only after the user approves. The approval covers the data changes the liste
 ### Step 3: Run the cases
 
 Runner subagents run the cases, one batch of up to 10 cases at a time, in the same named session. Each runner gets its cases, the `results.md` path, the run folder, the lesson file, [Results Format](./references/results-format.md), [UI Checks](./references/ui-checks.md), and the rules below. It returns its results, lesson candidates (what was slow or broke, and the fix that worked), and user actions still needed. Runners never push to TestRail or file bugs: the main session reviews every result first.
+
+Risky scope (money, sign-in and permissions, data hard to restore, personal data): the first batch is one happy path, one negative case, and one boundary case. Review them per Step 4 before the next batch. Fix a setup problem and rerun them; a case that needs a fix is `blocked`. Their results count for the run.
 
 Parallel lanes only when each lane has its own test account, the lanes share no data, and the accounts share no OTP device. A sequence that builds on itself (create, edit, cancel) stays in one lane. Each lane:
 
@@ -99,6 +104,7 @@ Per case:
   - `C<id>.png` for the final state. Add `C<id>-02.png` for scrolled areas.
 - Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
 - Write the result block right after the case, not at the end of the batch. Set `run_at` to the time of the verdict. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
+- After a reload, a new session, or a deploy notice, read the build again. Changed → set `build:` on the results after the change.
 - **The first cases all fail → check sign-in, role, data, and build before trusting any result.**
 - A blocker stops only the cases that depend on it. Run every independent case.
 - OTP, MFA, CAPTCHA, or a step only a person can do: send the user one short message (case, step, what to do) and run other cases meanwhile. Still not done at the end → `blocked`, owner the user.
@@ -108,12 +114,14 @@ After the last batch, close the run's session: `agent-browser --session <name> c
 
 ### Step 4: Review the results
 
-The main session reviews every block once, before the push:
+The main session reviews every block once, before the push, with the feature's context file (`test-cases/<feature>.context.md`, per [Context File](../gather-context/references/context-file.md)) at hand:
 
 - Each `failed`: reopen the evidence. It must show the failing step. If it does not, rerun the case, or set it back to `untested` with the reason.
+- A difference the context file's `Conflicts` or `Answers` settles follows that entry.
 - Text that differs from Expected is `failed` when a source (story, design, spec) fixes the text. It is "case needs fix" only when the sources leave the text open.
 - A product defect seen outside the case's steps is not a result. Keep it for the report, for `report-bug` or a question to the PO.
 - A failed case the user judges "case wrong, not product wrong" becomes `blocked` with "case needs fix". Fix the case later with `improve-test-cases`.
+- The user decides a rule or accepts a difference between the app and a source → record it in the context file: the rule in `Answers`, with who decided and where; the accepted difference in `Conflicts`, with the side followed. The next case written and the next run then follow it.
 
 ### Step 5: Push to TestRail
 
@@ -123,7 +131,7 @@ node <sync skill>/scripts/testrail.mjs results <run folder>/results.md
 ```
 
 1. Run `--dry-run` and fix what it reports. A case changed on TestRail after its `run_at`: run it again, or set its block back to `untested` with the reason "case changed on <date>".
-2. Show the plan: the run to create (name, refs, milestone, case count) or the existing run, results by status, files to attach.
+2. Show the plan: the run to create (name, refs, milestone, owner, case count) or the existing run and the refs the push adds to it, results by status, files to attach.
 3. **Push only after the user confirms the plan.** It writes to a shared TestRail project.
 4. Run the push. It writes the IDs back into `results.md` and posts only what TestRail does not have yet, as [Results Format](./references/results-format.md) describes.
 
@@ -148,9 +156,11 @@ Update `automation-lessons/<app>.md` per [Automation Lessons](./references/autom
 
 ### Step 8: Report
 
-- Counts by status, zeros included, the TestRail run link, and the `results.md` path.
+- For the user to decide, first: product defects outside the case steps, cases that need a fix, results not pushed. The story adds or changes screens and links Figma frames → offer `detect-product-mismatches` on the live app and Figma for that feature.
+- Counts by status, zeros included, the TestRail run link, and the `results.md` path. Part of an existing run: this run's counts, then the run's totals.
+- Cases left out because they already had a result: count by status, outside this run's counts.
+- Run time against the estimate.
 - Failed: case link, failing step with Expected vs Actual, evidence, Bug key or "Bug pending".
 - Blocked: reason, owner, and what unblocks it.
 - Untested: case and reason.
-- For the user to decide: product defects outside the case steps, cases that need a fix, results not pushed.
 - Lessons added, changed, or removed, one line each.

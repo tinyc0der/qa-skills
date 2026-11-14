@@ -575,13 +575,18 @@ async function loadRunCases(client, runId) {
   return { run, tests, caseIds: new Set(tests.map((t) => t.case_id)) };
 }
 
+const estimateNote = (item) => {
+  const [label, value] = item.estimate_forecast ? ['forecast', item.estimate_forecast] : item.estimate ? ['estimate', item.estimate] : [];
+  return value ? ` (${label} ${value})` : '';
+};
+
 async function cmdList(opts, cfg) {
   const client = createClient(cfg);
   if (opts.run) {
     const { run, tests } = await loadRunCases(client, runIdOf(opts.run));
     const labels = new Map((await client.get('get_statuses')).map((s) => [s.id, s.label]));
     console.log(`R${run.id} ${run.name}${run.is_completed ? ' (closed)' : ''}`);
-    for (const t of tests) console.log(`  C${t.case_id} [${labels.get(t.status_id) ?? t.status_id}] ${t.title}`);
+    for (const t of tests) console.log(`  C${t.case_id} [${labels.get(t.status_id) ?? t.status_id}] ${t.title}${estimateNote(t)}`);
     return 0;
   }
   const suiteId = await resolveSuite(client, cfg);
@@ -597,7 +602,7 @@ async function cmdList(opts, cfg) {
   const print = (section, depth) => {
     const pad = '  '.repeat(depth);
     console.log(`${pad}${section.name} [section ${section.id}]`);
-    for (const c of cases.filter((c) => c.section_id === section.id)) console.log(`${pad}  C${c.id} ${c.title}`);
+    for (const c of cases.filter((c) => c.section_id === section.id)) console.log(`${pad}  C${c.id} ${c.title}${estimateNote(c)}`);
     for (const child of children(section.id)) print(child, depth + 1);
   };
   for (const root of roots) print(root, 0);
@@ -1083,12 +1088,14 @@ async function cmdResults(files, opts, cfg, cwd) {
   let tests = [];
   let posted = new Map();
   let suiteId;
+  let existingRun;
   if (runId) {
     const loaded = await loadRunCases(client, runId);
     if (loaded.run.is_completed) throw new CliError(`Run R${runId} is closed; TestRail does not take results for a closed run`);
     const missing = caseIds.filter((id) => !loaded.caseIds.has(id));
     if (missing.length) throw new CliError(`Not in run R${runId}: ${missing.map((id) => `C${id}`).join(', ')}`);
     tests = loaded.tests;
+    existingRun = loaded.run;
     suiteId = loaded.run.suite_id;
     if (doc.results.some((r) => r.meta.testrail_result_id)) {
       posted = new Map((await client.getAll(`get_results_for_run/${runId}`, 'results')).map((r) => [String(r.id), r]));
@@ -1125,12 +1132,22 @@ async function cmdResults(files, opts, cfg, cwd) {
   suiteId ??= await resolveSuite(client, cfg);
   await refuseStaleCases(client, cfg, suiteId, doc, plan);
 
+  if (existingRun) {
+    const have = splitKeys(existingRun.refs);
+    const missingRefs = splitKeys(run.meta.refs).filter((k, i, all) => !have.includes(k) && all.indexOf(k) === i);
+    if (missingRefs.length) {
+      console.log(`${tag}add refs ${missingRefs.join(', ')} to run R${runId}`);
+      if (!dry) await client.post(`update_run/${runId}`, { refs: [...have, ...missingRefs].join(', ') });
+    }
+  }
+
   if (!runId) {
-    const body = { suite_id: suiteId, name: run.title, include_all: false, case_ids: caseIds };
+    const owner = await client.get('get_current_user');
+    const body = { suite_id: suiteId, name: run.title, include_all: false, case_ids: caseIds, assignedto_id: owner.id, start_on: Math.floor(Date.now() / 1000) };
     if (run.text) body.description = run.text;
     if (run.meta.refs) body.refs = run.meta.refs;
     if (run.meta.milestone) body.milestone_id = await resolveMilestone(client, cfg, run.meta.milestone);
-    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`].filter(Boolean);
+    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`, `assigned to ${owner.name}`].filter(Boolean);
     console.log(`${tag}create run ${JSON.stringify(run.title)} with ${caseIds.length} cases${extras.length ? ` (${extras.join(', ')})` : ''}`);
     if (!dry) {
       runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
