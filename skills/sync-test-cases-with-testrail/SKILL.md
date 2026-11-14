@@ -20,9 +20,10 @@ The script reads these variables from the environment, then from `.env` in the c
 | `TESTRAIL_SUITE_ID`    | Only for projects with several suites                                       |
 | `TESTRAIL_TEMPLATE_ID` | Only when the project has no template named like "Test Case (Steps)"        |
 | `TESTRAIL_FIELDS`      | Metadata keys to send as case fields, as `key:field_system_name` pairs: `smoke:custom_case_smoketest,automation:custom_automation_type,platform:custom_case_platform` |
+| `TESTRAIL_OWNER`       | Your name as the project's owner field writes it. New cases get it as owner, and it tells your cases from other QCs' cases |
 
 - Save values to `.env`. If the folder is a git repo, make sure `.env` is git-ignored.
-- Map every case field the project requires (an owner field, for example) in `TESTRAIL_FIELDS` and set its value once on each suite. The field system names come from **Administration → Customizations**.
+- Map every case field the project requires in `TESTRAIL_FIELDS` and set its value once on each suite. Map the owner field under the key `owner`, such as `owner:custom_case_owner`. The field system names come from **Administration → Customizations**.
 - The API must be enabled in **Administration → Site Settings → API**.
 
 ## Commands
@@ -35,7 +36,7 @@ node <skill>/scripts/testrail.mjs list [--section <name>]
 node <skill>/scripts/testrail.mjs list --run <id>
 node <skill>/scripts/testrail.mjs pull [--section <name>] [--run <id>] [--out <dir>] [--overwrite]
 node <skill>/scripts/testrail.mjs push <files...> --dry-run [--parent-section <name>]
-node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>]
+node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>] [--confirm-others <case ids>]
 node <skill>/scripts/testrail.mjs results <results.md> --dry-run
 node <skill>/scripts/testrail.mjs results <results.md>
 node <skill>/scripts/testrail.mjs runs [--refs <keys>] [--milestone <name>] [--since <YYYY-MM-DD>] [--active] [--details]
@@ -51,10 +52,12 @@ node <skill>/scripts/testrail.mjs runs [--refs <keys>] [--milestone <name>] [--s
 ## Push
 
 1. Run `check` on the files and fix what it reports.
-2. Run `push --dry-run` and show the user the plan: sections to create, cases to add, cases to update.
-3. **Push only after the user confirms the plan.** It writes to a shared TestRail project.
-4. Run `push` with the same files and options.
-5. If the folder is a git repo, commit the files. The push writes `testrail_section_id:` and `testrail_id:` into them.
+2. Run `push --dry-run`.
+3. The plan creates sections or cases: show the user the plan. **Push only after the user confirms it.** New sections and cases stay in a shared TestRail project.
+4. The plan only updates your own cases, or cases with no owner: push without asking.
+5. The dry-run marks an update to a case another QC owns with `needs --confirm-others`. Show the user each one with its owner and what changes. Push it only if they say yes, by passing its ID in `--confirm-others`. Never confirm one on their behalf. A case they decline: leave it out of the files, or revert its local edit.
+6. Run `push` with the same files and options.
+7. If the folder is a git repo, commit the files. The push writes `testrail_section_id:` and `testrail_id:` into them.
 
 Rules:
 
@@ -62,6 +65,8 @@ Rules:
 - Each suite becomes a section with the same name. An existing section with that name is reused.
 - `--parent-section` nests the sections under a top-level section, created if missing.
 - A test with `testrail_id:` is updated in place. A test without it is created. Never edit or remove these lines by hand.
+- A new case gets `TESTRAIL_OWNER` as owner. An update never changes a case's owner, and a blank owner stays blank.
+- Without `TESTRAIL_OWNER`, every case that has an owner counts as another QC's. With no `owner` field mapped, every case counts as another QC's, since no owner can be read. `push` stops when `TESTRAIL_OWNER` is set but no `owner` field is mapped, or when the field has no option of that name.
 - `priority:` matches the project's priorities by name (`normal` counts as Medium, `important` as High). `push` stops before writing anything if a value matches none of them, and lists the project's priorities.
 - Keys mapped in `TESTRAIL_FIELDS` are sent as case fields. `push` stops before writing anything on a dropdown value the field does not offer, and lists the options. It warns when `smoke`, `automation`, or `platform` is used but not mapped.
 

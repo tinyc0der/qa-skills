@@ -316,6 +316,12 @@ const CASE_FIELDS = [
       { context: { is_global: false, project_ids: [1] }, options: { items: '1, All\n2, Web\n3, Mobile' } },
     ],
   },
+  {
+    system_name: 'custom_case_owner',
+    name: 'case_owner',
+    type_id: 6,
+    configs: [{ context: { is_global: true, project_ids: null }, options: { items: '1, Dana\n2, Minh' } }],
+  },
 ];
 
 test('parseFieldSpec reads key:field pairs and rejects malformed ones', () => {
@@ -672,7 +678,13 @@ test('push creates the section and cases, writes ids back, then only updates on 
     assert.doesNotMatch(first.stdout + first.stderr, /secret-key/);
 
     mock.state.requests.length = 0;
-    const second = await runCli(['push', 'login.test.md'], { env: baseEnv(mock.port), cwd });
+    const unconfirmed = await runCli(['push', 'login.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(unconfirmed.code, 1);
+    assert.match(unconfirmed.stderr, /C100 .* owned by an unknown QC \(TESTRAIL_FIELDS maps no owner field\)/);
+    assert.match(unconfirmed.stderr, /--confirm-others C100,C101\./);
+    assert.deepEqual(posts(mock.state), []);
+
+    const second = await runCli(['push', 'login.test.md', '--confirm-others', 'C100,C101'], { env: baseEnv(mock.port), cwd });
     assert.equal(second.code, 0, second.stderr);
     assert.equal(named(mock.state, 'add_section').length, 0);
     assert.equal(named(mock.state, 'add_case').length, 0);
@@ -759,6 +771,112 @@ test('push rejects a field value or a field map TestRail cannot take before writ
     assert.match(malformed.stderr, /TESTRAIL_FIELDS expects key:field_name pairs/);
     assert.equal(posts(mock.state).length, 0);
     assert.doesNotMatch(readFileSync(join(cwd, 'order.test.md'), 'utf8'), /testrail_/);
+  } finally {
+    await mock.close();
+  }
+});
+
+const OWNER_SPEC = 'owner:custom_case_owner';
+const DANA = 1;
+const MINH = 2;
+const remoteOwned = (id, title, owner) => ({
+  id,
+  section_id: 6,
+  title,
+  template_id: 2,
+  refs: 'OLD-1',
+  custom_preconds: '',
+  custom_steps_separated: [],
+  custom_case_owner: owner,
+});
+const ownerMock = () =>
+  startMock({
+    sections: [{ id: 6, name: 'Checkout', parent_id: null }],
+    cases: [remoteOwned(50, 'Dana case', DANA), remoteOwned(51, 'Blank case', null), remoteOwned(52, 'Minh case', MINH), remoteOwned(53, 'Owner only', MINH)],
+  });
+const ownedTest = (meta, title) => `<!-- test\n${meta}\n-->\n\n# ${title}\n\n`;
+const OWNER_MD =
+  '<!-- suite\ntestrail_section_id: 6\n-->\n\n# Checkout\n\n' +
+  ownedTest('testrail_id: C50\nrefs: NEW-1\nowner: Minh', 'Dana case') +
+  ownedTest('testrail_id: C51\nrefs: NEW-1', 'Blank case') +
+  ownedTest('testrail_id: C53\nrefs: OLD-1\nowner: Dana', 'Owner only') +
+  ownedTest('owner: Minh', 'New case');
+const MINH_EDIT = ownedTest('testrail_id: C52\nrefs: NEW-1', 'Minh case');
+const NEW_SECTION = `<!-- suite -->\n\n# Payments\n\n${ownedTest('', 'Pay by card')}`;
+const updateIds = (state) => named(state, 'update_case').map((r) => r.id);
+const sentOwners = (state, name) => named(state, name).map((r) => r.body.custom_case_owner);
+
+test('push updates own and ownerless cases without asking, never sends an owner on update, and makes the pusher own new cases', async () => {
+  const mock = await ownerMock();
+  const cwd = fieldsWorkdir(OWNER_MD);
+  try {
+    const run = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC, TESTRAIL_OWNER: ' dana ' }), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(updateIds(mock.state), ['50', '51']);
+    assert.deepEqual(sentOwners(mock.state, 'update_case'), [undefined, undefined]);
+    assert.deepEqual(sentOwners(mock.state, 'add_case'), [DANA]);
+    assert.match(run.stdout, /cases added 1, updated 2, unchanged 1/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push refuses to update a case another QC owns before writing anything, shows it in --dry-run, and updates it with --confirm-others', async () => {
+  const mock = await ownerMock();
+  const text = OWNER_MD + MINH_EDIT + NEW_SECTION;
+  const cwd = fieldsWorkdir(text);
+  const env = baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC, TESTRAIL_OWNER: 'Dana' });
+  const args = ['push', 'order.test.md', '--parent-section', 'Web'];
+  try {
+    const refused = await runCli(args, { env, cwd });
+    assert.equal(refused.code, 1);
+    assert.match(refused.stderr, /^ {2}C52 "Minh case" owned by Minh$/m);
+    assert.match(refused.stderr, /^Confirm with the user, then pass --confirm-others C52\.$/m);
+    assert.doesNotMatch(refused.stderr, /C5[013]/);
+    assert.equal(posts(mock.state).length, 0);
+    assert.equal(readFileSync(join(cwd, 'order.test.md'), 'utf8'), text);
+
+    const dry = await runCli([...args, '--dry-run'], { env, cwd });
+    assert.equal(dry.code, 0, dry.stderr);
+    assert.match(dry.stdout, /^\[dry-run\] update case C52 "Minh case" \(owner Minh, needs --confirm-others\)$/m);
+    assert.match(dry.stdout, /^\[dry-run\] update case C50 "Dana case"$/m);
+    assert.equal(posts(mock.state).length, 0);
+
+    const confirmed = await runCli([...args, '--confirm-others', '99,C51,c52'], { env, cwd });
+    assert.equal(confirmed.code, 0, confirmed.stderr);
+    assert.deepEqual(updateIds(mock.state), ['50', '51', '52']);
+    assert.deepEqual(sentOwners(mock.state, 'update_case'), [undefined, undefined, undefined]);
+    assert.deepEqual(named(mock.state, 'add_section').map((r) => r.body.name), ['Web', 'Payments']);
+    assert.deepEqual(sentOwners(mock.state, 'add_case'), [DANA, DANA]);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push without TESTRAIL_OWNER asks to confirm every owned case, and TESTRAIL_OWNER needs a mapped owner field that offers it', async () => {
+  const mock = await ownerMock();
+  const cwd = fieldsWorkdir(OWNER_MD + MINH_EDIT);
+  try {
+    const unset = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC }), cwd });
+    assert.equal(unset.code, 1);
+    assert.match(unset.stderr, /^ {2}C50 "Dana case" owned by Dana$/m);
+    assert.match(unset.stderr, /^ {2}C52 "Minh case" owned by Minh$/m);
+    assert.match(unset.stderr, /--confirm-others C50,C52\.$/m);
+    assert.doesNotMatch(unset.stderr, /C5[13]/);
+
+    const unmapped = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_OWNER: 'Dana' }), cwd });
+    assert.equal(unmapped.code, 1);
+    assert.match(unmapped.stderr, /TESTRAIL_OWNER is set but TESTRAIL_FIELDS maps no owner field/);
+
+    const unknown = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC, TESTRAIL_OWNER: 'Lan' }), cwd });
+    assert.equal(unknown.code, 1);
+    assert.match(unknown.stderr, /invalid owner "Lan" in "TESTRAIL_OWNER"; TestRail options: Dana, Minh/);
+    assert.equal(posts(mock.state).length, 0);
+
+    const confirmed = await runCli(['push', 'order.test.md', '--confirm-others', 'C50,C52'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC }), cwd });
+    assert.equal(confirmed.code, 0, confirmed.stderr);
+    assert.deepEqual(updateIds(mock.state), ['50', '51', '52']);
+    assert.deepEqual(sentOwners(mock.state, 'add_case'), [MINH]);
   } finally {
     await mock.close();
   }
@@ -866,7 +984,7 @@ test('push clears preconditions, refs and steps that were removed from the file'
   const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
   writeFileSync(join(cwd, 'a.test.md'), '<!-- suite\ntestrail_section_id: 6\n-->\n\n# S\n\n<!-- test\ntestrail_id: C50\n-->\n\n# T\n');
   try {
-    const first = await runCli(['push', 'a.test.md'], { env: baseEnv(mock.port), cwd });
+    const first = await runCli(['push', 'a.test.md', '--confirm-others', 'C50'], { env: baseEnv(mock.port), cwd });
     assert.equal(first.code, 0, first.stderr);
     const [update] = named(mock.state, 'update_case');
     assert.equal(update?.id, '50', first.stdout);

@@ -23,6 +23,7 @@ Commands:
   list --run <id>                           Print the cases of a test run with their status
   push <files...> [--dry-run]               Create or update cases in TestRail and write IDs back
        [--parent-section <name>]
+       [--confirm-others <ids>]             Also update these cases another QC owns, e.g. C12,C13
   pull [--section <name>] [--out <dir>]     Download cases into .test.md files (default dir test-cases/)
        [--run <id>] [--overwrite]           --run keeps only the run's cases; --overwrite replaces differing files
   runs [--refs <keys>] [--milestone <name>] Print status counts of matching test runs, plan runs included
@@ -36,6 +37,8 @@ Environment (or .env in the current directory):
   TESTRAIL_SUITE_ID, TESTRAIL_TEMPLATE_ID (optional)
   TESTRAIL_FIELDS (optional) metadata keys sent as case fields, e.g.
     smoke:custom_case_smoketest,automation:custom_automation_type,platform:custom_case_platform
+  TESTRAIL_OWNER (optional) your name in the field mapped as owner, e.g. owner:custom_case_owner.
+    New cases get it; push updates a case with another owner only with --confirm-others
 
 Exit codes: 0 ok, 1 usage/validation/config error, 2 API error`;
 
@@ -500,6 +503,7 @@ function readConfig(env) {
     suiteId: env.TESTRAIL_SUITE_ID || null,
     templateId: env.TESTRAIL_TEMPLATE_ID || null,
     fieldSpec: parseFieldSpec(env.TESTRAIL_FIELDS),
+    owner: env.TESTRAIL_OWNER?.trim() || null,
   };
 }
 
@@ -806,7 +810,7 @@ async function cmdPush(files, opts, cfg, cwd) {
     if (!byPath.has(real)) byPath.set(real, loadedFile);
   }
   const loaded = [...byPath.values()];
-  const owners = new Map();
+  const holders = new Map();
   for (const { file, doc } of loaded) {
     for (const suite of doc.suites) {
       if (!suite.title) throw new CliError(`${file}: a test appears before any suite or a suite has no title`);
@@ -819,14 +823,14 @@ async function cmdPush(files, opts, cfg, cwd) {
           throw new CliError(`${file}: invalid testrail_id "${t.meta.testrail_id}" in "${t.title}"`);
         }
         const id = Number(t.meta.testrail_id.replace(/^C/i, ''));
-        const owner = owners.get(id);
-        if (owner) {
+        const holder = holders.get(id);
+        if (holder) {
           throw new CliError(
-            `${file}: ${JSON.stringify(t.title)} has testrail_id C${id}, which ${JSON.stringify(owner.title)} in ${owner.file} already has. ` +
+            `${file}: ${JSON.stringify(t.title)} has testrail_id C${id}, which ${JSON.stringify(holder.title)} in ${holder.file} already has. ` +
               'Remove the testrail_id from the test that is not that case, so push creates a new case for it',
           );
         }
-        owners.set(id, { file, title: t.title });
+        holders.set(id, { file, title: t.title });
       }
     }
   }
@@ -840,6 +844,17 @@ async function cmdPush(files, opts, cfg, cwd) {
   const usedKeys = new Set(loaded.flatMap(({ doc }) => doc.suites.flatMap((s) => [s.meta, ...s.tests.map((t) => t.meta)]).flatMap(Object.keys)));
   const unmapped = STANDARD_KEYS.filter((key) => usedKeys.has(key) && !ctx.fields.has(key));
   if (unmapped.length) console.log(`warning: ${unmapped.join(', ')} not sent; map them to TestRail case fields in TESTRAIL_FIELDS`);
+  const ownerField = ctx.fields.get('owner');
+  if (cfg.owner && !ownerField) {
+    throw new CliError('TESTRAIL_OWNER is set but TESTRAIL_FIELDS maps no owner field; add one such as owner:custom_case_owner');
+  }
+  const myOwnerValue = cfg.owner ? toFieldValue(ownerField, cfg.owner, 'TESTRAIL_OWNER') : undefined;
+  const confirmed = new Set(
+    listOf(opts['confirm-others']).map((id) => {
+      if (!/^C?\d+$/i.test(id)) throw new CliError(`--confirm-others expects case IDs such as C12,C13, got "${id}"`);
+      return caseNum(id);
+    }),
+  );
   const payloads = loaded.map(({ file, doc }) => {
     try {
       return doc.suites.map((suite) => suite.tests.map((test) => toCasePayload(test, suite, ctx)));
@@ -856,6 +871,34 @@ async function cmdPush(files, opts, cfg, cwd) {
     );
     return remoteCases.get(String(id));
   };
+
+  const updates = new Map();
+  for (const [fileIndex, { doc }] of loaded.entries()) {
+    for (const [suiteIndex, suite] of doc.suites.entries()) {
+      for (const [testIndex, test] of suite.tests.entries()) {
+        if (!test.meta.testrail_id) continue;
+        const caseId = test.meta.testrail_id.replace(/^C/i, '');
+        const payload = { ...payloads[fileIndex][suiteIndex][testIndex] };
+        if (ownerField) delete payload[ownerField.systemName];
+        const remote = await remoteCase(caseId);
+        if (caseMatches(payload, remote)) continue;
+        const owner = ownerField ? fromFieldValue(ownerField, remote?.[ownerField.systemName]) : 'an unknown QC (TESTRAIL_FIELDS maps no owner field)';
+        const mine = Boolean(cfg.owner) && owner.toLowerCase() === cfg.owner.toLowerCase();
+        const unconfirmed = owner && !mine && !confirmed.has(caseNum(caseId));
+        updates.set(caseId, { title: test.title, payload, unconfirmedOwner: unconfirmed ? owner : '' });
+      }
+    }
+  }
+  const refused = [...updates].filter(([, u]) => u.unconfirmedOwner);
+  if (refused.length && !dry) {
+    throw new CliError(
+      [
+        'Refusing to update cases another QC owns. Nothing was written:',
+        ...refused.map(([id, u]) => `  C${id} ${JSON.stringify(u.title)} owned by ${u.unconfirmedOwner}`),
+        `Confirm with the user, then pass --confirm-others ${refused.map(([id]) => `C${id}`).join(',')}.`,
+      ].join('\n'),
+    );
+  }
 
   async function ensureSection(name, parentId, description) {
     const found = sections.find((s) => s.parent_id === parentId && s.name === name);
@@ -894,21 +937,24 @@ async function cmdPush(files, opts, cfg, cwd) {
         }
         if (!dry) ids.sections.push({ suiteIndex, sectionId });
         for (const [testIndex, test] of suite.tests.entries()) {
-          const payload = payloads[fileIndex][suiteIndex][testIndex];
           if (test.meta.testrail_id) {
             const caseId = test.meta.testrail_id.replace(/^C/i, '');
             if (!dry) ids.cases.push({ suiteIndex, testIndex, caseId });
-            if (caseMatches(payload, await remoteCase(caseId))) {
+            const update = updates.get(caseId);
+            if (!update) {
               stats.unchanged++;
               continue;
             }
-            console.log(`${tag}update case C${caseId} ${JSON.stringify(test.title)}`);
-            if (!dry) await client.post(`update_case/${caseId}`, payload);
+            const note = update.unconfirmedOwner ? ` (owner ${update.unconfirmedOwner}, needs --confirm-others)` : '';
+            console.log(`${tag}update case C${caseId} ${JSON.stringify(test.title)}${note}`);
+            if (!dry) await client.post(`update_case/${caseId}`, update.payload);
             stats.updated++;
           } else {
             console.log(`${tag}add case ${JSON.stringify(test.title)} in section ${JSON.stringify(suite.title)}`);
             if (!dry) {
-              const created = await client.post(`add_case/${sectionId}`, payload);
+              const payload = payloads[fileIndex][suiteIndex][testIndex];
+              const body = myOwnerValue === undefined ? payload : { ...payload, [ownerField.systemName]: myOwnerValue };
+              const created = await client.post(`add_case/${sectionId}`, body);
               ids.cases.push({ suiteIndex, testIndex, caseId: created.id });
             }
             stats.added++;
@@ -1228,6 +1274,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
         options: {
           'dry-run': { type: 'boolean' },
           'parent-section': { type: 'string' },
+          'confirm-others': { type: 'string' },
           section: { type: 'string' },
           out: { type: 'string' },
           overwrite: { type: 'boolean' },
