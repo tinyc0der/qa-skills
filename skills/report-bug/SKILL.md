@@ -59,7 +59,7 @@ On a match, propose the action and write only after the user approves:
 - Check the expected behavior against the story, its comments, and its linked pages. Behavior descoped there is not a bug.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
 - If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists.
-- The expected behavior is not obvious and the story does not define it → search as [Related Sources](../qa-thinking/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
+- The expected behavior is not obvious and the story does not define it → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
   - Read the app's file in `automation-lessons/` first, if there is one.
   - Use the same screen, tab, filters, data, and build as the report.

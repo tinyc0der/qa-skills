@@ -13,7 +13,6 @@ References:
 - [Writing Rules](./references/writing-rule.md) covers suites, tests, preconditions, steps, and AI writing patterns to avoid.
 - [Test Design Techniques](./references/test-design-techniques.md) lists how Step 4 derives checklist items.
 - [Review Checklist](./references/review-checklist.md) lists what Self review checks.
-- [Related Sources](../qa-thinking/references/related-sources.md) of `qa-thinking` covers when and where to search for sources the ticket does not link.
 
 ## User interaction
 
@@ -48,7 +47,7 @@ Without subagents, apply the fixes yourself.
 
 ## Workflow
 
-1. Gather context and save it to a context file
+1. Gather context into a context file
 2. Ask for coverage scope — approval gate
 3. Ask for role if any test cases for the feature exist; always skipped for smoke
 4. Generate checklist — self review, then approval gate
@@ -58,112 +57,13 @@ Without subagents, apply the fixes yourself.
 
 ### Step 1: Gather context
 
-Understand:
+Run the [`gather-context`](../gather-context/SKILL.md) skill for the feature. Show its report above the Step 2 question.
 
-- the feature/functionality under test and its business goals
-- main testing flows and user journeys
-- specific areas of concern
+Items follow the context file:
 
-A context file for the feature from an earlier run is the starting point: read the sources it lists instead of searching again, and check its conflicts and open questions again. Ignore it when the user asks for an independent run.
-
-Information sources:
-
-- User prompt
-- Jira: the ticket and its acceptance criteria (Atlassian MCP)
-- Confluence: specs and requirements pages (Atlassian MCP)
-- Figma: screens, states, and UI copy (Figma MCP)
-- TestRail: existing test cases, via the `sync-test-cases-with-testrail` skill
-- Live app: actual behavior on a non-production environment, via the `agent-browser` skill
-- QA workspace: feature catalogs (`catalog-features` output) and mismatch pages (`detect-product-mismatches` output)
-
-Source priority:
-
-- The ticket is the primary source: description, acceptance criteria, images, comments, parent, sub-tasks, and linked issues. Linked bugs record behavior settled later.
-- Read the description history (`expand: changelog`). A phrase removed while the rest stayed is a decision against it; a full rewrite makes the old draft an earlier plan. Date sources by their last content change, not Jira `updated`.
-- Images the MCP cannot download and sections that come back empty: ask for screenshots, or record them as not read.
-- From linked documents, use only the parts in the ticket's scope and rules for every result of the screen.
-- Expected results follow the ticket. Record each conflict with another source in the context file.
-- Silence is not conflict: write the item from the source that states the behavior, as `ask` when that source predates the ticket and is not linked. Released stories of the same screen and their fixed bugs are current behavior, ranking above spec pages for parts the ticket does not change.
-- Labels and layout follow the design, else the spec's field table or existing cases. Behavior and messages follow the ticket; displayed values, the set of fields, filters, and orders behavior depends on are behavior. Labels on a screen another story built follow that story.
-- Ticket parts in conflict: a later sub-task or comment that narrows the plan wins, recorded, no `ask`. One that reverses an acceptance criterion gets one `ask` item that checks what both sides keep. A part listing fewer options is silent on the rest.
-- Other sources in conflict: follow the newest, record it, and mark dependent items `ask`.
-- No ticket, document, or description given: ask once for one, then continue from the prompt.
-
-Sources may come as pasted text, links, or MCP tools. If a Jira, Confluence, or Figma link needs an MCP that is not connected, stop and ask the user to connect it.
-
-Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app:
-
-- If the feature is deployed, ask the user for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill.
-- In the live app, navigate only. Submit nothing that saves data unless the user agrees.
-- Use screenshots of related pages when the user shares them.
-- In Figma, read the frames of each component the ticket changes or gives a new state (picker, sheet, keyboard), not only the screen frames. Context files of related features from earlier runs list frames already found.
-
-#### QA workspace
-
-A catalog's README `Type` names its source. Default folders: `catalog/` and `mismatches/sources/*/catalog/`.
-
-- Live app catalog: the feature's URL and navigation path are where exploring starts.
-- Jira catalog: the feature's other issues, read as context.
-- TestRail catalog: see Existing test cases.
-- Mismatch pages (`mismatches/mismatches/README.md`): read the ones for the feature. They are known conflicts.
-
-#### Existing test cases
-
-Find the TestRail cases that already test the feature, with the `sync-test-cases-with-testrail` skill:
-
-- TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases the catalog does not link yet.
-- No catalog: run `list` and match sections and case titles to the feature.
-- TestRail not set up: ask for its Setup, or continue without the check and record TestRail as not read.
-- Do not `pull` here. Step 5 pulls the section the user chooses to expand.
-
-#### Related sources
-
-When the sources above leave a gap, search as [Related Sources](../qa-thinking/references/related-sources.md) describes.
-
-#### Context file
-
-Save the findings to `test-cases/<feature-name>.context.md`, named like the feature's test case file. Overwrite it on a re-run, and update it when the user picks the other side of a conflict or answers an open question. Name sources and link them; do not copy their content:
-
-- `Date`
-- sources read: ticket keys, page titles, frame names, app environment and build, each with its link and last-updated date
-- sources that could not be read
-- sources found by search, each with the gap it fills
-- existing cases: count, section, `C<id>` range
-- conflicts between sources, including known mismatches, and the side the test cases follow
-- gaps no source filled
-- validation rules and error messages left without a checklist item, and why
-- answers the user gave to `ask` findings
-
-```markdown
-# Saved cards
-
-Date: 2026-11-10
-
-Sources read:
-
-- Jira [ABC-123](https://jira.example.com/browse/ABC-123), updated 2026-11-03; parent ABC-100
-- Confluence [Saved cards](https://wiki.example.com/x/Ab12), updated 2026-10-28
-- Figma [Checkout › Payment](https://figma.com/design/Ab12), updated 2026-10-30
-- Live app: staging, Checkout › Payment, build 4.12.0
-
-Not read: Confluence "Payments FAQ" (no access)
-
-Found by search:
-
-- Jira [ABC-130](https://jira.example.com/browse/ABC-130) (same epic), updated 2026-10-15: card expiry rules
-
-Existing cases: 8 in TestRail section Checkout › Payment (C101–C108)
-
-Conflicts:
-
-- Expired cards at checkout: the live app lists them; ABC-123 hides them. Test cases follow ABC-123.
-
-Open questions:
-
-- Saved cards limit per user: no source says
-```
-
-Do not ask for approval. Above the Step 2 question, show the file's path, sources not read, and at most five conflicts or open questions that change expected results. The file holds the rest.
+- Expected results follow the side each conflict names.
+- An item that depends on an open conflict or an open question is `ask`. A reversed acceptance criterion gets one `ask` item that checks what both sides keep.
+- Record new doubts, rules left without a checklist item, and the user's answers to `ask` findings in the context file, as [Context File](../gather-context/references/context-file.md) describes.
 
 ### Step 2: Ask for coverage scope
 
@@ -305,7 +205,7 @@ Generation rules:
 - Write exactly one test case per approved checklist item, and no others. Set its `priority:` to the item's priority, and `smoke: yes` when the item has `[smoke]`.
 - Set `automation:` on every test: `yes` when a script can read the expected result (a value, message, or state), even if the flow waits; `no` for layout, visual, and judgment checks.
 - Set `platform:` on each suite when the product has several platforms. Use the option names the pulled cases use (`Mobile`, `Web`). Without pulled cases, use `All` for behavior every platform shares, else the platform the ticket names.
-- Name files `feature-name.test.md` (always the `.test.md` extension).
+- Name files `<feature-name>.test.md` with the context file's feature name (always the `.test.md` extension).
 - Multiple features or whole product → one file per feature.
 - When the user chose to expand an existing section, `pull --section <section>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
 - When pulled cases carry `platform:`, the project keeps one section tree per feature for all platforms. Add the new platform's tests to those subsections; do not create a section per platform.
@@ -330,3 +230,4 @@ Run [Self review](#self-review) on the new test cases. Before each review, run `
 - Ask the user to review the files and request changes if needed.
 - List the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as suggested additions and questions.
 - Suggest pushing the test cases to TestRail with the `sync-test-cases-with-testrail` skill.
+- When the context file has open questions or open conflicts, suggest sending them to the PO with the `review-user-story` skill.

@@ -11,18 +11,15 @@ The deliverable is a brief, useful review, not a sentence-by-sentence audit or a
 
 ## Workflow
 
-### 1. Read the story and its context
+### 1. Gather context
 
-- Read the full story, not only its title or summary: description, acceptance criteria, subtasks, and comments.
-- Read the parent epic for context only: rules and decisions that apply to this story. Do not review the epic.
-- Read linked Confluence pages and Figma frames when they define the behavior.
-- If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the story's feature. Cite a known mismatch instead of raising it as new.
-- If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists. Its open questions and gaps are Ready to test candidates.
-- When these sources leave a gap, search as [Related Sources](../qa-thinking/references/related-sources.md) describes. An answer found only in a source the story does not link is still a Story quality finding (Complete): name the source and ask the PO to link it.
-- Read Jira and Confluence through the Atlassian MCP and Figma through the Figma MCP. Missing connection → stop and ask for it.
-- If tool output is truncated, retrieve the omitted content before drawing conclusions.
+- Run the [`gather-context`](../gather-context/SKILL.md) skill for the story.
+- Do not review the parent epic. Use it only for the rules and decisions that apply to this story.
+- Cite a known mismatch instead of raising it as new.
+- A behavior found only in a source the story does not link is still a Story quality finding (Complete): name the source and ask the PO to link it.
+- The context file's open questions are Ready to test candidates. Its open conflicts are unresolved decisions for Ambiguities & Contradictions, even when a comment seems to answer them.
 - Distinguish the original request, later clarifications, and implementation reports. A closed subtask or a comment saying PASS is not your own execution evidence.
-- If an important source is inaccessible, state the limitation briefly. Continue with available evidence unless the story cannot be understood.
+- An important source not read: state the limitation in one line above the headings. Continue unless the story cannot be understood.
 
 ### 2. Check story quality
 
@@ -83,7 +80,8 @@ Do not:
 
 - Show the review to the user first.
 - **Post it only after the user approves**, as one comment on the story through the Atlassian MCP.
-- The comment is the only write. Never edit the story's description, fields, or subtasks.
+- The comment is the only write to Jira. Never edit the story's description, fields, or subtasks.
+- After posting, add each gap and ambiguity the comment raised to the context file's open questions or conflicts, marked `asked` as [Context File](../gather-context/references/context-file.md) describes.
 
 ## Output format
 
@@ -114,15 +112,16 @@ Use exactly these four headings, in this order. Do not add an executive summary,
 Output constraints:
 - Story quality: one bullet per failed check from step 2, or "No gaps found."
 - Ambiguities & Contradictions: at most five items; use fewer when appropriate.
+- Follow-up review (an earlier QA review comment is on the story): raise only what it did not raise, the `asked` items the user asks to send again, and criteria an answer changed. Leave out the headings with none.
 - Risks: concise and specific.
 - Acceptance Criteria: a numbered list with at most ten points.
 - Use plain, direct language. Every bullet must teach the reader something about the story, a decision, a consequence, or an acceptance outcome.
 - Do not repeat the same concern across sections without a distinct purpose: quality = how the story is written; ambiguity = unresolved decision; risk = consequence; criterion = observable expected result.
-- Do not edit issues, create subtasks, rewrite the story, or execute tests. The approved Jira comment (step 6) is the only write.
+- Do not edit issues, create subtasks, rewrite the story, or execute tests. The approved Jira comment and the context file update (step 6) are the only writes.
 
 ## Quality check before responding
 
-- Did I read the comments, subtasks, and linked pages, including truncated content?
+- Did the context cover the comments, subtasks, and linked pages, including truncated content?
 - Does each story-quality item quote the story text or name what is missing?
 - Does each Ready to test gap block an expected result or a test setup, with no source filling it?
 - Is every ambiguity genuinely unanswered in the sources?

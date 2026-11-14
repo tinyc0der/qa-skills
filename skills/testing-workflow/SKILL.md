@@ -11,6 +11,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 
 | Skill                           | Purpose                                                                     |
 | ------------------------------- | --------------------------------------------------------------------------- |
+| `gather-context`                | Collect a ticket's sources, conflicts, and open questions into a context file |
 | `review-user-story`             | Review a user story for gaps and testability; feedback to the PO            |
 | `catalog-features`              | Catalog the features of one source                                          |
 | `detect-product-mismatches`     | Compare sources with each other and record mismatches                       |
@@ -28,6 +29,8 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - Match the request to a flow below. Delegate to that flow's skill, then suggest its next actions.
 - Flows are examples, not exhaustive. Combine or extend them when a request spans several tasks.
 - When suggesting next steps, take into account the flows, context, user request, and results of previous steps.
+- **Assigned ticket** (a ticket to test from start to finish) → follow the Assigned Ticket Flow.
+- **Gather context** (what is known about a ticket, its sources, its open questions) → route to the `gather-context` skill.
 - **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
 - **Catalog features of a source** (a Jira project, a Confluence space, a TestRail suite, the live app) → route to the `catalog-features` skill.
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
@@ -37,6 +40,22 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Strategic intent** ("where do I start", "improve our QA process", "QA maturity review") → route to the `qa-lead-strategy-advisor` skill instead. It owns the high-level roadmap and delegates execution back here.
 
 ## Basic Flows
+
+### Assigned Ticket Flow
+
+Run one step at a time. After each, suggest the next one.
+
+```
+User: is assigned a ticket, or asks to test one from start to finish
+=>
+1. 🔎 Review the story and send the feedback to the PO (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Add `qa-thinking` when the user wants risk scenarios.
+2. 📝 Write test cases (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO.
+3. ❓ Open questions or open conflicts left in the context file → send them to the PO (with `review-user-story` skill)
+4. 💬 PO replied → re-run `gather-context`, then update the `ask` test cases from the context file's `Answers`
+5. ⬆️ Push to TestRail (with `sync-test-cases-with-testrail` skill)
+6. ▶️ Build ready → run the cases (with `run-test-suite` skill)
+7. 🐞 File a Jira Bug for each failed case (with `report-bug` skill)
+```
 
 ### Test Generation Flow
 

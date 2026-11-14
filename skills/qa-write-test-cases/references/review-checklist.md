@@ -54,4 +54,4 @@ Write each finding as:
 - the broken check or rule, with the source quote or link
 - for `fix`, the exact change
 
-`fix` is a change the fixer can make within the sources, the tier, and the approved checklist. It includes adding, splitting, merging, removing, and reprioritizing checklist items, writing a missing test for an approved item, and removing a test with no item. `ask` needs the user: a conflict the ticket does not settle (the context file side came from a lesser source), a fact no source gives, or a coverage trade-off the tier does not decide.
+`fix` is a change the fixer can make within the sources, the tier, and the approved checklist. It includes adding, splitting, merging, removing, and reprioritizing checklist items, writing a missing test for an approved item, and removing a test with no item. `ask` needs the user: a conflict the context file marks `(open)`, a fact no source gives, or a coverage trade-off the tier does not decide.
