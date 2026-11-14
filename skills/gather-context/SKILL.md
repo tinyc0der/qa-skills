@@ -12,6 +12,7 @@ Collect what every source says about one ticket or feature, decide which source 
 ### 1. Start from the context file
 
 - The context file in `test-cases/*.context.md` that names the ticket or the feature is the starting point: read the sources it lists, search only for gaps still open, and check its conflicts and open questions again.
+- A context file written in this session is current: use it without re-reading its sources, unless the user says a source changed.
 - Do not ask the user again about a source under `Not read`, unless the user offers it.
 - Ignore the context file when the user asks for an independent run.
 - No ticket, document, or description given: ask once for one, then continue from the prompt.
