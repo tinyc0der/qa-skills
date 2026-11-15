@@ -14,11 +14,13 @@ Sections, in this order. Leave out an empty one.
 - `Left without a test`: validation rules and error messages without a checklist item, and why
 - `Answers`: answers the user or the PO gave, each with who gave it and where
 
+An open question or open conflict that tests depend on has a `Cases:` sub-bullet naming them: test titles, or `C<id>` once pushed.
+
 Updates:
 
-- Overwrite the file on a re-run, but keep `Left without a test`, `Answers`, and each open question and open conflict no source settles yet, with its `asked` marks.
+- Overwrite the file on a re-run, but keep `Left without a test`, `Answers`, and each open question and open conflict no source settles yet, with its `asked` marks and `Cases:`.
 - An open question or open conflict sent to the PO ends with `asked <date>` and the comment's link. Sending it again adds another.
-- An answer to an open question or an open conflict → move it to `Answers`.
+- An answer to an open question or an open conflict, or a story change that settles one → move it to `Answers`, with its `Cases:`.
 - A new doubt → add it to `Open questions`.
 
 ```markdown
@@ -46,10 +48,12 @@ Conflicts:
 - Cancel during ATO and ATC: the story lets the investor cancel any pending order; a later PO comment blocks cancel during ATO and ATC, as Confluence "Order rules" does. Follows the comment.
 - Cancel during ATO: the live app shows "Cancel"; TRADE-205 blocks it. Follows TRADE-205.
 - Partially matched order: the acceptance criteria let the investor cancel the unmatched quantity; a later comment says a partially matched order cannot be cancelled. Follows neither side. (open)
+  - Cases: C208
 
 Open questions:
 
 - Order matched before the cancel reaches the exchange: no source says what the investor sees; asked 2026-11-11 ([TRADE-205 comment](https://example.atlassian.net/browse/TRADE-205?focusedCommentId=1002))
+  - Cases: C210, C211
 
 Answers:
 

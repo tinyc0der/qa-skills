@@ -19,6 +19,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Assigned a story** (a new ticket to test) → follow the Assigned Story Flow.
 - **The PO answered, or the story changed** → follow the PO Answer Flow.
 - **Dev set the Due dates of their subtasks** → follow the Dev Dates Flow.
+- **A build with the story is ready** → follow the Build Ready Flow.
 - **Dev fixed a bug** → follow the Bug Fix Flow.
 - **Continue a ticket** ("continue <KEY>", what is left on a ticket) → follow the Continue Ticket Flow.
 - **A test status report** (status and pass rate for a ticket, milestone, or date) → the `runs` command of the `sync-test-cases-with-testrail` skill.
@@ -54,7 +55,7 @@ Next event: the PO answers, Dev sets their Due dates, or a build is ready
 Event: the PO answers in the story's comments, or the story changes
 =>
 1. 🔄 Re-run `gather-context` for the story.
-2. 📝 Update the `ask` cases and the cases the change touches (with `qa-write-test-cases` skill), and push them.
+2. 📝 Update the cases each new answer lists in the context file, and the cases the change touches (with `qa-write-test-cases` skill), and push them.
 =>
 Deliverable: the answers in the cases on TestRail
 Next event: a build is ready
@@ -70,16 +71,27 @@ Date the QC subtask, estimating its story points if it has none (with `plan-qc-s
 Deliverable: story points and dates on the QC subtask
 ```
 
+### Build Ready Flow
+
+```
+Event: Dev deploys a build with the story to a test environment
+=>
+1. ▶️ Run the story's cases on the build (with `run-test-suite` skill): new feature scope on the first run, then the cases without a passed or failed result.
+2. 🐞 `run-test-suite` hands the failed cases to `report-bug`, which drafts their Bugs and creates the ones the QC approves.
+=>
+Deliverable: the results on TestRail, and a Bug in Jira for each failed case
+Next event: Dev marks a Bug fixed, or every case passed and the QC signs off the story
+```
+
 ### Bug Fix Flow
 
 ```
 Event: Dev marks a Bug fixed
 =>
-1. ▶️ Rerun the failed cases and their flow on a build with the fix (with `run-test-suite` skill, fix verification scope).
-2. ✋ Closing or reopening the Bug has no skill yet: hand the results to the QC for it.
+Rerun the Bug's cases on a build with the fix, then close or reopen the Bug once the QC approves (with `verify-bug` skill)
 =>
-Deliverable: the retest results on TestRail
-Next event: every case passed and every Bug closed, then the QC signs off the story
+Deliverable: the retest results on TestRail, and the Bug closed or reopened
+Next event: Dev marks a reopened Bug fixed, or every case passed and every Bug closed, then the QC signs off the story
 ```
 
 ### Continue Ticket Flow
@@ -88,11 +100,13 @@ Next event: every case passed and every Bug closed, then the QC signs off the st
 User: says "continue <KEY>", or asks what is left on a ticket
 =>
 1. 🔄 Run `gather-context` for the ticket.
-2. 🔎 Find each event that happened without its deliverable. Read Jira, TestRail, and the ticket folder, never an earlier conversation:
+2. 🔎 Find each event that happened without its deliverable. Read Jira, TestRail, the ticket folder, and `test-runs/`, never an earlier conversation:
    - no QA review comment from the QC on the story, or no cases with refs <KEY> on TestRail → Assigned Story Flow
-   - a story comment answers an `asked` question the cases lack → PO Answer Flow
+   - an answer in the context file that a case it lists lacks → PO Answer Flow
    - `plan-qc-subtasks` finds something to write → Dev Dates Flow
+   - a `results.md` with refs <KEY> in `test-runs/` that has `untested` blocks or results not pushed to TestRail → resume that run (with `run-test-suite` skill)
+   - a build with the story is on a test environment, and cases with refs <KEY> have no passed or failed result → Build Ready Flow
    - a failed result in `test-runs/` without a Bug key → draft its Bugs (with `report-bug` skill)
-   - a Bug linked to the story that Dev marked fixed, with no results after it → Bug Fix Flow
+   - a Bug linked to the story that Dev marked fixed and nobody closed or reopened since → Bug Fix Flow
 3. Run those flows in this order. None found: name the event the ticket waits for.
 ```
