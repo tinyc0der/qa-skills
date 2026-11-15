@@ -15,7 +15,6 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 | `review-user-story`             | Review a user story for gaps and testability; feedback to the PO            |
 | `catalog-features`              | Catalog the features of one source                                          |
 | `detect-product-mismatches`     | Compare sources with each other and record mismatches                       |
-| `qa-thinking`                   | Analyze a feature as QA: edge cases, negative flows, abuses, risk scenarios |
 | `qa-write-test-cases`           | Generate new test cases and checklists from requirements                    |
 | `improve-test-cases`            | Improve existing test cases quality                                         |
 | `detect-duplicate-test-cases`   | Find duplicate, near-duplicate, and overlapping test cases                  |
@@ -58,7 +57,7 @@ Run the steps back to back. Stop only where a step needs the QC, and put every q
 ```
 Event: the QC is assigned a story
 =>
-1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Add `qa-thinking` when the user wants risk scenarios. Do not stop for the post question.
+1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Do not stop for the post question.
 2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review draft.
 3. 🗂 Plan the story's QC subtask (with `plan-qc-subtasks` skill): steps 1 and 2 only, no message of its own. A plan that writes nothing stays out of the message.
    ⏸ One message with the review, then the checklist, then the QC subtask plan, then one question for all:
@@ -132,17 +131,6 @@ After generation fully completed, pick the next step from:
 1. ⬆️ Push the new test cases to TestRail, when the checklist gate did not (with `sync-test-cases-with-testrail` skill)
 2. 🧹 Check for duplicate/overlapping cases (with `detect-duplicate-test-cases` skill)
 3. 🎭 Generate specific test cases using `qa-write-test-cases` skill and role name
-```
-
-### QA Analysis Flow
-
-```
-User: asks "what could go wrong?", "what am I missing?", or "review this as QA"
-=>
-Use `qa-thinking` skill to surface edge cases, negative flows, abuses and risk scenarios
-=>
-After analysis fully completed, pick the next step from:
-1. 📝 Generate test cases from the scenarios (with `qa-write-test-cases` skill)
 ```
 
 ### Test Case Improvement Flow

@@ -1,6 +1,6 @@
 ---
 name: gather-context
-description: Gather what every source says about a Jira ticket or feature and save it to a context file (`tickets/<KEY>-<slug>/context.md`) with the sources read and not read, existing TestRail cases, conflicts between sources and the side followed, and open questions. Reads the ticket with its history, comments, sub-tasks, and linked issues, plus Confluence, Figma, TestRail, the live app, and the QA workspace. It is the first step of `review-user-story`, `qa-thinking`, and `qa-write-test-cases`. Use when the user asks what is known about a ticket or feature, asks to collect, refresh, or re-check its context, or asks for the sources a ticket does not link.
+description: Gather what every source says about a Jira ticket or feature and save it to a context file (`tickets/<KEY>-<slug>/context.md`) with the sources read and not read, existing TestRail cases, conflicts between sources and the side followed, and open questions. Reads the ticket with its history, comments, sub-tasks, and linked issues, plus Confluence, Figma, TestRail, the live app, and the QA workspace. It is the first step of `review-user-story` and `qa-write-test-cases`. Use when the user asks what is known about a ticket or feature, asks to collect, refresh, or re-check its context, or asks for the sources a ticket does not link.
 ---
 
 # Gather Context

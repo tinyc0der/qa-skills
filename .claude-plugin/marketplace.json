@@ -10,7 +10,7 @@
     {
       "name": "requirements",
       "source": "./plugins/requirements",
-      "description": "Write and review requirements from Jira, Confluence, and Figma: user stories, acceptance criteria, QA risks, feature catalogs, and mismatches with the live app"
+      "description": "Review requirements from Jira, Confluence, and Figma: user stories and their acceptance criteria, feature catalogs, and mismatches with the live app"
     },
     {
       "name": "test-management",
@@ -20,7 +20,7 @@
     {
       "name": "qa-process",
       "source": "./plugins/qa-process",
-      "description": "QA process for manual QC: think through quality risks, orchestrate the test case lifecycle, and plan QC subtasks in Jira"
+      "description": "QA process for manual QC: orchestrate the test case lifecycle and plan QC subtasks in Jira"
     }
   ]
 }

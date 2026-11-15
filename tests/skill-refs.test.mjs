@@ -29,6 +29,7 @@ const REMOVED = [
   'qa-split-testing-levels-pyramid',
   'qa-sprint-report-by-testomatio',
   'qa-test-code-coverage',
+  'qa-thinking',
   'run-tests-with-testomatio-reporter',
   'scan-automation-project',
   'setup-change-aware-pr-testing',
