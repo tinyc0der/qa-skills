@@ -1,15 +1,11 @@
 ---
 name: testing-workflow
-description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the QC reports what just happened on a ticket (assigned a story, the PO answered, Dev set their dates, a build is ready, Dev fixed a bug), says "continue <KEY>" or asks what is left on a ticket, a request spans several QA skills, or the user asks what to do next. A request for a single task goes to that task's skill. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
+description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the QC reports what just happened on a ticket (assigned a story, the PO answered, Dev set their dates, a build is ready, Dev fixed a bug), says "continue <KEY>" or asks what is left on a ticket, a request spans several QA skills, the user asks what to do next, or a QA request no other skill fits. A request for a single task goes to that task's skill. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
 ---
 
 # Testing Workflow
 
 Orchestrates the test case lifecycle by routing requests to specialized skills and suggesting next steps. A ticket's flows start from real events in the QC's work and span many conversations: each flow ends when its deliverable exists.
-
-**When to skip steps:**
-
-- Assigned a story that already has your review comment, or cases with its key → run the Continue Ticket Flow instead of the Assigned Story Flow.
 
 ## Specialized Skills
 
@@ -31,8 +27,10 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 
 ## Routing
 
-- Match the request to a flow below. Delegate to that flow's skill, then suggest its next actions.
-- Flows are examples, not exhaustive. Combine or extend them when a request spans several tasks.
+- Start from the QC's intent: the deliverable they want and where it ends up. Match it to a flow below, or to a skill, then suggest its next actions.
+- **A flow is the usual path to its deliverable, not a script.** Skip steps whose result already exists or that the request makes unnecessary, add steps the situation needs, and when no flow fits, combine the skills that own what the task touches. Say in one line how the path differs from the flow.
+- Each skill's write approvals, formats, duplicate checks, ownership rules, and read-back apply on any path.
+- No skill owns what the task changes → work out the approach yourself. Name the deliverable, reuse what fits from other skills, show each change others will see and ask once as `message-the-qc` says, read it back, and report the approach in one line.
 - When suggesting next steps, take into account the flows, context, user request, and results of previous steps. Suggest the one next step that fits.
 - Stop and write to the QC as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says.
 - A ticket's flow ends with its deliverable, then the event the ticket waits for next: who acts, and what the QC says when it happens, such as "build 2.3.1 is ready, continue <KEY>".
