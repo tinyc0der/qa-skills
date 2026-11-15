@@ -21,7 +21,7 @@ Detect duplicate test cases in TestRail. Recommend cleanup actions.
 
 Compare cases by what they test: title, steps, expected results, preconditions, refs, and section. Differences in wording, formatting, and test data values that reach the same rule and expected result do not make two cases different. A different platform does.
 
-Classify each pair into a detection level (defined in `./references/DUPLICATE_INSTRUCTIONS.md`):
+Classify each pair into a detection level (defined in [Duplicate Detection](./references/duplicate-detection.md)):
 - Level 1: exact duplicates.
 - Level 2: semantic duplicates.
 - Level 3: overlapping / subset tests.
@@ -35,7 +35,7 @@ Each group includes:
 
 ### 3. Generate Report
 
-Follow the report template in `./references/DUPLICATE_INSTRUCTIONS.md`. Include:
+Follow the report template in [Duplicate Detection](./references/duplicate-detection.md). Include:
 - Summary statistics (total scanned, duplicates found by category).
 - Each duplicate group with `C<id>`, section, and title of every case.
 - Recommendation for each group (`keep`/`merge`/`remove`).
