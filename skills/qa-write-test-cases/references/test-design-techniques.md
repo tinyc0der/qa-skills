@@ -74,6 +74,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - One item per error class a source names or implies (timeout, 5xx, 4xx, offline) that has its own expected result.
 - Each precondition the feature itself checks (OTP at submit, session at a save): one item for when it does not hold. Not the login every read-only screen needs. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
+- An action that moves money or cannot be undone (place or cancel an order, transfer money): one item where it is submitted twice fast (double tap, submit again while the first is loading), and one where it is interrupted between submit and result (app sent to the background during OTP, network lost, back pressed). Each ends with one result or none, and every screen that shows it agrees (order book, buying power, history).
 - A new instance of a shared component (a new tab with the same table, a new export): each bug fixed on the other instances is a row or step for the new one.
 - An intermittent bug (race, timing): repeat the repro about 3/p times for a reported rate p (1 in 15 → 45 rounds), 10 times when no source gives a rate.
 
