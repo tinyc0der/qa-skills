@@ -5,19 +5,12 @@ description: Analyze and improve existing manual test cases (`*.test.md` in Test
 
 # Improve Test Cases
 
-Analyze and improve existing manual test cases to make them clearer for the QA team:
-- Improve test titles for clarity.
-- Enhance test descriptions.
-- Fix broken formatting and markdown syntax.
-- Standardize test structure to the TestRail test case format.
-- Ensure consistent terminology and language.
-
-The target format and rules are owned by the `qa-write-test-cases` skill:
+Rewrites existing test cases to the format and rules of the `qa-write-test-cases` skill:
 - [Test Case Format](../qa-write-test-cases/references/testrail-test-case-format.md)
 - [Writing Rules](../qa-write-test-cases/references/writing-rule.md)
 
 **DO NOT CHANGE:**
-- `testrail_id:` and `testrail_section_id:` lines.
+- The metadata lines `testrail_id:`, `testrail_section_id:`, `priority:`, `refs:`, `smoke:`, `automation:`, `platform:`, and any other key.
 - Original test intent.
 - The natural language the tests are written in.
 
@@ -39,11 +32,10 @@ Run `check` of the `sync-test-cases-with-testrail` skill on the files and flag w
 - Rewrite each flagged test to the format and writing rules. Do not ask first: the summary shows each change.
 - A fact the test needs and no file or user answer gives (an error text, how to cause a failure) is a question for the PO. Do not invent it. Add it to the ticket's context file when there is one.
 - Include context from the parent suite in a description when relevant.
-- Keep `priority:`, `refs:`, `smoke:`, `automation:`, `platform:`, and other metadata values.
 
 ## Step 4: Save
 
-- Overwrite the original files.
+- Edit the files in place.
 - Keep the same file names and directory structure.
 
 ## Step 5: Summarize and Push

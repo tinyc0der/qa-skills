@@ -11,15 +11,15 @@ One `results.md` per run, in `test-runs/<YYYY-MM-DD>-<slug>/`, next to its evide
 
 ```markdown
 <!-- run
-refs: PROJ-1
+refs: TRADE-101
 milestone: Sprint 12
-build: staging · 2.14.3 (18212)
+build: uat · android 4.12.0 (4120)
 -->
 
-# PROJ-1 Login
+# TRADE-101 LO buy order
 
-- Environment: https://staging.example.com, account `qa-admin`, viewport 1920×1080
-- Cases: `tickets/PROJ-1-login/login.test.md`
+- Environment: UAT, account `qa-trade-01`, Pixel 8, Android 15, portrait
+- Cases: `tickets/TRADE-101-lo-buy-order/lo-buy-order.test.md`
 - Run time: 2026-11-10 10:02–10:41
 
 <!-- result
@@ -27,28 +27,28 @@ case: C11
 status: passed
 run_at: 2026-11-10 10:14
 elapsed: 1m 10s
-observed: 1 passed (login form) · 2 passed · 3 passed (dashboard, header shows "qa-admin")
-checked: 1 screenshot, nothing wrong
-evidence: C11.png
+observed: 1 passed (ceiling 64.20, floor 55.80) · 2 passed (dialog shows order value 6,000,000 and fee 9,000) · 3 passed (Pending in the order book, buying power 100,000,000 → 93,991,000)
+checked: 2 screenshots, nothing wrong
+evidence: C11-step2.png, C11.png
 -->
 
-## C11 Successful login
+## C11 LO buy order at the reference price shows as pending in the order book
 
 <!-- result
 case: C12
 status: failed
 run_at: 2026-11-10 10:20
 elapsed: 2m 15s
-observed: 1 passed · 2 passed · 3 failed ("Invalid password")
-evidence: C12-step3.png, C12.png
-defects: PROJ-9
+observed: 1 passed (ceiling 64.20, floor 55.80) · 2 failed (64.30 opens the confirmation dialog, the other 3 rows pass)
+evidence: C12-step2.png, C12.png
+defects: TRADE-231
 -->
 
-## C12 Locked account
+## C12 LO buy order accepts only prices from floor to ceiling
 
-**Step 3 failed: lock message**
-- Expected: "Account locked" message
-- Actual: "Invalid password" message
+**Step 2 failed: ceiling price + 0.10 is accepted**
+- Expected: Error "Price must be between the floor and ceiling price." under **Price**
+- Actual: Confirmation dialog opens with price 64.30
 
 <!-- result
 case: C13
@@ -56,11 +56,11 @@ status: blocked
 run_at: 2026-11-10 10:31
 -->
 
-## C13 Password reset
+## C13 Quantity not in lots of 100 shows an error
 
-**Blocked: reset email never arrives on staging**
-- Owner: DevOps
-- Unblocks when: staging sends mail again
+**Blocked: UAT price feed stopped at 10:25, the Buy form shows no floor or ceiling price**
+- Owner: UAT support
+- Unblocks when: the Buy form shows the floor and ceiling prices again
 ```
 
 ## Run Metadata
@@ -83,7 +83,7 @@ run_at: 2026-11-10 10:31
 | `status`               | `passed`, `failed`, `blocked`, or `untested`. Another TestRail status works by its name or label. |
 | `run_at`               | Local time of the verdict, as `2026-11-10 10:14`. Needed on every result the push sends. The push refuses a result whose case's preconditions, steps, or expected results changed on TestRail after it. |
 | `elapsed`              | Time the case took, as `1m 30s` or `2h 5m`.                                                       |
-| `observed`             | Each step as `passed`, `failed`, or `not observed`, with what was seen: `1 passed (form shown) · 2 failed ("Invalid password")`. The push refuses `passed` unless every step is `passed`. Not sent. |
+| `observed`             | Each step as `passed`, `failed`, or `not observed`, with what was seen: `1 passed (form shown) · 2 failed (64.30 opens the dialog)`. The push refuses `passed` unless every step is `passed`. Not sent. |
 | `checked`              | What the [screenshot check](./ui-checks.md#check-the-screenshots) found. The push refuses `passed` with evidence without it. Not sent. |
 | `evidence`             | Comma-separated file names in the run folder.                                                     |
 | `defects`              | Comma-separated Bug keys.                                                                         |

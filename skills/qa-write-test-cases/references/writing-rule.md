@@ -22,12 +22,12 @@ Title structure: `<object> <condition> <outcome>`. Start with a role only when t
 
 Examples:
 
-- Login with valid email and password opens the dashboard
-- Invalid email format shows an error
-- Interval of 59 seconds shows an error
+- LO buy order at the reference price opens the confirmation dialog
+- Quantity not in lots of 100 shows an error
+- Price 0.10 above the ceiling shows an error
 - Retry button appears when NetworkError occurs
-- Admin can invite up to 10 users to a project
-- Viewer cannot edit a comment
+- Broker can cancel a client's pending order
+- Read-only user cannot place an order
 
 Avoid:
 
@@ -35,8 +35,8 @@ Avoid:
 - Words every title would share: a role when the feature has one role, `User sees`, `User can`
 - Multi-intent titles joined by `and` / `then`. A merged item still has one objective; name that objective.
 - Restating the suite name in every title
-- Embedding IDs or numbers: `TC-001: Login`
-- Vague outcomes: `Successful login`, `Login works`
+- Embedding IDs or numbers: `TC-001: LO buy order`
+- Vague outcomes: `Successful order`, `Buy works`
 
 ## Preconditions
 
@@ -57,11 +57,11 @@ A step is an action (with optional test data) and an expected result, in the for
 - Steps are mechanical: click, send, read, assert.
 - Each step includes exact instructions with concrete, realistic values a tester can act on directly.
 - Use a `${variable}` placeholder, in backticks, only for a value reused across steps, a data-driven value (the examples table), or environment data no source gives that the tester supplies (test account, customer name). Never for other data or preconditions.
-- Prefer URL paths over full URLs, e.g. `/auth/login`.
+- Prefer URL paths over full URLs, e.g. `/trade/order-book`.
 - Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)", and subjective outcomes like "should work" or "might fail"; replace them with concrete, literal values.
 - For data that changes with time (market prices, the clock, balances), give the rule to derive it from what the screen shows: `ceiling price + 0.10`, `current time − 7 minutes`.
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.
-- Exception: data entry that only sets up the action under test joins that action (`Enter 59 in **Interval** and click **Create**`) or goes in preconditions.
+- Exception: data entry that only sets up the action under test joins that action (`Enter 100 in **Quantity** and click **Place order**`) or goes in preconditions.
 - No expected result that only repeats the input (`Field shows 3,050`).
 - No check that another check on the same line implies: an error shown on the form already means the next screen did not open.
 - A code block may follow a step when it holds an API request or response body.
@@ -70,13 +70,12 @@ One expected line per screen or state. Separate the checks on it with `; `, each
 
 Instead of:
 
-`*Expected*: Error "The minimum order interval is 60 seconds." under **Interval**`
-`*Expected*: Red border on **Interval**`
-`*Expected*: Confirmation screen does not open`
+`*Expected*: Error "Price must be between the floor and ceiling price." under **Price**`
+`*Expected*: Red border on **Price**`
 
 Use:
 
-`*Expected*: Error "The minimum order interval is 60 seconds." under **Interval**; red border on **Interval**; confirmation screen does not open`
+`*Expected*: Error "Price must be between the floor and ceiling price." under **Price**; red border on **Price**`
 
 ### Bold and italic in steps
 
