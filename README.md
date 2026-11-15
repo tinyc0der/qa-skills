@@ -62,7 +62,6 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | Skill                      | Description                                                                                   |
 | -------------------------- | --------------------------------------------------------------------------------------------- |
 | `testing-workflow`         | Run the workflow for what just happened on a ticket, or continue a ticket where it stands     |
-| `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
 | `plan-qc-subtasks`         | Create your QC subtasks in Jira, estimate their story points, and set their dates from Dev's   |
 | `message-the-qc`           | When the skills stop to ask you, and how every message to you is laid out                     |
 
@@ -86,7 +85,7 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `requirements`    | `gather-context`, `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`, `message-the-qc` |
 | `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking`, `message-the-qc` |
-| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `plan-qc-subtasks`, `qa-thinking`, `gather-context`, `message-the-qc` |
+| `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `qa-thinking`, `gather-context`, `message-the-qc` |
 
 ## Repository structure
 

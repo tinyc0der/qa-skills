@@ -20,7 +20,7 @@
     {
       "name": "qa-process",
       "source": "./plugins/qa-process",
-      "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, orchestrate the test case lifecycle, and plan QC subtasks in Jira"
+      "description": "QA process for manual QC: think through quality risks, orchestrate the test case lifecycle, and plan QC subtasks in Jira"
     }
   ]
 }

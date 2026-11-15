@@ -1,6 +1,6 @@
 ---
 name: testing-workflow
-description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the QC reports what just happened on a ticket (assigned a story, the PO answered, Dev set their dates, a build is ready, Dev fixed a bug), says "continue <KEY>" or asks what is left on a ticket, a request spans several QA skills, the user asks what to do next, or a QA request no other skill fits. A request for a single task goes to that task's skill. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
+description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the QC reports what just happened on a ticket (assigned a story, the PO answered, Dev set their dates, a build is ready, Dev fixed a bug), says "continue <KEY>" or asks what is left on a ticket, a request spans several QA skills, the user asks what to do next, or a QA request no other skill fits. A request for a single task goes to that task's skill.
 ---
 
 # Testing Workflow
@@ -48,7 +48,6 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
 - **Plan QC work in Jira** (stories to test, QC subtasks, their story points or dates) → route to the `plan-qc-subtasks` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
-- **Strategic intent** ("where do I start", "improve our QA process", "QA maturity review") → route to the `qa-lead-strategy-advisor` skill instead. It owns the high-level roadmap and delegates execution back here.
 
 ## Basic Flows
 
