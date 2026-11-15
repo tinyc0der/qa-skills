@@ -1,11 +1,11 @@
 ---
 name: testing-workflow
-description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the user asks to manage the whole testing workflow, a request spans several QA skills, or the user asks what to do next. A request for a single task goes to that task's skill. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
+description: Route manual QA work across the QA skills, from requirements in Jira, Confluence, and Figma to test cases and test runs in TestRail, and suggest the next step. Use when the QC reports what just happened on a ticket (assigned a story, the PO answered, Dev set their dates, a build is ready, Dev fixed a bug), says "continue <KEY>" or asks what is left on a ticket, a request spans several QA skills, or the user asks what to do next. A request for a single task goes to that task's skill. For strategic intent ("where do I start", "improve our QA process", "review our quality", "QA maturity review") use the `qa-lead-strategy-advisor` skill instead.
 ---
 
 # Testing Workflow
 
-Orchestrates the test case lifecycle by routing requests to specialized skills and suggesting next steps.
+Orchestrates the test case lifecycle by routing requests to specialized skills and suggesting next steps. A ticket's flows start from real events in the QC's work and span many conversations: each flow ends when its deliverable exists.
 
 ## Specialized Skills
 
@@ -31,12 +31,18 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - Flows are examples, not exhaustive. Combine or extend them when a request spans several tasks.
 - When suggesting next steps, take into account the flows, context, user request, and results of previous steps. Suggest the one next step that fits.
 - Stop and write to the QC as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says.
-- **Assigned ticket** (a ticket to test from start to finish) → follow the Assigned Ticket Flow.
+- A ticket's flow ends with its deliverable, then the event the ticket waits for next: who acts, and what the QC says when it happens, such as "build 2.3.1 is ready, continue <KEY>".
+- **Assigned a story** (a new ticket to test) → follow the Assigned Story Flow.
+- **The PO answered, or the story changed** → follow the PO Answer Flow.
+- **Dev set the Due dates of their subtasks** → follow the Dev Dates Flow.
+- **Dev fixed a bug** → follow the Bug Fix Flow.
+- **Continue a ticket** ("continue <KEY>", what is left on a ticket) → follow the Continue Ticket Flow.
+- **Story ready to sign off, or a test status report** → no skill covers these yet. Say so.
 - **Gather context** (what is known about a ticket, its sources, its open questions) → route to the `gather-context` skill.
 - **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
 - **Catalog features of a source** (a Jira project, a Confluence space, a TestRail suite, the live app) → route to the `catalog-features` skill.
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
-- **Run test cases** (a suite, a ticket's cases, regression, smoke, a TestRail run) → route to the `run-test-suite` skill.
+- **Run test cases** (a build is ready, a suite, a ticket's cases, regression, smoke, a TestRail run) → route to the `run-test-suite` skill.
 - **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
 - **Plan QC work in Jira** (stories to test, QC subtasks, their story points or dates) → route to the `plan-qc-subtasks` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
@@ -44,26 +50,74 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 
 ## Basic Flows
 
-### Assigned Ticket Flow
+### Assigned Story Flow
 
 Run the steps back to back. Stop only where a step needs the QC, and put every question pending at that point in one message.
 
 ```
-User: is assigned a ticket, or asks to test one from start to finish
+Event: the QC is assigned a story
 =>
 1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Add `qa-thinking` when the user wants risk scenarios. Do not stop for the post question.
 2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review draft.
-3. 🗂 Plan the story's QC subtask (with `plan-qc-subtasks` skill): steps 1 and 2 only, no message of its own. A plan that writes nothing stays out of Stop 1.
-   ⏸ Stop 1: one message with the review, then the checklist, then the QC subtask plan, then one question for all:
+3. 🗂 Plan the story's QC subtask (with `plan-qc-subtasks` skill): steps 1 and 2 only, no message of its own. A plan that writes nothing stays out of the message.
+   ⏸ One message with the review, then the checklist, then the QC subtask plan, then one question for all:
       ❓ Post the review and write the cases?
       1. ✅ Post the review, write the QC subtask, write the cases, and push them to TestRail
       2. 📝 Post the review, write the QC subtask, and write the cases, no push
       3. ✏️ Type changes to the review, the checklist, or the QC subtask plan
 4. 💬 Do only what the answer approved: post the review, write the QC subtask plan (with `plan-qc-subtasks` skill, from its step 4), write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
-   ⏸ Stop 2: report the cases, and ask the QC to say when the build is ready.
-5. 💬 Each later request on the ticket → re-run `gather-context` first. PO replies in the story's comments update the `ask` test cases, which then get pushed.
-6. ▶️ Build ready → run the cases (with `run-test-suite` skill). Its one question, when it needs one, comes before the first case.
-7. 🐞 The run's report carries the Bug drafts for its failed cases: one answer creates them all. Fix the cases marked "case needs fix" (with `improve-test-cases` skill).
+=>
+Deliverable: the review comment for the PO, the QC subtask in Jira, the cases on TestRail linked to the story
+Next event: the PO answers, Dev sets their Due dates, or a build is ready
+```
+
+### PO Answer Flow
+
+```
+Event: the PO answers in the story's comments, or the story changes
+=>
+1. 🔄 Re-run `gather-context` for the story.
+2. 📝 Update the `ask` cases and the cases the change touches (with `qa-write-test-cases` skill), and push them.
+=>
+Deliverable: the answers in the cases on TestRail
+Next event: a build is ready
+```
+
+### Dev Dates Flow
+
+```
+Event: Dev sets the Due dates of their subtasks
+=>
+Date the QC subtask, estimating its story points if it has none (with `plan-qc-subtasks` skill)
+=>
+Deliverable: story points and dates on the QC subtask
+```
+
+### Bug Fix Flow
+
+```
+Event: Dev marks a Bug fixed
+=>
+1. ▶️ Rerun the failed cases and their flow on a build with the fix (with `run-test-suite` skill, fix verification scope).
+2. ✋ Closing or reopening the Bug has no skill yet: hand the results to the QC for it.
+=>
+Deliverable: the retest results on TestRail
+Next event: every case passed and every Bug closed, then the QC signs off the story
+```
+
+### Continue Ticket Flow
+
+```
+User: says "continue <KEY>", or asks what is left on a ticket
+=>
+1. 🔄 Run `gather-context` for the ticket.
+2. 🔎 Find each event that happened without its deliverable. Read Jira, TestRail, and the ticket folder, never an earlier conversation:
+   - no QA review comment from the QC on the story, or no cases with refs <KEY> on TestRail → Assigned Story Flow
+   - a story comment answers an `asked` question the cases lack → PO Answer Flow
+   - `plan-qc-subtasks` finds something to write → Dev Dates Flow
+   - a failed result in `test-runs/` without a Bug key → the Bug drafts of the Test Run Flow (with `report-bug` skill)
+   - a Bug linked to the story that Dev marked fixed, with no results after it → Bug Fix Flow
+3. Run those flows in this order. None found: name the event the ticket waits for.
 ```
 
 ### Test Generation Flow
@@ -105,7 +159,7 @@ After improvement step fully completed, pick the next step from:
 ### Test Run Flow
 
 ```
-User: asks to run test cases, a suite, regression, smoke, or a TestRail run
+User: says a build is ready, or asks to run test cases, a suite, regression, smoke, or a TestRail run
 =>
 Use `run-test-suite` skill to run the cases on the live app and push the results to TestRail
 =>
