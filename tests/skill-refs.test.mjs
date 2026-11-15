@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// This fork serves manual QC without access to the product codebase; these upstream skills need code, automation, or Testomat.io.
+// This fork serves Vietcap manual QC without access to the product codebase; these upstream skills need code, automation, or Testomat.io, or do another role's work.
 const REMOVED = [
   'automate-manual-test-cases',
   'debug-fix-failed-flaky-autotests',
@@ -23,11 +23,13 @@ const REMOVED = [
   'qa-data-seeder',
   'qa-e2e-tests-reporting',
   'qa-explain-behavior',
+  'qa-lead-strategy-advisor',
   'qa-pr-requirements-analyzer',
   'qa-review-pr',
   'qa-split-testing-levels-pyramid',
   'qa-sprint-report-by-testomatio',
   'qa-test-code-coverage',
+  'qa-thinking',
   'run-tests-with-testomatio-reporter',
   'scan-automation-project',
   'setup-change-aware-pr-testing',
