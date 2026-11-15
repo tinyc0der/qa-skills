@@ -15,6 +15,9 @@ tickets/<KEY>-<slug>/
   *.test.md           # sections pulled to expand, under the names pull gives them
 test-runs/<YYYY-MM-DD>-<slug>/
 automation-lessons/
+domain/
+  index.md            # one line per topic file
+  <topic>.md          # rules that hold beyond one ticket
 .env
 ```
 
@@ -23,4 +26,5 @@ automation-lessons/
 - Find a ticket's folder with `tickets/<KEY>-*/`. Two folders for one key: ask which one to use, and never merge them on your own.
 - A ticket that changes existing cases: pull them fresh into its folder with `pull --section <name> --out tickets/<KEY>-<slug>/`. Never copy files from another ticket's folder: other QCs may have changed those cases on TestRail since.
 - A workspace with an older flat `test-cases/` folder: read its files as before, and put new work in `tickets/`.
+- `domain/` keeps the rules that apply beyond one ticket, such as session times, fees, and order rules. It is the QC's own like the rest of the workspace, and goes into the workspace's git history. Only [`save-domain-knowledge`](../../save-domain-knowledge/SKILL.md) writes it.
 - A decision other QCs need goes where they can see it: a case fix to the TestRail case, and a rule or accepted difference to a comment on the story, with the user's approval. The context file keeps the link.

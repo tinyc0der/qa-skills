@@ -63,7 +63,7 @@ On a match, propose the action in the Step 4 message, and write only after the u
 - Check the expected behavior against the story, its comments, and its linked pages. Behavior descoped there is not a bug.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
 - If the story has a context file (`tickets/<KEY>-*/context.md`), read it and the sources it lists.
-- The expected behavior is not obvious and the story does not define it → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
+- The expected behavior is not obvious and the story does not define it → a confirmed rule in `domain/` gives it, read as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says. No rule → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
   - Read the app's file in `automation-lessons/` first, if there is one.
   - Use the same screen, tab, filters, data, and build as the report.
@@ -113,7 +113,7 @@ With each Bug, show only what the QC checks:
 - priority and severity, each with its reason in a few words
 - assignee and sprint by name, and the story key
 - the duplicate match and the proposed action (Step 2)
-- the source of the expected behavior, when it is not the story
+- the source of the expected behavior, when it is not the story, such as a domain rule ID
 - each `Unverified` value
 
 Keep account IDs, sprint IDs, link types, and TestRail links for the read-back in Step 5. Mark each unknown value `Unverified`. Do not create the Bug while the story, found-on environment, platform, build, or sprint is `Unverified`.

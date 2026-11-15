@@ -45,6 +45,8 @@ Report only the checks the story fails, each quoting the story text it concerns 
   - dependencies: third-party APIs, other teams
   - languages, notifications, and OTP or login session expiry, when the story touches them
 
+A confirmed rule from `domain/` that the context file lists is a source. A gap it fills, in a part the story does not change, is not a gap. The context file cites the rule's ID.
+
 ### 3. Identify material ambiguities and contradictions
 
 Raise only questions whose answers could materially change user behavior, scope, permissions, dependencies, or acceptance expectations.
@@ -53,7 +55,7 @@ For each item:
 - State exactly what is unresolved or conflicting.
 - Explain the competing meanings or the missing governing rule when useful.
 - Say what the answer changes for the user, such as a wrong fee or buying power, an order accepted in the wrong session, or a failed submission.
-- Cite the source: story, comment, epic, page, or frame.
+- Cite the source: story, comment, epic, page, or frame. For a rule from `domain/`, cite the rule's own source link, not its ID: the PO cannot open the QC's `domain/`.
 - Check that a comment or linked page has not already answered it.
 
 Do not:

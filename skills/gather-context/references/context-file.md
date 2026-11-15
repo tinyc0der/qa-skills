@@ -5,7 +5,7 @@ One file per ticket: `context.md` in the ticket's folder ([Ticket Folder](./tick
 Sections, in this order. Leave out an empty one.
 
 - `Date`
-- `Sources read`: ticket keys, page titles, frame names, app environment and build, each with its link and last content change date
+- `Sources read`: ticket keys, page titles, frame names, domain rule IDs, app environment and build, each with its link and last content change date
 - `Not read`: sources that could not be read, and why
 - `Found by search`: each source with the gap it fills
 - `Existing cases`: count, TestRail section, `C<id>` range
@@ -34,6 +34,7 @@ Sources read:
 - Confluence [Order rules](https://example.atlassian.net/wiki/x/Ab12), updated 2026-09-15
 - Figma [Trade › Order book](https://figma.com/design/Ab12), updated 2026-10-30
 - Live app: UAT, Trade › Order book, build 4.12.0
+- Domain rule order-rules-1 in [order-rules.md](../../domain/order-rules.md), checked 2026-11-15
 
 Not read: Confluence "Order rules FAQ" (no access)
 

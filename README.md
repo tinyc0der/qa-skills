@@ -27,7 +27,7 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 | Live app   | Exploring and checking actual behavior       | A staging URL and [agent-browser](https://github.com/vercel-labs/agent-browser): `npm i -g agent-browser && agent-browser install`, then `npx skills add vercel-labs/agent-browser` |
 | Mobile app | Running cases on Android and iOS             | A device, emulator, or simulator and [agent-device](https://github.com/callstack/agent-device): `npm i -g agent-device` |
 
-Each QC keeps their own QA workspace, with no shared repo: one folder per ticket under `tickets/` (context file and test cases), test run results (`test-runs/`), automation lessons (`automation-lessons/`), and `.env`. TestRail holds the cases every QC shares, and Jira holds the decisions. `automation-lessons/` holds one file per app and platform with the deep links, waits, and session tips that make the next run faster. See [Ticket Folder](./skills/gather-context/references/ticket-folder.md).
+Each QC keeps their own QA workspace, with no shared repo: one folder per ticket under `tickets/` (context file and test cases), test run results (`test-runs/`), automation lessons (`automation-lessons/`), domain rules (`domain/`), and `.env`. TestRail holds the cases every QC shares, and Jira holds the decisions. `automation-lessons/` holds one file per app and platform with the deep links, waits, and session tips that make the next run faster. `domain/` keeps the rules that apply beyond one ticket, such as session times, fees, and order rules, each with its source and who confirmed it. See [Ticket Folder](./skills/gather-context/references/ticket-folder.md).
 
 ## Skills
 
@@ -39,6 +39,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps and open questions                  |
 | `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
 | `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing or differs |
+| `save-domain-knowledge`     | Save a rule the PO or a source confirmed that holds beyond one ticket to `domain/`, so later tickets reuse it |
 
 ### Test cases
 
@@ -84,9 +85,9 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `gather-context`, `review-user-story`, `catalog-features`, `detect-product-mismatches`, `message-the-qc` |
-| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `message-the-qc` |
-| `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `message-the-qc` |
+| `requirements`    | `gather-context`, `review-user-story`, `catalog-features`, `detect-product-mismatches`, `save-domain-knowledge`, `message-the-qc` |
+| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `save-domain-knowledge`, `message-the-qc` |
+| `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `save-domain-knowledge`, `message-the-qc` |
 
 ## Repository structure
 
