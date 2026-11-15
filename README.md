@@ -55,6 +55,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | Skill        | Description                                                                                    |
 | ------------ | ---------------------------------------------------------------------------------------------- |
 | `report-bug` | Create a reproducible Jira Bug from a failed TestRail case or a live app defect, linked to its story |
+| `verify-bug` | Retest a Bug Dev marked fixed on a build that carries the fix, then close or reopen it with evidence |
 
 ### QA process
 
@@ -72,7 +73,8 @@ A ticket spans several conversations, since it waits for the PO, a build, and Bu
 2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Through `testing-workflow`, the same answer creates your QC subtask with `plan-qc-subtasks`. Open questions left in the context file go back to the PO through `review-user-story`.
 3. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
 4. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
-5. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+5. When Dev fixes a Bug, retest it with `verify-bug`. It checks the build carries the fix, reruns the Bug's steps, its failed cases, and the flows around them, and one answer closes or reopens every Bug it retested.
+6. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
 
 Skills stop only for input only you have and for writes others see that cannot be undone, and ask everything pending in one message. See the [`message-the-qc`](./skills/message-the-qc/SKILL.md) skill.
 
@@ -83,7 +85,7 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `requirements`    | `gather-context`, `review-user-story`, `catalog-features`, `detect-product-mismatches`, `message-the-qc` |
-| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `message-the-qc` |
+| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `message-the-qc` |
 | `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `message-the-qc` |
 
 ## Repository structure

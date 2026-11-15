@@ -17,7 +17,7 @@ References:
 **When to skip steps:**
 
 - The QC gives the finished cases → skip Steps 2 to 4 and write only those cases. Format them, set `refs:`, and compare them with the story's existing cases. Steps 6 and 7 still run, and the push asks first, since no checklist approved it.
-- The PO answered `ask` items in cases already written → pull those cases fresh, change only what the answers settle, and skip Steps 2 to 4. Steps 6 and 7 still run.
+- New answers in the context file's `Answers` list cases already written → pull those cases fresh, change only what the answers settle, and skip Steps 2 to 4. Steps 6 and 7 still run.
 
 ## User interaction
 
@@ -185,5 +185,6 @@ Run [Self review](#self-review) on the new test cases. Before each review, run `
 ### Step 7: Push and summarize
 
 - Push approved at the gate → push the files with the `sync-test-cases-with-testrail` skill. The gate approved creating these cases in that section and nothing else. A dry run that does more, such as updating any case (pulled legacy cases convert to the steps template) or creating another section, stops and shows what it would change.
+- List the test of each `ask` item under the open question or open conflict it depends on, as [Context File](../gather-context/references/context-file.md) describes: the PO's answer finds its cases there.
 - Summary, in this order: the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as questions; the number of test cases and suites, the files, and the TestRail section link when pushed.
 - Next step: open questions or open conflicts in the context file → send them to the PO with the `review-user-story` skill. Otherwise, run the cases when the build is ready. Not pushed → push with `sync-test-cases-with-testrail`.

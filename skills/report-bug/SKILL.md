@@ -1,6 +1,6 @@
 ---
 name: report-bug
-description: Create a Jira Bug from a failed TestRail case or a defect found in the live app. Find the user story it belongs to, search Jira for duplicates first, write reproducible steps with Expected vs Actual per failing step, link the Bug to the story and the TestRail case, and read it back after creating. Use when the user asks to create, log, file, or raise a bug or defect in Jira, write a bug report, or record a failed case or wrong behavior, including when they only share a screenshot of the error. Not for retesting a fixed bug.
+description: Create a Jira Bug from a failed TestRail case or a defect found in the live app. Find the user story it belongs to, search Jira for duplicates first, write reproducible steps with Expected vs Actual per failing step, link the Bug to the story and the TestRail case, and read it back after creating. Use when the user asks to create, log, file, or raise a bug or defect in Jira, write a bug report, or record a failed case or wrong behavior, including when they only share a screenshot of the error. Not for retesting a Bug Dev marked fixed, or closing or reopening it after the retest (`verify-bug`).
 ---
 
 # Report Bug
@@ -132,6 +132,7 @@ Keep account IDs, sprint IDs, link types, and TestRail links for the read-back i
 - Field keys and allowed values come from the project's create metadata for the Bug issue type. Never hardcode field IDs.
 - Leave out optional fields without data. Never send `Unverified` or a placeholder as a value.
 - Issue link to the story: `relates to`, or `blocks` when the Bug blocks the story. A story key in the description is not a link.
+- A side regression `verify-bug` found: also link the fixed Bug, with `relates to`.
 - Web link to each TestRail case whose failed result gets this Bug: title `C<id> — <case title>`, URL `<TESTRAIL_URL>/index.php?/cases/view/<id>`.
 - Attach the evidence.
 - The tool cannot create an issue link or web link, or upload a file → hand them to the user to add.
