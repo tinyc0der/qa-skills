@@ -21,7 +21,8 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Dev set the Due dates of their subtasks** → follow the Dev Dates Flow.
 - **Dev fixed a bug** → follow the Bug Fix Flow.
 - **Continue a ticket** ("continue <KEY>", what is left on a ticket) → follow the Continue Ticket Flow.
-- **Story ready to sign off, or a test status report** → no skill covers these yet. Say so.
+- **A test status report** (status and pass rate for a ticket, milestone, or date) → the `runs` command of the `sync-test-cases-with-testrail` skill.
+- **Story ready to sign off** → no skill covers this yet. Say so.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
 
 ## Basic Flows
