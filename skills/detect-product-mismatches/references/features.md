@@ -4,7 +4,7 @@ A feature is something the product does for its users that they would name: "Pay
 
 A feature is made of behaviors: what someone who uses it (end user, admin, API client, integrated system) can do, see, or get, and when. Sources are compared behavior by behavior, so every source's behaviors are written the same way.
 
-Behavior is similar to requirement or acceptance criteria, but those terms describe intended behavior; the live app gives actual behavior, user docs documented behavior (`catalog-features` › Source roles). "Behavior" fits every role: implemented, planned, or documented.
+Behavior is similar to requirement or acceptance criteria, but those terms describe intended behavior; the live app gives actual behavior (`catalog-features` › Source roles). "Behavior" fits both roles: implemented or planned.
 
 ## Find
 
@@ -20,7 +20,6 @@ Per source:
 | Confluence | Search under the root page or space (CQL `text ~ "term"`); headings of long documents                          |
 | Figma      | Frames linked from the feature's Jira issues and Confluence pages; else Figma search by screen name and labels |
 | TestRail   | Sections and case titles in the pulled files; text in expected results                                         |
-| User docs  | Confluence search under the docs space; docs site search or nav                                                |
 | Other      | The source's own search                                                                                        |
 
 - Found at the source, missing from the catalog → use it and report a catalog error.
@@ -37,7 +36,6 @@ Read every matching feature at its links (documents: under its headings). Behavi
 | Jira       | Stories and feature issues: acceptance criteria, then the description. Epics: their scope. Bugs: the expected result                                        | A bug's reported actual result; tasks, spikes, chores, tech debt                                         |
 | Confluence | Functional requirements, business rules, acceptance criteria, flows; one behavior per table row and per meaningful matrix cell; exclusions as negative ones | Future phases, nice-to-have, MoSCoW Could and Won't; goals, rationale, personas, metrics, open questions |
 | Figma      | Copy (labels, messages, empty and error text), states (empty, loading, error, disabled), the screens of a flow and their order, annotations                 | Layout, colors, spacing; placeholder text; frames marked draft or exploration                            |
-| User docs  | Guides, how-tos, limits, notes and warnings; badges (plan, edition, role, platform) as conditions; navigation steps                                         | Screenshots and videos                                                                                   |
 | TestRail   | Expected results                                                                                                                                            | Steps, test data                                                                                         |
 
 - Live app behavior the test account cannot reach (other role, plan, or setting) → open question, not silence.
@@ -49,7 +47,7 @@ Read every matching feature at its links (documents: under its headings). Behavi
 ### Shape
 
 - One behavior per line, one sentence, present tense.
-- No `should`, `shall`, `must`, `will`: state it as a fact. The source's role says whether it is actual, intended, or documented.
+- No `should`, `shall`, `must`, `will`: state it as a fact. The source's role says whether it is actual or intended.
 - Name who acts or what changes, in domain terms. Never "the system", "it", or "we".
 - Outcome is what the actor can observe (screen, response, file, email, notification), not how the product gets there.
 - Conditions stay in the behavior: role, platform, setting, state.
@@ -62,7 +60,7 @@ Read every matching feature at its links (documents: under its headings). Behavi
 - Values as the source states them, with units. No value in the source → none in the behavior. Never round, convert, or fill one in; a vague behavior stays vague (open question).
 - Live app: values as observed (limits hit, text shown); a value an admin can change: the observed one, marked `(configurable)`.
 - UI labels and messages verbatim, in quotes; navigation paths with `›`.
-- Domain terms (prefer the user docs' terms), one per concept across sources.
+- Domain terms (prefer the terms the live app shows), one per concept across sources.
 - No class, function, table, file, flag, or library names. Protocol details (endpoints, status codes, fields) only when the API is what users use.
 - Keep the source's level of detail: a coarse behavior stays coarse. Never merge behaviors and drop values or conditions.
 - Restate, never paste. Never people, comments, or customer data.

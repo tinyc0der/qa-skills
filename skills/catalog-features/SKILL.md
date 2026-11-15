@@ -1,8 +1,8 @@
 ---
 name: catalog-features
 description: >-
-  Builds a catalog of product features from one source: a tree that mirrors the source, each feature as a key, title, and link to the source. Supports Jira, Confluence, TestRail, the live app, and user docs.
-  Use when asked to catalog/list features, existing functionality, Jira issues, Confluence requirements, specs, PRDs, user docs, TestRail test cases, the live app's screens, or similar sources.
+  Builds a catalog of product features from one source: a tree that mirrors the source, each feature as a key, title, and link to the source. Supports Jira, Confluence, TestRail, and the live app.
+  Use when asked to catalog/list features, existing functionality, Jira issues, Confluence requirements, specs, PRDs, TestRail test cases, the live app's screens, or similar sources.
 ---
 
 # Catalog features
@@ -21,7 +21,6 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 | ---------- | ------------------------------------------------------------------------------------------ |
 | Actual     | Actual behavior of the product. The live app.                                              |
 | Intended   | What we attempted to implement. Jira issues, Confluence requirements, TestRail test cases. |
-| Documented | What the product says it does. User docs.                                                  |
 
 ## Rules
 
@@ -46,7 +45,7 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 - Tree: the page tree; headings inside long pages.
 - Scope: a space or a root page; ask the user for it and other crucial filters. Take into account that there could be drafts, deprecated pages, copies. Process them accordingly.
 - Link: page title + URL; the heading for long pages.
-- Role: Intended for requirements and specs; Documented for user docs. Ask when a space holds both.
+- Role: Intended.
 - History: No.
 
 ### TestRail
@@ -71,7 +70,7 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 
 ### Other
 
-Any source that describes the product (help site, release notes). Agree on role, coverage, history with the user before syncing.
+Any source that describes the product (release notes). Agree on role, coverage, history with the user before syncing.
 
 ## Steps
 

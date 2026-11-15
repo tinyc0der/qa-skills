@@ -1,9 +1,9 @@
 ---
 name: detect-product-mismatches
 description: >-
-  Compares what different sources say the product does: the live app (observed behavior), Jira, Confluence requirements, Figma designs, and TestRail test cases (intended behavior), user docs (documented behavior), and any other source (release notes etc.).
+  Compares what different sources say the product does: the live app (observed behavior), Jira, Confluence requirements, Figma designs, and TestRail test cases (intended behavior), and any other source (release notes etc.).
   Checks every feature in every source and records mismatches: behavior two sources disagree on, behavior the live app lacks, and features a source is silent on.
-  Use when the user asks to compare, cross-check, align, validate requirements, specs, Jira tickets, Confluence pages, Figma designs, TestRail test cases, user docs, or the live app against each other, to find mismatches, contradictions, differences, or outdated docs, designs, or requirements, or to find what is missing from the app, not documented, or not specified.
+  Use when the user asks to compare, cross-check, align, validate requirements, specs, Jira tickets, Confluence pages, Figma designs, TestRail test cases, or the live app against each other, to find mismatches, contradictions, differences, or outdated designs or requirements, or to find what is missing from the app or not specified.
 ---
 
 # Detect product mismatches
@@ -34,7 +34,6 @@ Type, role, scope, and history of each source come from its catalog README (`cat
 | Confluence requirements | Intended              |
 | Figma                   | Intended              |
 | TestRail                | Intended              |
-| User docs               | Documented            |
 | Other                   | As its catalog README |
 
 Figma has no catalog: read the frames linked from the feature's Jira issues and Confluence pages, else search the Figma file the user names. Compare copy, states, and screens.
@@ -56,11 +55,10 @@ Per feature, what each source says is rewritten as behaviors in one shape ([feat
 
 ## Likely cause
 
-From dates read at the source: Jira resolution date (else creation date), Confluence page last version, Figma file version history, TestRail case last update, docs "last updated"; live app: the release date of its version (release notes, else the Jira fix version). The same dates decide the newest issue for `History: Yes`.
+From dates read at the source: Jira resolution date (else creation date), Confluence page last version, Figma file version history, TestRail case last update; live app: the release date of its version (release notes, else the Jira fix version). The same dates decide the newest issue for `History: Yes`.
 
 - The live app differs from the newest intended behavior, and nothing newer explains it → Bug.
 - Confluence page, Figma frame, or TestRail case older than the Jira issue or release that set the current behavior → Stale requirement.
-- User docs older than that change → Stale docs.
 - Otherwise → Decide (product owner).
 
 ## Steps

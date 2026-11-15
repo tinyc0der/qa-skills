@@ -48,7 +48,7 @@ File name: follow existing file name pattern or kebab-case of the title by defau
 - `## Difference`: first a one-sentence summary of how they differ, then one bullet per side, live app first when compared; sources that agree grouped on one bullet. Each bullet: the sources (key or name), then their behavior. Write each side so it is clear alone: the condition, then what the user gets. Not observed in app: the live app bullet says what is missing and the navigation path where it was looked for.
 - `## Impact`: level first: **High** (users blocked, data or money wrong), **Medium** (a workaround exists), **Low** (wording, cosmetic). Then who meets it, when, and what they see or cannot do.
 - `## Likely cause`: SKILL.md › Likely cause, with the dates that decide it.
-- `## Solution`: suggested fix, from the likely cause: Bug → file a Jira defect with the steps and screenshot; Stale requirement → update the requirement; Stale docs → update the docs; Decide → the options for the product owner.
+- `## Solution`: suggested fix, from the likely cause: Bug → file a Jira defect with the steps and screenshot; Stale requirement → update the requirement; Decide → the options for the product owner.
 - `## Sources`: evidence, one row per compared source; live app row always, first, when the app is compared.
 - `## Steps in the app`: live app compared only: numbered steps from the start URL to the observed result, then the screenshot.
 - Other info required to explain the mismatch.
@@ -86,7 +86,6 @@ Update the Confluence page "Saved cards": expired saved cards are listed at chec
 | Live app (actual)      | Expired saved cards are listed, greyed out              | Checkout › Payment, [URL](https://staging.example.com/checkout/payment) | 2026-08-30 |
 | Jira (intended)        | PAY-112: Expired saved cards are listed, not selectable | [PAY-112](https://example.atlassian.net/...)                            | 2026-08-28 |
 | Confluence (intended)  | Expired saved cards are not listed                      | [Saved cards](https://example.atlassian.net/...)                        | 2026-01-10 |
-| User docs (documented) | silent                                                  | Searched: Help › Payments, CQL "expired"                                |            |
 
 ## Steps in the app
 
