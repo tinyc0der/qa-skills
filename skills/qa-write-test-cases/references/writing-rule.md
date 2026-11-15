@@ -5,17 +5,12 @@
 - Formulas, business rules, edge-case reasoning, and feature context live in the suite/test description.
 - Prerequisites common to all test cases go as bullet points in the suite description: the environment, such as role and account type when no expected result depends on them, language, app settings, the screen every test starts on, and tools every test uses (DevTools).
 - Keep test data and the state a test relies on out of the suite description. TestRail shows a case without its section description.
-- Formulas and diagrams relevant to all test cases can be included as code blocks in the suite description.
 
 ## Test Cases
 
 - A test case consists of an optional description and steps.
-- Golden rule: "why" in the description, "what" in the steps.
-- Add the intent to the description if the title is not enough to explain it.
-- Put preparations into preconditions/description, not into steps.
-- Focus on black-box testing: every action and observable result goes through public APIs or UI (unless the user specifies otherwise).
+- Golden rule: "why" in the description, "what" in the steps. Add a description only when the title does not explain the intent.
 - Prefer UI over public APIs when possible. When the app can show a value (add a column, open details), read it there. Use DevTools or an API only for what the UI cannot show, and cover every page of a paged list.
-- Add system checks only when it is not clear how to test via public APIs or UI. This is not a unit test; usually no direct server or code access is allowed.
 - Drive a backend story through the system that feeds it (the CMS, the app) and capture the request in DevTools. Send requests directly only for inputs that system blocks.
 - Mock or check an endpoint only when a source names it as the one serving the data, or the step copies the request from DevTools while doing the action under test. Otherwise describe the data state in preconditions (`Most searched has 2 tickers`).
 
@@ -43,17 +38,9 @@ Avoid:
 - Embedding IDs or numbers: `TC-001: Login`
 - Vague outcomes: `Successful login`, `Login works`
 
-Good vs bad:
-
-- `Verify successful login` → `Login with valid email and password opens the dashboard`
-- `Wrong password test` → `Login with invalid password shows an error`
-- `User sees error when email format is invalid` → `Invalid email format shows an error`
-- `Login and update profile` → split into two tests
-
 ## Preconditions
 
 - Add preconditions for setup that is required for the test to run but is not part of the test actions.
-- Define the preconditions and initial state of the system as bullet points.
 - If relevant, include the user role.
 - Skip preconditions that are not needed or repeat the suite description.
 - Give every value the steps rely on that differs from the screen's defaults: form data, time window, account state. Do not point to data written elsewhere.
@@ -62,24 +49,21 @@ Good vs bad:
 
 ## Steps
 
-A step is an action (with optional test data) and an expected result, in the format of [Test Case Format](./testrail-test-case-format.md) §7. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
+A step is an action (with optional test data) and an expected result, in the format of [Test Case Format](./testrail-test-case-format.md) §4. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
 
 - Each expected result passes or fails: no "either X or Y", no "record whether X". An outcome no source gives is an `ask` item, not two accepted outcomes.
+- Every check goes in the expected result, never in the action.
 - Each step is a simple sentence. Avoid commas and sub-sentences.
 - Steps are mechanical: click, send, read, assert.
 - Each step includes exact instructions with concrete, realistic values a tester can act on directly.
 - Use a `${variable}` placeholder, in backticks, only for a value reused across steps, a data-driven value (the examples table), or environment data no source gives that the tester supplies (test account, customer name). Never for other data or preconditions.
 - Prefer URL paths over full URLs, e.g. `/auth/login`.
-- Use specific values when they are important for the scenario (boundary values, format validation, locale-specific input).
 - Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)", and subjective outcomes like "should work" or "might fail"; replace them with concrete, literal values.
 - For data that changes with time (market prices, the clock, balances), give the rule to derive it from what the screen shows: `ceiling price + 0.10`, `current time − 7 minutes`.
-- Avoid general statements in steps. Move them to the description.
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.
 - Exception: data entry that only sets up the action under test joins that action (`Enter 59 in **Interval** and click **Create**`) or goes in preconditions.
 - No expected result that only repeats the input (`Field shows 3,050`).
 - No check that another check on the same line implies: an error shown on the form already means the next screen did not open.
-- All step actions must be clear to perform via public API or UI.
-- All checks/verifications/assertions belong in the expected result, not in the step action.
 - A code block may follow a step when it holds an API request or response body.
 
 One expected line per screen or state. Separate the checks on it with `; `, each check one verifiable fact. Start a new line when the screen or state changes.
@@ -101,13 +85,6 @@ Use sparingly. Each style serves one purpose; otherwise write plain text.
 - **bold** — UI elements the user interacts with: buttons, links, fields, tabs, checkboxes, modals (e.g. `Click **Save**`, `Open **Settings** tab`).
 - *italic* — names of pages/screens/documents referenced as context (e.g. `Open the *Privacy Policy* page`).
 
-Avoid:
-
-- Bold/italic on full sentences or whole steps.
-- Combining bold and italic (`***...***`).
-- Emphasis for visual weight; rephrase or split the step instead.
-- Bold/italic in place of a placeholder (`[url]`) or a code block.
-
 ## Tone
 
-Write in a neutral, literal tone: say what the system does and what the tester sees. No marketing or emphatic adjectives, filler phrases, or emoji, unless the user asks for them. Use bold and italic only as Bold and italic in steps describes.
+Write in a neutral, literal tone: say what the system does and what the tester sees. No marketing or emphatic adjectives, filler phrases, or emoji, unless the user asks for them.

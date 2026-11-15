@@ -5,13 +5,6 @@ description: Markdown format for manual test cases (`*.test.md`) and how the `sy
 
 # Test Case Markdown Format
 
-## Format Overview
-
-The document is structured as:
-
-1. **Suite block** — one or more per file, with suite metadata, title, and description
-2. **Test blocks** — one or more per suite, each with test metadata, title, description, preconditions, test data table, and steps
-
 ## Document Structure
 
 ```
@@ -35,6 +28,8 @@ Test description (optional)
 | --- | --- |
 | value1 | value2 |
 ```
+
+A file holds one or more suites, and each suite one or more tests.
 
 ## Suite Metadata
 
@@ -66,35 +61,17 @@ If a test leaves out a key, the suite's value is used.
 
 ## Formatting Rules
 
-### 1. Suite and test blocks
-
-- Suite block starts with `<!-- suite`.
-- Test blocks start with `<!-- test`.
-- Each test block is separated by `<!-- test`.
-
-### 2. Metadata blocks
-
-- Metadata must be inside HTML comments: `<!-- suite ... -->` and `<!-- test ... -->`.
-- Each line is `key: value`; lines without `:` are ignored.
-- Keys and values are trimmed of surrounding whitespace.
-
-### 3. Headings
-
-- **Suite title:** first `#` heading after the suite metadata block.
-- **Test title:** first `#` or `##` heading after each test metadata block.
-- Only these headings are used for titles; other headings are part of the description.
-
-### 4. Description
+### 1. Description
 
 - Everything after the test heading until `## Steps` or the next `<!-- test` is the test description, except the examples table.
 - Description supports standard markdown.
 
-### 5. Preconditions
+### 2. Preconditions
 
 - Optional. Write them under a `## Preconditions` heading after the test description and before `## Steps`.
 - List each precondition as a bullet point.
 
-### 6. Examples section
+### 3. Examples section
 
 - Introduced by `<!-- example -->` (optional content after `-->`).
 - Place it after the test description and preconditions, before `## Steps`. A table after the steps also works.
@@ -104,26 +81,18 @@ If a test leaves out a key, the suite's value is used.
 - **Separator:** next row must contain `---` (3+ dashes) in each cell to mark headers.
 - **Data rows:** rows after the separator are example rows. The steps run once per row, with that row's values in the `${column}` placeholders. Records that must exist together go in preconditions, not in an example table.
 
-### 7. Steps
-
-Test steps use the `## Steps` header section with a nested markdown list format:
+### 4. Steps
 
 ```markdown
 ## Steps
 
-- (Step Action)
-  *Expected*: ... (Observable behavior)
-- ...
-  *Expected*: ...
+1. (Step Action)
+   *Expected*: ... (Observable behavior)
+2. ...
+   *Expected*: ...
 ```
 
-**Step format rules:**
-
-- Steps must be under a `## Steps` heading
-- Use nested markdown lists (bulleted `-` or numbered `1.`)
-- Top-level items describe the action to perform
-- Nested items with `*Expected*` (or `*Expected*:`, `*Expected result*`) describe the observable behavior
-- Expected results should be specific and verifiable
+Numbered (`1.`) and bulleted (`-`) lists both work.
 
 ## Mapping to TestRail
 
@@ -135,115 +104,49 @@ Test steps use the `## Steps` header section with a nested markdown list format:
 | `## Steps` action and `*Expected*` lines  | Steps (separated): step and expected result |
 | `priority`, `refs`                        | Priority, References                       |
 
-## Examples
-
-### Minimal suite with one test
+## Example
 
 ```markdown
 <!-- suite
+refs: TRADE-101
+platform: Mobile
 -->
 
-# Login Suite
+# LO buy order
 
-Tests for login functionality.
-
-<!-- test
--->
-
-# Login with valid credentials opens the dashboard
-
-User can log in with valid credentials.
-```
-
-### Full suite with metadata and examples
-
-```markdown
-<!-- suite
-refs: JIR-123
--->
-
-# Login Functionality
-
-This suite contains manual tests for the login process.
+- Environment: UAT
+- App language: English
+- Every test starts on the **Trade** tab
 
 <!-- test
 priority: high
+smoke: no
+automation: yes
 -->
 
-# Login with each account role opens the dashboard
+# LO buy order accepts only prices from floor to ceiling
 
-A user should be able to log in with valid credentials.
+HOSE accepts a price only inside the day's band, from the floor to the ceiling price (reference price ± 7%). The price step is 0.10 for prices of 50.00 and above, so the ceiling price + 0.10 and the floor price − 0.10 are the nearest prices outside the band.
 
 ## Preconditions
 
-- The accounts from the test data table exist and are active
-- User is logged out
+- HOSE is in the continuous matching session
+- `${ticker}` is a HOSE stock with a reference price of 60.00 or more
+- The account has buying power for 100 shares of `${ticker}` at its ceiling price
 
 <!-- example -->
 
-| Username | Password | Role  |
-| -------- | -------- | ----- |
-| admin    | admin123 | admin |
-| user     | user123  | user  |
+| price | result |
+| --- | --- |
+| Ceiling price | Confirmation dialog opens |
+| Floor price | Confirmation dialog opens |
+| Ceiling price + 0.10 | Error "Price must be between the floor and ceiling price." under **Price** |
+| Floor price − 0.10 | Error "Price must be between the floor and ceiling price." under **Price** |
 
 ## Steps
 
-- Navigate to `/auth/login`
-  *Expected*: Login form shows username and password fields
-- Enter the username and password from the test data table and click **Login**
-  *Expected*: Dashboard opens
-```
-
-### Test with numbered steps and a code block
-
-````markdown
-<!-- suite
--->
-
-# API Testing
-
-Tests for REST API endpoints.
-
-<!-- test
-priority: critical
--->
-
-# POST /api/users creates a user
-
-A new user can be created via POST request.
-
-## Steps
-
-1. Send POST request to `/api/users`
-   ```json
-   { "email": "jane@example.com", "name": "Jane" }
-   ```
-   *Expected*: Response status code is 201; response includes `id` and `createdAt` fields
-2. Send GET request to `/api/users/{id}` with the returned `id`
-   *Expected*: User data matches the data sent in POST request
-````
-
-### Multiple suites in one file
-
-```markdown
-<!-- suite
--->
-
-# Suite One
-
-Description for suite one
-
-<!-- test
--->
-
-# Test One
-
-Description
-
-<!-- suite
--->
-
-# Suite Two
-
-Description for suite two
+1. Open the **Buy** form of `${ticker}`
+   *Expected*: Form shows the ceiling and floor prices of `${ticker}`
+2. Enter `${price}` in **Price** and 100 in **Quantity** and tap **Place order**
+   *Expected*: `${result}`
 ```
