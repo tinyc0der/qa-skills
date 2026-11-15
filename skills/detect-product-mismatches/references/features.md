@@ -1,6 +1,6 @@
 # Features
 
-A feature is something the product does for its users that they would name: "Pay with saved card", "Export report to CSV". In a catalog, one feature YAML is one feature of its source, in the area where the source puts it. Another source may name it differently or split it differently: e.g. one epic covers three app features, one docs page covers two.
+A feature is something the product does for its users that they would name: "Place LO buy order", "View order book". In a catalog, one feature YAML is one feature of its source, in the area where the source puts it. Another source may name it differently or split it differently: e.g. one epic covers three app features, one docs page covers two.
 
 A feature is made of behaviors: what someone who uses it (end user, admin, API client, integrated system) can do, see, or get, and when. Sources are compared behavior by behavior, so every source's behaviors are written the same way.
 
@@ -38,8 +38,8 @@ Read every matching feature at its links (documents: under its headings). Behavi
 | Figma      | Copy (labels, messages, empty and error text), states (empty, loading, error, disabled), the screens of a flow and their order, annotations                 | Layout, colors, spacing; placeholder text; frames marked draft or exploration                            |
 | TestRail   | Expected results                                                                                                                                            | Steps, test data                                                                                         |
 
-- Live app behavior the test account cannot reach (other role, plan, or setting) → open question, not silence.
-- Comments and later edits may change the body ("dropped", "moved to PROJ-456", "decided: 3 retries, not 5"): state the final behavior, never the comment.
+- Live app behavior the test account cannot reach (other role, account type, or setting) → open question, not silence.
+- Comments and later edits may change the body ("dropped", "moved to TRADE-210", "decided: blocked in ATO and ATC"): state the final behavior, never the comment.
 - Acceptance criteria may sit in a custom field, a description heading, a checklist, or sub-tasks: find the convention in the first issues.
 
 ## Behaviors
@@ -52,7 +52,7 @@ Read every matching feature at its links (documents: under its headings). Behavi
 - Outcome is what the actor can observe (screen, response, file, email, notification), not how the product gets there.
 - Conditions stay in the behavior: role, platform, setting, state.
 - Source key, when the behavior has one, goes first.
-- Negative behaviors count: `Viewer cannot delete a project.`
+- Negative behaviors count: `Investor cannot cancel a matched order.`
 - Split on "and" when each part can be checked on its own.
 
 ### Values and words
@@ -67,14 +67,14 @@ Read every matching feature at its links (documents: under its headings). Behavi
 
 ## Examples
 
-| Source says                                                           | Behavior                                                            |
-| --------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| The system shall allow users to store payment methods (max 5).        | `Customer can save up to 5 cards.`                                  |
-| Users can save cards to pay faster.                                   | `Customer can save a card.` (benefit dropped)                       |
-| AC: if the card is declined, show "Payment failed. Try another card." | `Declined card: Customer sees "Payment failed. Try another card."`  |
-| Enterprise customers get SSO; Pro is coming soon.                     | `Enterprise plan: SSO sign-in is available.` (Pro: future, dropped) |
-| Session times out after a while.                                      | `Session expires after inactivity.` (no value invented)             |
-| Bug: saving the same card twice creates a duplicate; expected: one.   | `Saving the same card again keeps one saved card.`                  |
+| Source says                                                                           | Behavior                                                                                       |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| The system shall allow users to place LO buy orders (lot size 100).                   | `Investor can place an LO buy order in lots of 100.`                                           |
+| Users can place LO orders to buy at the price they choose.                            | `Investor can place an LO buy order.` (benefit dropped)                                        |
+| AC: if the price is outside the band, show "Price must be between floor and ceiling." | `Price outside the band: Investor sees "Price must be between floor and ceiling."`             |
+| HOSE stocks show floor and ceiling on the Buy screen; HNX is coming soon.             | `HOSE stock: Investor sees the floor and ceiling price on Trade › Buy.` (HNX: future, dropped) |
+| Investors are signed out after a period of inactivity.                                | `Investor is signed out after inactivity.` (no value invented)                                 |
+| Bug: double-tapping Buy places two orders; expected: one.                             | `Double-tapping "Buy" places one order.`                                                       |
 
 ## Check
 

@@ -4,7 +4,6 @@ Reads catalogs (layout owned by `catalog-features`); changes them only through t
 
 ```
 mismatches/                  # output folder
-  README.md                  # sitemap; one line each
   sources/
     README.md                # every catalog here: name, type, role, link, Date
     {name}/                  # source name
@@ -18,7 +17,7 @@ mismatches/                  # output folder
 
 ## Formatting
 
-Every page: `# Title`, then a breadcrumb that matches folders (links to the parent pages only), then the body. Mismatch pages: no breadcrumb. Relative links to pages and screenshots in the output folder; source features as key + URL.
+Relative links to pages and screenshots in the output folder; source features as key + URL.
 
 ## Kinds
 
@@ -30,7 +29,7 @@ Every page: `# Title`, then a breadcrumb that matches folders (links to the pare
 
 ## README
 
-`mismatches/README.md` missing → create it: `# Mismatches`, breadcrumb. Write the mismatches list.
+`mismatches/README.md` missing → create it: `# Mismatches`. Write the mismatches list.
 
 1. Compared: one row per source: name, role, scope, history, catalog link, Date. App version. Check date.
 2. Differs, Not observed in app: one list per kind, highest impact first: page link + impact level + sources + likely cause.
@@ -56,44 +55,44 @@ File name: follow existing file name pattern or kebab-case of the title by defau
 ### Example
 
 ```markdown
-# Expired cards at checkout
+# Cancelling a pending order during ATO
 
-Feature: [Checkout › Pay with saved card](../sources/app/catalog/checkout/pay-with-saved-card.yaml)
+Feature: [Trade › Order book › Cancel pending order](../sources/app/catalog/trade/order-book/cancel-pending-order.yaml)
 
 ## Difference
 
-The live app lists expired saved cards at checkout, greyed out; Confluence says they are not listed.
+The live app lets the investor cancel a pending order during ATO; TRADE-205 and Confluence say orders cannot be cancelled during ATO.
 
-- **Live app, PAY-112:** Expired saved cards are listed at checkout, greyed out and not selectable.
-- **Confluence "Saved cards":** Expired saved cards are not listed at checkout.
+- **Live app:** During ATO, a pending order in Trade › Order book shows "Cancel", and the investor can cancel it.
+- **TRADE-205, Confluence "Order rules":** During ATO, the investor cannot cancel an order.
 
 ## Impact
 
-Low. A customer with an expired card sees it greyed out at checkout. Support answers based on Confluence say it should not appear.
+High. During ATO, an investor can cancel a pending order the rules say must stay. If the exchange still matches it, the investor holds shares they believe they cancelled.
 
 ## Likely cause
 
-Stale requirement: PAY-112 (2026-08-28) changed the behavior after the Confluence page (2026-01-10).
+Bug: the live app (build 4.12.0, 2026-11-14) differs from TRADE-205 (2026-11-13), the newest intended behavior, and nothing newer explains it.
 
 ## Solution
 
-Update the Confluence page "Saved cards": expired saved cards are listed at checkout, greyed out and not selectable.
+File a Jira defect with the steps and screenshot.
 
 ## Sources
 
-| Source                 | Says                                                    | Link                                                                    | Updated    |
-| ---------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------- | ---------- |
-| Live app (actual)      | Expired saved cards are listed, greyed out              | Checkout › Payment, [URL](https://staging.example.com/checkout/payment) | 2026-08-30 |
-| Jira (intended)        | PAY-112: Expired saved cards are listed, not selectable | [PAY-112](https://example.atlassian.net/...)                            | 2026-08-28 |
-| Confluence (intended)  | Expired saved cards are not listed                      | [Saved cards](https://example.atlassian.net/...)                        | 2026-01-10 |
+| Source                | Says                                                             | Link                                                                | Updated    |
+| --------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------- | ---------- |
+| Live app (actual)     | During ATO, a pending order shows "Cancel" and can be cancelled  | Trade › Order book, [URL](https://uat.example.com/trade/order-book) | 2026-11-14 |
+| Jira (intended)       | TRADE-205: Investor cannot cancel an order during ATO or ATC     | [TRADE-205](https://example.atlassian.net/browse/TRADE-205)         | 2026-11-13 |
+| Confluence (intended) | Investor cannot cancel an order during ATO or ATC                | [Order rules](https://example.atlassian.net/wiki/x/Ab12)            | 2026-09-15 |
 
 ## Steps in the app
 
-1. Sign in as a customer with an expired saved card.
-2. Open Checkout › Payment.
-3. The expired card is listed, greyed out, and cannot be selected.
+1. Sign in as an investor with a pending LO buy order.
+2. During ATO, open Trade › Order book.
+3. The pending order shows "Cancel", and the investor can cancel it.
 
-![Expired card at checkout](screenshots/expired-cards-at-checkout.png)
+![Cancel during ATO](screenshots/cancelling-a-pending-order-during-ato.png)
 ```
 
 - `Says`: the source's behavior, as [features.md](features.md) › Behaviors describes; `silent` when it has none.

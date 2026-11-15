@@ -52,7 +52,7 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 
 - Access: the `list` command of the `sync-test-cases-with-testrail` skill.
 - Tree: TestRail sections and subsections.
-- Feature: what users do, named from the product ("Invite member", not the case title "Invite member with a valid email"), grouping every case that tests it; not one per case or section; cases in several sections → one feature.
+- Feature: what users do, named from the product ("Cancel pending order", not the case title "Cancel pending order during the continuous session"), grouping every case that tests it; not one per case or section; cases in several sections → one feature.
 - Key: none. Links: each case as `C<id>` + `{TESTRAIL_URL}/index.php?/cases/view/{id}`.
 - Scope: sections; ask the user.
 - Role: Intended.
@@ -62,8 +62,8 @@ Output folder: given by the calling skill or the user. Default: `catalog/`. Writ
 
 - Access: the `agent-browser` skill, signed in with the test account and role the user gives.
 - Tree: the app's navigation: menu sections, pages, tabs.
-- Feature: what users do, named from the product ("Invite member"), not one per page or URL; same feature on two screens → one feature.
-- Link: URL + navigation path, e.g. `Settings › Members`.
+- Feature: what users do, named from the product ("Place LO buy order"), not one per page or URL; same feature on two screens → one feature.
+- Link: URL + navigation path, e.g. `Trade › Buy`.
 - Scope: environment URL, roles, areas; ask the user. Only what the given roles can reach.
 - Role: Actual.
 - History: No.
@@ -128,5 +128,3 @@ To a calling skill: features added, changed, and removed.
 ## Next actions
 
 - `detect-product-mismatches`
-- `review-user-story`
-- Test cases from requirements → `qa-write-test-cases`

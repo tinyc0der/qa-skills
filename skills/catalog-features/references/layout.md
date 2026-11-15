@@ -9,8 +9,8 @@ catalog/                     # output folder
     README.md                # the area's own link/path, subarea if any, its features
     {feature}.yaml           # feature page
     {subarea}/               # subarea (optional)
-      README.md              # the subarea own link/path, name, its features; breadcrumbs
-      {feature}.yaml         # feature page; breadcrumbs; feature info (below)
+      README.md              # the subarea own link/path, name, its features
+      {feature}.yaml         # feature page; feature info (below)
     ...
 ```
 
