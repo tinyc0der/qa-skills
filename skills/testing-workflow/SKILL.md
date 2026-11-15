@@ -22,6 +22,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 | `sync-test-cases-with-testrail` | Push test cases to TestRail, list existing cases, pull them into files      |
 | `run-test-suite`                | Run test cases on the live app and push the results to a TestRail run       |
 | `report-bug`                    | Create a Jira Bug from a failed case or a live app defect                   |
+| `plan-qc-subtasks`              | Create the QC's subtasks in Jira, estimate story points, and set dates      |
 | `agent-browser`                 | Check behavior on the live app in a browser                                 |
 
 ## Routing
@@ -37,6 +38,7 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
 - **Run test cases** (a suite, a ticket's cases, regression, smoke, a TestRail run) → route to the `run-test-suite` skill.
 - **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
+- **Plan QC work in Jira** (stories to test, QC subtasks, their story points or dates) → route to the `plan-qc-subtasks` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
 - **Strategic intent** ("where do I start", "improve our QA process", "QA maturity review") → route to the `qa-lead-strategy-advisor` skill instead. It owns the high-level roadmap and delegates execution back here.
 
@@ -51,16 +53,17 @@ User: is assigned a ticket, or asks to test one from start to finish
 =>
 1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Add `qa-thinking` when the user wants risk scenarios. Do not stop for the post question.
 2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review draft.
-   ⏸ Stop 1: one message with the review, then the checklist, then one question for both:
+3. 🗂 Plan the story's QC subtask (with `plan-qc-subtasks` skill): steps 1 and 2 only, no message of its own. A plan that writes nothing stays out of Stop 1.
+   ⏸ Stop 1: one message with the review, then the checklist, then the QC subtask plan, then one question for all:
       ❓ Post the review and write the cases?
-      1. ✅ Post the review, write the cases, and push them to TestRail
-      2. 📝 Post the review and write the cases, no push
-      3. ✏️ Type changes to the review or the checklist
-3. 💬 Do only what the answer approved: post the review, write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
+      1. ✅ Post the review, write the QC subtask, write the cases, and push them to TestRail
+      2. 📝 Post the review, write the QC subtask, and write the cases, no push
+      3. ✏️ Type changes to the review, the checklist, or the QC subtask plan
+4. 💬 Do only what the answer approved: post the review, write the QC subtask plan (with `plan-qc-subtasks` skill, from its step 4), write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
    ⏸ Stop 2: report the cases, and ask the QC to say when the build is ready.
-4. 💬 Each later request on the ticket → re-run `gather-context` first. PO replies in the story's comments update the `ask` test cases, which then get pushed.
-5. ▶️ Build ready → run the cases (with `run-test-suite` skill). Its one question, when it needs one, comes before the first case.
-6. 🐞 The run's report carries the Bug drafts for its failed cases: one answer creates them all. Fix the cases marked "case needs fix" (with `improve-test-cases` skill).
+5. 💬 Each later request on the ticket → re-run `gather-context` first. PO replies in the story's comments update the `ask` test cases, which then get pushed.
+6. ▶️ Build ready → run the cases (with `run-test-suite` skill). Its one question, when it needs one, comes before the first case.
+7. 🐞 The run's report carries the Bug drafts for its failed cases: one answer creates them all. Fix the cases marked "case needs fix" (with `improve-test-cases` skill).
 ```
 
 ### Test Generation Flow
