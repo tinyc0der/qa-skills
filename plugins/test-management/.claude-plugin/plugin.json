@@ -1,7 +1,7 @@
 {
   "name": "test-management",
   "version": "1.1.0",
-  "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, pull, run on the live app with results in TestRail, and report failures as Jira bugs",
+  "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, pull, run on the live app with results in TestRail, report failures as Jira bugs, and verify fixed bugs",
   "repository": "https://github.com/tinyc0der/qa-skills",
   "license": "MIT",
   "keywords": [

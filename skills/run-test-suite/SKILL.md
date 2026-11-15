@@ -1,6 +1,6 @@
 ---
 name: run-test-suite
-description: Run manual test cases on the live web app with the `agent-browser` skill or on an Android or iOS device with the `agent-device` skill, record a Passed, Failed, or Blocked result with screenshot evidence for each case, push the results to a TestRail test run, and hand failed cases to `report-bug`. Works from `*.test.md` files, a TestRail section, a ticket key, or an existing TestRail run. Reads and updates the app's automation lessons so each run is faster than the last. Use when the user wants test cases run on web, Android, or iOS and each recorded as pass or fail, from a ticket's cases, a section, files, or a TestRail run; for regression, smoke, or fix verification; or because a build is ready to test. Also use to create a TestRail test run or push a run's results. Not for writing test cases or filing bugs.
+description: Run manual test cases on the live web app with the `agent-browser` skill or on an Android or iOS device with the `agent-device` skill, record a Passed, Failed, or Blocked result with screenshot evidence for each case, push the results to a TestRail test run, and hand failed cases to `report-bug`. Works from `*.test.md` files, a TestRail section, a ticket key, a Bug key, or an existing TestRail run. Reads and updates the app's automation lessons so each run is faster than the last. Use when the user wants test cases run on web, Android, or iOS and each recorded as pass or fail, from a ticket's cases, a section, files, or a TestRail run; for regression, smoke, or fix verification; or because a build is ready to test. Also use to create a TestRail test run or push a run's results. Not for writing test cases, filing bugs, or verifying a Bug Dev marked fixed (`verify-bug`).
 ---
 
 # Run Test Suite
@@ -37,13 +37,14 @@ Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. Find
 | `*.test.md` files   | Files with `testrail_id`: run `push --dry-run` on them first. A case it would update differs from TestRail: pull TestRail's copy into `<run folder>/cases`, run that, and list the case in the report as differing locally. |
 | TestRail section    | `pull --section <name> --out <run folder>/cases`                                           |
 | Ticket key          | Cases whose `refs` include the key, in the story's ticket folder or a pull. None found → tell the user the story's cases lack refs; never swap in a whole section on your own. |
-| TestRail run `R<id>` | `list --run <id>` for statuses, then `pull --run <id> --out <run folder>/cases`. Default scope: cases Untested or Retest in the run. |
+| Bug key             | Cases whose `defects` name the key: blocks in `test-runs/*/results.md`, rows of `runs --refs <its story> --details`, and the Bug's TestRail web links. Their result blocks in this run keep the key in `defects`. The Bug's Steps to reproduce also run as a local case in `<run folder>/cases/<KEY>.test.md`, with the Bug's conditions as preconditions and no `testrail_id`, unless one of those cases has the same steps. |
+| TestRail run `R<id>` | `list --run <id>` for statuses, then `pull --run <id> --out <run folder>/cases`. Default scope: cases Untested or Retest in the run, and Failed too for fix verification. |
 | TestRail link       | Case link: that case. Section link: its `group_id` is the section ID that `list` prints; pull that section. A run link the user gives as the case list for a new run: `pull --run <id>`, without `testrail_run_id`. |
 
 Scope by kind of run:
 
 - New feature: every case of the story.
-- Fix verification: the failed cases, plus cases in the same flow.
+- Fix verification: the failed cases, plus the story's cases for the other branches and boundaries of the same flow. A flow that moves orders or money adds the cases that check buying power, fee, and order status after the action.
 - Regression: cases in the sections the change touches. No ticket says which areas changed → ask in the Step 2 message.
 - Smoke: cases with `smoke: yes`, or the ones the user names.
 
@@ -51,7 +52,9 @@ Platform of each case, from its `platform`: a web option runs in the browser, an
 
 Order the cases so setup is shared: group by precondition and start page, and put cases that delete or reset data last in their group.
 
-Write `results.md` per [Results Format](./references/results-format.md): one run block, then one `untested` result block per case in run order. For a TestRail run, set `testrail_run_id: R<id>` in the run block; without it, the push creates a new run. Set `milestone:` to the TestRail milestone named after the story's sprint, picked as `report-bug` picks it, or after the release for a regression. No milestone of that name → leave it out and say so in the plan. A case without `testrail_id` gets an empty `case:` and stays local; push it first with `sync-test-cases-with-testrail` to get its result onto TestRail.
+A case whose preconditions name a trading session (ATO, continuous, lunch break, ATC, PLO, or outside trading hours) runs only in that session's window. Group these cases by exchange and session, order the groups by window start, and run the other cases while waiting for a window. Window times come from the sessions listed in the QA workspace's `domain/index.md`; none listed → ask in the Step 2 message. Never hard-code session times: they differ by exchange and change with the market's rules.
+
+Write `results.md` per [Results Format](./references/results-format.md): one run block, then one `untested` result block per case in run order. For a TestRail run, set `testrail_run_id: R<id>` in the run block; without it, the push creates a new run. For a Bug key, use the run that holds the Bug's failed results when it is open and holds every case in scope. A closed run, or a case in scope outside it → a new run named `<KEY> retest` (every Bug key, comma-separated, when several), with refs the Bug and story keys. Set `milestone:` to the TestRail milestone named after the story's sprint, picked as `report-bug` picks it, or after the release for a regression. No milestone of that name → leave it out and say so in the plan. A case without `testrail_id` gets an empty `case:` and stays local; push it first with `sync-test-cases-with-testrail` to get its result onto TestRail.
 
 ### Step 2: Prepare the session
 
@@ -70,11 +73,11 @@ Show the plan as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays o
 - cases to run (count and list), and cases left out with the reason
 - environment URL, account, role, build, per platform, and the device for each mobile platform
 - cases that save, change, or delete data
-- run order, and parallel lanes if any
-- estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Add the last run's setup and waiting: its run time minus the sum of its `elapsed`. Count the cases with no number.
+- run order, each session group with its window's start time, and parallel lanes if any
+- estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Add the last run's setup and waiting: its run time minus the sum of its `elapsed`. Count the cases with no number. A run with session groups ends no earlier than its last group's window.
 - where results go: the TestRail run to create (name, milestone) or the existing run, or local only
 
-Ask before the first case only when the run creates a TestRail run, has cases in risky scope (Step 3) that save, change, or delete data, or has an open question: an environment or account no lesson file names (item 3), changed areas (Step 1), or which device ([Device Session](./references/device-session.md)). Put every such question in this one message. Otherwise show the plan and start.
+Ask before the first case only when the run creates a TestRail run, has cases in risky scope (Step 3) that save, change, or delete data, or has an open question: an environment or account no lesson file names (item 3), changed areas (Step 1), which device ([Device Session](./references/device-session.md)), or session times `domain/index.md` does not list (Step 1). Put every such question in this one message. Otherwise show the plan and start.
 
 ```
 ❓ Start the run?
@@ -91,7 +94,7 @@ Runner subagents run the cases, one batch of up to 10 cases at a time, in the sa
 
 Risky scope (money, sign-in and permissions, data hard to restore, personal data): the first batch is one happy path, one negative case, and one boundary case. Review them per Step 4 before the next batch. Fix a setup problem and rerun them; a case that needs a fix is `blocked`. Their results count for the run.
 
-Parallel lanes only when each lane has its own test account, the lanes share no data, and the accounts share no OTP device. A sequence that builds on itself (create, edit, cancel) stays in one lane. Each lane:
+Parallel lanes only when each lane has its own test account, the lanes share no data, and the accounts share no OTP device. A sequence that builds on itself (create, edit, cancel) stays in one lane. The trading session is one clock for every lane: no lane runs a session group before its window, so lanes never shorten a wait for one. Each lane:
 
 - opens its own session, `agent-browser --session <app>-qa-<n> --restore`, and never shares a `--profile` or `--state` file with another lane: shared cookies are one server session, so the lanes sign each other out.
 - on Android or iOS, has its own device and session `<app>-qa-<os>-<n>`: two lanes on one device take the screen from each other.
@@ -115,8 +118,9 @@ Per case:
 - Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
 - Write the result block right after the case, not at the end of the batch. Set `run_at` to the time of the verdict. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
 - After a reload, a new session, or a deploy notice, read the build again. Changed → set `build:` on the results after the change.
-- **The first cases all fail → check sign-in, role, data, and build before trusting any result.**
+- **The first cases all fail → check sign-in, role, data, build, and the market session (closed, or not the one the cases need) before trusting any result.**
 - A blocker stops only the cases that depend on it. Run every independent case.
+- A session case not finished inside its window stays `untested`, naming the next window, such as "ATC closed before step 3; next ATC 2026-11-16 14:30".
 - OTP, MFA, CAPTCHA, a step on the device itself, or any other step only a person can do: send the user one short message (case, step, what to do) and run other cases meanwhile. Still not done at the end → `blocked`, owner the user.
 - Never write a `passed` the runner did not observe.
 
@@ -155,7 +159,7 @@ The user asks only to create the run → Step 1, then this step with every block
 
 ### Step 6: Hand failed cases to report-bug
 
-- Hand every `failed` case to `report-bug` at once, with its result block and evidence. It drafts all the Bugs, and the Step 8 report carries its one question for the batch.
+- Hand every `failed` case to `report-bug` at once, with its result block and evidence, except a case whose `defects` already names the Bug that explains the failure, such as a `verify-bug` retest. It drafts all the Bugs, and the Step 8 report carries its one question for the batch.
 - The QC answers the report → `report-bug` creates the Bugs. Add each key to its block's `defects:` and push the keys through Step 5 in the same turn.
 
 ### Step 7: Save automation lessons
