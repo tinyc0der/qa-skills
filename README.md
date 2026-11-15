@@ -1,6 +1,6 @@
-# QA Skills for Manual QC
+# QA Skills for Vietcap Manual QC
 
-AI agent skills for manual QC engineers who work from Jira, Confluence, Figma, TestRail, and the running app, with no access to the product codebase. Forked from [testomatio/skills](https://github.com/testomatio/skills) by Testomat.io (MIT license).
+AI agent skills for manual QC engineers at Vietcap Securities, who test Vietcap's web and mobile apps from Jira, Confluence, Figma, TestRail, and the running app, with no access to the product codebase. Forked from [testomatio/skills](https://github.com/testomatio/skills) by Testomat.io (MIT license).
 
 ## Install
 
@@ -36,7 +36,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | Skill                       | Description                                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
 | `gather-context`            | Collect what every source says about a ticket or feature into a context file: sources, conflicts, open questions |
-| `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps, risks, acceptance criteria         |
+| `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps and open questions                  |
 | `qa-thinking`               | Analyze a ticket, requirement, or design from a QA perspective: edge cases, negative flows, abuse |
 | `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
 | `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing, differs, or is undocumented |
