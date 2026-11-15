@@ -26,7 +26,7 @@ Sources may come as pasted text, links, or MCP tools. Read Jira and Confluence t
 - Images the MCP cannot download and sections that come back empty: record them as not read. The first report that lists them asks for screenshots.
 - Linked documents: only the parts in the ticket's scope, and rules for every result of the screen.
 - Figma: screens, states, and UI copy. Read the frames of each component the ticket changes or gives a new state (picker, sheet, keyboard), not only the screen frames. Context files of related tickets list frames already found.
-- Live app: if the feature or the screens it changes are deployed, explore the related pages with the `agent-browser` skill. Take the non-production URL and account from the app's file in `automation-lessons/`; ask only when it has none. Navigate only; submit nothing that saves data unless the user agrees. Use screenshots the user shares. Declined → record the live app as not read.
+- Live app: if the feature or the screens it changes are deployed, explore the related pages with the `agent-browser` skill, or on Android and iOS with the `agent-device` skill as the Device Session reference of `run-test-suite` says. Take the non-production URL and account from the app's file in `automation-lessons/`; ask only when it has none. Navigate only; submit nothing that saves data unless the user agrees. Use screenshots the user shares. Declined → record the live app as not read.
 - Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app.
 - When these sources leave a gap, search as [Related Sources](./references/related-sources.md) describes.
 

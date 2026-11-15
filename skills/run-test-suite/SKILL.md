@@ -30,7 +30,7 @@ TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync
 
 ### Step 1: Select cases
 
-Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. Find the cases by source:
+Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. A folder of that name whose `results.md` has `untested` blocks or results not pushed → resume it. Any other existing folder → add `-2`, `-3`: reusing it would overwrite its TestRail result IDs. Find the cases by source:
 
 | Source              | Cases                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------ |
@@ -94,6 +94,8 @@ Runner subagents run the cases, one batch of up to 10 cases at a time, in the sa
 
 Risky scope (money, sign-in and permissions, data hard to restore, personal data): the first batch is one happy path, one negative case, and one boundary case. Review them per Step 4 before the next batch. Fix a setup problem and rerun them; a case that needs a fix is `blocked`. Their results count for the run.
 
+Security cases (the 🔐 pentest focus) run only with the run's own test accounts; a check that one account cannot reach another's data uses two of them. Never repeat failed logins or OTPs up to the lockout count, flood requests, or send input that changes data outside the run's accounts.
+
 Parallel lanes only when each lane has its own test account, the lanes share no data, and the accounts share no OTP device. A sequence that builds on itself (create, edit, cancel) stays in one lane. The trading session is one clock for every lane: no lane runs a session group before its window, so lanes never shorten a wait for one. Each lane:
 
 - opens its own session, `agent-browser --session <app>-qa-<n> --restore`, and never shares a `--profile` or `--state` file with another lane: shared cookies are one server session, so the lanes sign each other out.
@@ -115,6 +117,7 @@ Per case:
   - `C<id>-step<n>.png` right after a step that fails, a step judged from a screenshot, or a step whose value a later step replaces.
   - `C<id>.png` for the final state. Add `C<id>-02.png` for scrolled areas. Never zoom out or widen the viewport to fit a screenshot: it hides real overflow bugs.
 - A case run on several platforms keeps one result block, since TestRail holds one status per case. Each `observed` step covers every platform, such as `2 failed (web: fee 9,000; ios: no fee shown)`. The status comes from the worst platform. Screenshot names end in `-web`, `-android`, or `-ios`. `run_at` is the earliest verdict, and `elapsed` is the sum.
+- Builds that reach the platforms on different days → one run per platform, each with its own folder `<YYYY-MM-DD>-<slug>-<platform>` and TestRail run: a later pass on one platform would hide a fail on another.
 - Before `passed`, check every screenshot of the case per [UI Checks](./references/ui-checks.md#check-the-screenshots) and write the outcome in `checked`.
 - Write the result block right after the case, not at the end of the batch. Set `run_at` to the time of the verdict. Set `elapsed` to the case's own time, without waits for the user or reruns caused by the agent.
 - After a reload, a new session, or a deploy notice, read the build again. Changed → set `build:` on the results after the change.

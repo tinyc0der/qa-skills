@@ -64,14 +64,14 @@ On a match, propose the action in the Step 4 message, and write only after the u
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
 - If the story has a context file (`tickets/<KEY>-*/context.md`), read it and the sources it lists.
 - The expected behavior is not obvious and the story does not define it → a confirmed rule in `domain/` gives it, read as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says. No rule → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
-- Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
+- A non-production environment: reproduce on the web with the `agent-browser` skill, or on Android and iOS with the `agent-device` skill as the Device Session reference of `run-test-suite` says. Ask before any action that saves data.
   - Read the app's file in `automation-lessons/` first, if there is one.
   - Use the same screen, tab, filters, data, and build as the report.
   - Redo what the reporter did before the failing step, not only the numbered steps.
   - Record displayed values read from the app, not impressions from a screenshot.
   - Read the build from the app's version string, not from the environment name.
   - A different result on a similar but different screen is a separate finding. Report "not reproduced" only with the conditions set up, and ask whether to file from the user's evidence.
-- Other platforms or production: work from the user's evidence and ask for what is missing.
+- Production: work from the user's evidence and ask for what is missing.
 - Failed TestRail case: take the result comment, build, and evidence from its block in `test-runs/*/results.md`. No results file → take them from the user.
 
 ### Step 4: Draft the Bug
@@ -84,7 +84,7 @@ Writing rules:
 
 - Follow the Steps and Tone sections of [Writing Rules](../qa-write-test-cases/references/writing-rule.md). Where they differ from the Bug Report Format, the format wins.
 - Write in the language the user asks for. Otherwise use the language of the project's existing Bugs. Keep Jira field names as Jira shows them.
-- Setup steps hold only the account, data, and settings the defect depends on. Never passwords.
+- Setup steps hold only the account, data, and settings the defect depends on. Never passwords, tokens, cookies, or `Authorization` headers.
 - Actual holds observations only: values, messages, error codes, requests. Never a guessed cause.
 - Leave out correct behavior around the defect, effects on other screens, timestamps from the run, a second example of the same point, and repeats on other data.
 - Never name the story, page, or criterion that defines the expected behavior. Never mention TestRail cases, runs, or results, local files, skill names, or agent actions.

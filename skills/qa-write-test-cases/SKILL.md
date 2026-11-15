@@ -91,7 +91,7 @@ When Step 1 found existing cases for the feature and the scope is not smoke, the
 | **🎨 picasso**     | **ui/ux**                                |
 | **⚖️ lawyer**      | **texts**, error messages, typos, etc.   |
 | **🌐 polyglot**    | **localization**, translations           |
-| **📈 performance** | **performance**, slow pages, timeouts    |
+| **📈 performance** | **performance**, slow pages, timeouts; one user's timing, not load |
 | 🔧 other           | **specify your own role**                |
 
 ### Step 4: Generate checklist
