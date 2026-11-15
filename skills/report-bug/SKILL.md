@@ -66,7 +66,7 @@ On a match, propose the action in the Step 4 message, and write only after the u
 - The expected behavior is not obvious and the story does not define it → a confirmed rule in `domain/` gives it, read as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says. No rule → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - A non-production environment: reproduce on the web with the `agent-browser` skill, or on Android and iOS with the `agent-device` skill as the Device Session reference of `run-test-suite` says. Ask before any action that saves data.
   - Read the app's file in `automation-lessons/` first, if there is one.
-  - Use the same screen, tab, filters, data, and build as the report.
+  - Use the same screen, tab, filters, data, build, account type, trading session, and order state as the report. The report's session window has passed → reproduce in the next one or ask, never report "not reproduced" from another session.
   - Redo what the reporter did before the failing step, not only the numbered steps.
   - Record displayed values read from the app, not impressions from a screenshot.
   - Read the build from the app's version string, not from the environment name.
@@ -85,7 +85,7 @@ Writing rules:
 - Follow the Steps and Tone sections of [Writing Rules](../qa-write-test-cases/references/writing-rule.md). Where they differ from the Bug Report Format, the format wins.
 - Write in the language the user asks for. Otherwise use the language of the project's existing Bugs. Keep Jira field names as Jira shows them.
 - Setup steps hold only the account, data, and settings the defect depends on. Never passwords, tokens, cookies, or `Authorization` headers.
-- Actual holds observations only: values, messages, error codes, requests. Never a guessed cause.
+- Actual holds observations only: values, messages, error codes, requests. Never a guessed cause. For money or an order, state the amount off for one order.
 - Leave out correct behavior around the defect, effects on other screens, timestamps from the run, a second example of the same point, and repeats on other data.
 - Never name the story, page, or criterion that defines the expected behavior. Never mention TestRail cases, runs, or results, local files, skill names, or agent actions.
 
@@ -93,11 +93,11 @@ Priority and severity:
 
 - Propose each separately, with a reason. Never derive one from the other.
 - Use only values the project's Jira offers.
-- The table supports the priority proposal. Anything touching money or balances starts at Critical and goes lower only with a reason.
+- The table supports the priority proposal. Anything touching money, balances, or orders starts at Critical and goes lower only with a reason.
 
 | Priority | Signs                                                          |
 | -------- | -------------------------------------------------------------- |
-| Critical | Wrong money or balance, data loss, core flow blocked, security |
+| Critical | Wrong money, balance, order, or matched quantity; an order accepted in a blocked session; data loss; core flow blocked; security |
 | High     | Main flow wrong with a workaround; wrong figures displayed     |
 | Medium   | Secondary flow, or only under narrow conditions                |
 | Low      | Display, typos, layout                                         |
