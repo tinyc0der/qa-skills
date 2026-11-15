@@ -52,7 +52,7 @@ Platform of each case, from its `platform`: a web option runs in the browser, an
 
 Order the cases so setup is shared: group by precondition and start page, and put cases that delete or reset data last in their group.
 
-A case whose preconditions name a trading session (ATO, continuous, lunch break, ATC, PLO, or outside trading hours) runs only in that session's window. Group these cases by exchange and session, order the groups by window start, and run the other cases while waiting for a window. Window times come from the sessions listed in the QA workspace's `domain/index.md`; none listed → ask in the Step 2 message. Never hard-code session times: they differ by exchange and change with the market's rules.
+A case whose preconditions name a trading session (ATO, continuous, lunch break, ATC, PLO, or outside trading hours) runs only in that session's window. Group these cases by exchange and session, order the groups by window start, and run the other cases while waiting for a window. Window times come from the trading sessions topic file that the QA workspace's `domain/index.md` lists. No time there for an exchange and session the run needs → ask in the Step 2 message. Hand the times the QC types to `save-domain-knowledge` so later runs do not ask again; the Step 8 report carries its question. Never hard-code session times: they differ by exchange and change with the market's rules.
 
 Write `results.md` per [Results Format](./references/results-format.md): one run block, then one `untested` result block per case in run order. For a TestRail run, set `testrail_run_id: R<id>` in the run block; without it, the push creates a new run. For a Bug key, use the run that holds the Bug's failed results when it is open and holds every case in scope. A closed run, or a case in scope outside it → a new run named `<KEY> retest` (every Bug key, comma-separated, when several), with refs the Bug and story keys. Set `milestone:` to the TestRail milestone named after the story's sprint, picked as `report-bug` picks it, or after the release for a regression. No milestone of that name → leave it out and say so in the plan. A case without `testrail_id` gets an empty `case:` and stays local; push it first with `sync-test-cases-with-testrail` to get its result onto TestRail.
 
@@ -77,7 +77,7 @@ Show the plan as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays o
 - estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Add the last run's setup and waiting: its run time minus the sum of its `elapsed`. Count the cases with no number. A run with session groups ends no earlier than its last group's window.
 - where results go: the TestRail run to create (name, milestone) or the existing run, or local only
 
-Ask before the first case only when the run creates a TestRail run, has cases in risky scope (Step 3) that save, change, or delete data, or has an open question: an environment or account no lesson file names (item 3), changed areas (Step 1), which device ([Device Session](./references/device-session.md)), or session times `domain/index.md` does not list (Step 1). Put every such question in this one message. Otherwise show the plan and start.
+Ask before the first case only when the run creates a TestRail run, has cases in risky scope (Step 3) that save, change, or delete data, or has an open question: an environment or account no lesson file names (item 3), changed areas (Step 1), which device ([Device Session](./references/device-session.md)), or session times `domain/` does not hold (Step 1). Put every such question in this one message. Otherwise show the plan and start.
 
 ```
 ❓ Start the run?
@@ -174,7 +174,7 @@ Update `automation-lessons/<app>.md` per [Automation Lessons](./references/autom
 
 Lay it out as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says:
 
-1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, cases that need a fix, cases that differ locally (Step 1), story comments to post (Step 4), results not pushed.
+1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, cases that need a fix, cases that differ locally (Step 1), session times to save (Step 1), story comments to post (Step 4), results not pushed.
 2. Counts by status, zeros included, the TestRail run link, and run time against the estimate. Part of an existing run: this run's counts, then the run's totals. Cases left out because they already had a result: count by status, outside this run's counts.
 3. Failed: one line per case, with its title, failing step, Expected vs Actual, and Bug key or "Bug pending".
 4. Blocked: one line per case, with the reason, owner, and what unblocks it. Untested: case and reason.

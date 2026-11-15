@@ -57,6 +57,7 @@ Run the [`gather-context`](../gather-context/SKILL.md) skill for the feature. It
 Items follow the context file:
 
 - Expected results follow the side each conflict names.
+- An expected result may come from a confirmed rule from `domain/` that the context file lists. Cite the rule's ID as its source.
 - An item that depends on an open conflict or an open question is `ask`. A reversed acceptance criterion gets one `ask` item that checks what both sides keep.
 - Record new doubts, rules left without a checklist item, and the user's answers to `ask` findings in the context file, as [Context File](../gather-context/references/context-file.md) describes.
 

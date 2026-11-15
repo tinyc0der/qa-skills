@@ -38,6 +38,7 @@ A catalog's README `Type` names its source. Default folders: `catalog/` and `mis
 - Jira catalog: the feature's other issues, read as context.
 - TestRail catalog: see Existing test cases.
 - Mismatch pages (`mismatches/mismatches/README.md`): read the ones for the feature. They are known conflicts.
+- Domain rules: read `domain/index.md`, then only the topic files whose line matches the ticket. Read each rule as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says.
 
 #### Existing test cases
 
@@ -54,6 +55,7 @@ Find the TestRail cases that already test the feature, with the `sync-test-cases
 - The ticket is the primary source. Where another source contradicts it, the ticket wins.
 - Silence is not conflict: a source that states a behavior the ticket does not mention gives that behavior. When that source predates the ticket and the ticket does not link it, the behavior is an open question.
 - Released stories of the same screen and their fixed bugs are current behavior. For parts the ticket does not change, they rank above spec pages.
+- A confirmed rule in `domain/` is current behavior too, and ranks with released stories. Where the ticket changes the rule, the ticket wins, and its `Conflicts` entry names the rule ID as stale from the ticket's release.
 - Labels and layout follow the design, else the spec's field table or existing cases. Behavior and messages follow the ticket; displayed values, the set of fields, filters, and orders behavior depends on are behavior. Labels on a screen another story built follow that story.
 - Ticket parts in conflict: a later sub-task or comment that narrows the plan wins. One that reverses an acceptance criterion's outcome for the same input is an open conflict that follows neither side. A part listing fewer options is silent on the rest.
 - Other sources in conflict: follow the newest. The conflict stays open.
@@ -64,6 +66,8 @@ Save it in the ticket's folder ([Ticket Folder](./references/ticket-folder.md)),
 
 ### 5. Report
 
-Report, as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out, the file's path, the sources not read, and the conflicts and open questions that change expected behavior. The file holds the rest. Do not ask for approval.
+Report, as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out, the file's path, the sources not read, and the conflicts and open questions that change expected behavior. The file holds the rest. Do not ask for approval of the context file.
+
+Hand to [`save-domain-knowledge`](../save-domain-knowledge/SKILL.md) what this run adds that holds beyond the ticket: answers it moves into `Answers`, and confirmed rules the ticket changes. An earlier run offered the rest. It drafts the entries, and the report carries its one question.
 
 Run by another skill: hand the report to that skill instead of messaging the QC. Its own message carries what matters.
