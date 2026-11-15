@@ -7,23 +7,6 @@ description: Route manual QA work across the QA skills, from requirements in Jir
 
 Orchestrates the test case lifecycle by routing requests to specialized skills and suggesting next steps. A ticket's flows start from real events in the QC's work and span many conversations: each flow ends when its deliverable exists.
 
-## Specialized Skills
-
-| Skill                           | Purpose                                                                     |
-| ------------------------------- | --------------------------------------------------------------------------- |
-| `gather-context`                | Collect a ticket's sources, conflicts, and open questions into a context file |
-| `review-user-story`             | Review a user story for gaps and testability; feedback to the PO            |
-| `catalog-features`              | Catalog the features of one source                                          |
-| `detect-product-mismatches`     | Compare sources with each other and record mismatches                       |
-| `qa-write-test-cases`           | Generate new test cases and checklists from requirements                    |
-| `improve-test-cases`            | Improve existing test cases quality                                         |
-| `detect-duplicate-test-cases`   | Find duplicate, near-duplicate, and overlapping test cases                  |
-| `sync-test-cases-with-testrail` | Push test cases to TestRail, list existing cases, pull them into files      |
-| `run-test-suite`                | Run test cases on the live app and push the results to a TestRail run       |
-| `report-bug`                    | Create a Jira Bug from a failed case or a live app defect                   |
-| `plan-qc-subtasks`              | Create the QC's subtasks in Jira, estimate story points, and set dates      |
-| `agent-browser`                 | Check behavior on the live app in a browser                                 |
-
 ## Routing
 
 - Start from the QC's intent: the deliverable they want and where it ends up. Match it to a flow below, or to a skill, then suggest its next actions.
@@ -39,13 +22,6 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Dev fixed a bug** → follow the Bug Fix Flow.
 - **Continue a ticket** ("continue <KEY>", what is left on a ticket) → follow the Continue Ticket Flow.
 - **Story ready to sign off, or a test status report** → no skill covers these yet. Say so.
-- **Gather context** (what is known about a ticket, its sources, its open questions) → route to the `gather-context` skill.
-- **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
-- **Catalog features of a source** (a Jira project, a Confluence space, a TestRail suite, the live app) → route to the `catalog-features` skill.
-- **Compare sources** (Jira, Confluence, Figma, TestRail, the live app: not implemented, differs, unspecified, undocumented) → route to the `detect-product-mismatches` skill.
-- **Run test cases** (a build is ready, a suite, a ticket's cases, regression, smoke, a TestRail run) → route to the `run-test-suite` skill.
-- **Report a bug** (a failed case, a defect in the live app, a screenshot of an error) → route to the `report-bug` skill.
-- **Plan QC work in Jira** (stories to test, QC subtasks, their story points or dates) → route to the `plan-qc-subtasks` skill.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
 
 ## Basic Flows
@@ -115,69 +91,7 @@ User: says "continue <KEY>", or asks what is left on a ticket
    - no QA review comment from the QC on the story, or no cases with refs <KEY> on TestRail → Assigned Story Flow
    - a story comment answers an `asked` question the cases lack → PO Answer Flow
    - `plan-qc-subtasks` finds something to write → Dev Dates Flow
-   - a failed result in `test-runs/` without a Bug key → the Bug drafts of the Test Run Flow (with `report-bug` skill)
+   - a failed result in `test-runs/` without a Bug key → draft its Bugs (with `report-bug` skill)
    - a Bug linked to the story that Dev marked fixed, with no results after it → Bug Fix Flow
 3. Run those flows in this order. None found: name the event the ticket waits for.
-```
-
-### Test Generation Flow
-
-```
-User: asks to generate/create test cases/checklist
-=>
-Use `qa-write-test-cases` skill to proceed with test case, checklist generation
-=>
-After generation fully completed, pick the next step from:
-1. ⬆️ Push the new test cases to TestRail, when the checklist gate did not (with `sync-test-cases-with-testrail` skill)
-2. 🧹 Check for duplicate/overlapping cases (with `detect-duplicate-test-cases` skill)
-3. 🎭 Generate specific test cases using `qa-write-test-cases` skill and role name
-```
-
-### Test Case Improvement Flow
-
-```
-User: asks for test cases improvement, improve quality, make test cases better
-=>
-Use `improve-test-cases` skill to proceed with test case improvement
-=>
-After improvement step fully completed, pick the next step from:
-1. ⬆️ Push the updated test cases to TestRail (with `sync-test-cases-with-testrail` skill)
-2. 🧹 Check for duplicate/overlapping cases (with `detect-duplicate-test-cases` skill)
-```
-
-### Test Run Flow
-
-```
-User: says a build is ready, or asks to run test cases, a suite, regression, smoke, or a TestRail run
-=>
-Use `run-test-suite` skill to run the cases on the live app and push the results to TestRail
-=>
-After the run fully completed, pick the next step from:
-1. 🐞 Answer the Bug drafts the run's report carries (with `report-bug` skill)
-2. ✏️ Fix the cases marked "case needs fix" (with `improve-test-cases` skill)
-```
-
-### Duplicate Detection Flow
-
-```
-User: asks to find duplicates, overlapping or redundant test cases
-=>
-Use `detect-duplicate-test-cases` skill to identify exact, near-duplicate and subset cases
-=>
-After detection fully completed, pick the next step from:
-1. ✏️ Improve/merge the surviving test cases (with `improve-test-cases` skill)
-2. ⬆️ Push the cleaned-up suite to TestRail (with `sync-test-cases-with-testrail` skill)
-```
-
-### Sync with TestRail Flow
-
-```
-User: asks to push test cases to TestRail, list existing TestRail cases, or pull them into files
-=>
-Use `sync-test-cases-with-testrail` skill with its `push`, `list`, or `pull` command
-=>
-After the sync fully completed, pick the next step from:
-1. ✏️ Improve the pulled test cases (with `improve-test-cases` skill)
-2. 🧹 Check the pulled suite for duplicates (with `detect-duplicate-test-cases` skill)
-3. 📝 Generate test cases for features that have none in TestRail (with `qa-write-test-cases` skill)
 ```
