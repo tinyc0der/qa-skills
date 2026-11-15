@@ -63,15 +63,17 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | -------------------------- | --------------------------------------------------------------------------------------------- |
 | `testing-workflow`         | Orchestrate the test case lifecycle: requirements review, generation, improvement, TestRail sync |
 | `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
+| `message-the-qc`           | When the skills stop to ask you, and how every message to you is laid out                     |
 
 ## Typical flow
 
 1. Review the Jira story with `review-user-story` and post the feedback to the PO. Use `qa-thinking` for your own risk scenarios. Both start with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
-2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Open questions left in the context file go back to the PO through `review-user-story`.
-3. Push to TestRail with `sync-test-cases-with-testrail` after a dry run.
-4. Run the cases on the live app with `run-test-suite`. It pushes the results to a TestRail run.
-5. File a Jira Bug for each failed case, with `report-bug`.
-6. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Open questions left in the context file go back to the PO through `review-user-story`.
+3. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
+4. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
+5. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+
+Skills stop only for input only you have and for writes others see that cannot be undone, and ask everything pending in one message. See the [`message-the-qc`](./skills/message-the-qc/SKILL.md) skill.
 
 ## Claude Code plugins
 
@@ -79,9 +81,9 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `gather-context`, `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches` |
-| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking` |
-| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`, `gather-context`                                   |
+| `requirements`    | `gather-context`, `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`, `message-the-qc` |
+| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking`, `message-the-qc` |
+| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`, `gather-context`, `message-the-qc`                 |
 
 ## Repository structure
 

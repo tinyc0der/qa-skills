@@ -19,9 +19,9 @@ Mobile cases run with the `agent-device` skill: Android on a real device or an e
 2. The device the lesson file names for this environment.
 3. `agent-device devices --platform <android|ios>` lists exactly one device: use it and add it to the lesson file.
 
-Several devices and none named: ask the user once.
+Several devices and none named: ask in the plan message (Step 2 of the skill).
 
-A real iPhone needs the one-time setup in `help physical-device`. Not set up: the iPhone's cases are `blocked`, owner the user. A simulator stands in only when the user agrees, since camera, push, and hardware behavior differ.
+A real iPhone needs the one-time setup in `help physical-device`. Not set up: the iPhone's cases are `blocked`, owner the user. A simulator stands in only when the user agrees in the plan message, since camera, push, and hardware behavior differ.
 
 ## Open the App
 

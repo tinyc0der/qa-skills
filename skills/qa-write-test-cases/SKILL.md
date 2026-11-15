@@ -17,19 +17,9 @@ References:
 ## User interaction
 
 - **Always generate a checklist before test cases**, even if the user asks for test cases directly.
-- **Do not skip steps. Get user approval at each gate before moving to the next step.**
+- **The checklist (Step 4) is the one approval gate.** Scope, role, and destination are defaults the checklist message states, and the QC changes them in the same reply.
+- Stop and write to the QC as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says.
 - Write the checklist and test cases in the language the user asks for. Otherwise use the language of existing test cases, then of the requirements.
-- Use the Ask tool for choices when available.
-- Fill input fields with suggestions when asking the user for input.
-- Mark questions with ❓ and numbered options:
-
-```
-❓ Do you want to:
-
-1. action 1
-2. action 2
-3. type something else
-```
 
 ## Self review
 
@@ -39,25 +29,25 @@ Loop until a review finds nothing to fix:
 
 1. Review: re-read the checklist or the written files item by item against every check. Write each finding in the Review Checklist's findings format.
 2. Fix: start a fresh fixer subagent, never one from an earlier round. Give it the `fix` findings, the paths of the files they name, the context file, and the Review Checklist. For the checklist, give it the checklist text, and it returns the fixed checklist. It applies only the listed findings.
-3. Keep `ask` findings for the user. Do not act on them.
+3. Keep `ask` findings out of the fixes. Do not act on them.
 
-After the third fix, review once more and stop. Show the user only the `ask` findings and the `fix` findings still open, not the review or the fixes made.
+After the third fix, review once more and stop. Show the user only the `ask` findings and the `fix` findings still open, not the review or the fixes made. An `ask` on a fact no source gives, or on an open conflict, is the PO's: record it in the context file's open questions, keep its item `ask`, and count it instead of asking the QC.
 
 Without subagents, apply the fixes yourself.
 
 ## Workflow
 
 1. Gather context into a context file
-2. Ask for coverage scope — approval gate
-3. Ask for role if any test cases for the feature exist; always skipped for smoke
-4. Generate checklist — self review, then approval gate
+2. Choose coverage scope — default
+3. Choose role — default
+4. Generate checklist — self review, then the approval gate
 5. Generate detailed test cases
 6. Review test cases — self review
-7. Show summary
+7. Push and summarize
 
 ### Step 1: Gather context
 
-Run the [`gather-context`](../gather-context/SKILL.md) skill for the feature. Show its report above the Step 2 question.
+Run the [`gather-context`](../gather-context/SKILL.md) skill for the feature. Its report goes into the checklist message header (Step 4).
 
 Items follow the context file:
 
@@ -65,54 +55,23 @@ Items follow the context file:
 - An item that depends on an open conflict or an open question is `ask`. A reversed acceptance criterion gets one `ask` item that checks what both sides keep.
 - Record new doubts, rules left without a checklist item, and the user's answers to `ask` findings in the context file, as [Context File](../gather-context/references/context-file.md) describes.
 
-### Step 2: Ask for coverage scope
+### Step 2: Choose coverage scope
 
-The scope sets the initial checklist size; the user can still fine-tune it in Step 4.
+Use the scope the user named: a tier, a number ("around 10"), or a description ("just the API contract, no UI"). Otherwise use ⚖️ Balanced. Do not ask.
 
-- **Compute approximate test counts per tier from your Step 1 analysis. Do not use generic or hardcoded ranges** — the numbers must reflect the specific feature under test.
-- If you can't reasonably estimate (feature too vague, context too thin), say so and either omit the numbers or go back to Step 1.
-- If the user picks ✏️ Other, accept a number ("around 10") or a free-form description ("just the API contract, no UI") and size the checklist from it.
+| Tier          | Covers                                                                                                                          |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 🚀 Smoke      | Critical path only                                                                                                              |
+| ⚖️ Balanced   | Happy path, alternative flows, key negative and common edge cases                                                               |
+| 🧨 Exhaustive | Full coverage incl. error states, boundaries, invalid input combinations, empty and default states, and UI/security/perf/i18n where relevant |
 
-Show each option as a block: bold label with test count on the first line, description on the next. Replace `<N>` with your estimates:
+**Estimate each tier's test count from your Step 1 analysis, never from generic ranges.** The checklist message shows the other tiers' counts so the QC can switch. Context too thin to estimate → leave the counts out and say why.
 
-```markdown
-❓ **How much coverage do you want?**
+### Step 3: Choose role
 
-**1. 🚀 Smoke** ~<N> tests
-Critical-path only
+Use the role or focus the user named, such as "security edge cases". Otherwise use ⚙️ default. Do not ask.
 
-**2. ⚖️ Balanced** ~<N> tests
-Happy path, alternative flows, key negative and common edge cases
-
-**3. 🧨 Exhaustive** ~<N> tests
-Full coverage incl. error states, boundaries, invalid input combinations, empty and default states, and UI/security/perf/i18n where relevant
-
-**4. ✏️ Other**
-Type a number of tests, or describe scope in your own words
-```
-
-### Step 3: Ask for role
-
-Ask for a role only when Step 1 found existing test cases for the feature under test. The basics are already covered, so the user may want a specific angle. Skip it when TestRail was not read.
-
-Also skip this step for "smoke" scope.
-
-If the user already named a role or focus (in the prompt or via ✏️ Other in Step 2, e.g. "security edge cases"), apply the matching role without asking.
-
-When ask for a role:
-
-- Show the roles (markdown table with name and short description) and ask the user to pick one. Recommend a role based on context and on what the existing test cases don't cover yet.
-- Use ⚙️ default if the user does not specify a role.
-- If the user selects 🔧 other, ask them to define a custom role.
-- If you show only some roles, add a "Show all available roles" option:
-
-```
-❓ Choose role:
-
-1. default (or recommended role based on context)
-2. ☰ Show all available roles
-3. ✏️ Type role name
-```
+When Step 1 found existing cases for the feature and the scope is not smoke, the checklist message names the one role that would add the most beyond them, so the QC can switch to it.
 
 #### Roles
 
@@ -162,41 +121,35 @@ Example:
 
 #### Self review
 
-Run [Self review](#self-review) on the checklist. Skip it when the user only removed or reworded items. Show the findings it leaves for the user above the approval question.
+Run [Self review](#self-review) on the checklist. Skip it when the user only removed or reworded items.
 
 #### Approval gate
 
-- If a multi-select/checkbox Ask tool is available: present leaf items as checkboxes, prefixed with number, priority and category (e.g. `2.1 🔴 Login: valid email`), with the recommended subset for the chosen tier pre-checked. The ticked items become the test cases in Step 5.
-- Otherwise: show the markdown checklist and ask the user to add/remove/change items.
+One message, in this order:
 
-Always ask about the amount of cases / level of detail:
+1. Header, one line each: scope and item count, with the other tiers' counts; role, and the role Step 3 recommends; destination section (Step 5); sources not read; count of `ask` items waiting on the PO.
+2. The findings Self review leaves for the QC, as numbered questions.
+3. The checklist.
+4. The question:
 
 ```
-❓ Do you want to:
+❓ Write the test cases?
 
-1. 👍 Keep as is
-2. ➖ Less details
-3. ➕ More details
-4. ✏️ Type anything you want to change
+1. ✅ Write and push to TestRail
+2. 📝 Write only
+3. ✏️ Type changes: item numbers to drop, items to add, another tier, role, or section
 ```
 
+- Items only removed or reworded, or another section → apply the change and go to Step 5 without asking again. Push in Step 7 only when the reply says to push.
+- Items added, or another tier or role → regenerate (Step 4) and ask again.
+- The user asked only for a checklist → leave out the question, end here, and offer the test cases in one line.
 - More details → enable the 🤓 nerd role.
-- User modifies the checklist → regenerate (Step 4).
 - User not satisfied → go back to Step 1 for more context.
-- Approved → Step 5.
+- Option 1 also approves the Step 7 push of exactly these cases to the section the header names.
 
 ### Step 5: Generate detailed test cases
 
-If the user originally asked only for a checklist, first ask: "Do you want to generate test cases for this checklist?"
-
-If Step 1 found existing cases, ask:
-
-```
-❓ Where do the new test cases go?
-
-1. ➕ Expand section Checkout › Payment
-2. 🆕 Create a new section
-```
+Destination, named in the checklist header: the section where Step 1 found the feature's cases, expanded; otherwise a new section named after the feature.
 
 Write test case files to the ticket's folder ([Ticket Folder](../gather-context/references/ticket-folder.md)).
 
@@ -209,7 +162,7 @@ Generation rules:
 - Multiple features or whole product → one file per feature.
 - When the user chose to expand an existing section, `pull --section <section> --out <ticket folder>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
 - When pulled cases carry `platform:`, the project keeps one section tree per feature for all platforms. Add the new platform's tests to those subsections; do not create a section per platform.
-- A new section with several suites: tell the user to push with `--parent-section "<feature name>"` so the suites nest under one section.
+- A new section with several suites: push with `--parent-section "<feature name>"` so the suites nest under the one section the header named.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.
 
 Format rules:
@@ -224,10 +177,8 @@ Format rules:
 
 Run [Self review](#self-review) on the new test cases. Before each review, run `check` of the `sync-test-cases-with-testrail` skill on the files and fix what it reports.
 
-### Step 7: Show summary
+### Step 7: Push and summarize
 
-- Show the number of test cases and suites, and the generated files.
-- Ask the user to review the files and request changes if needed.
-- List the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as suggested additions and questions.
-- Suggest pushing the test cases to TestRail with the `sync-test-cases-with-testrail` skill.
-- When the context file has open questions or open conflicts, suggest sending them to the PO with the `review-user-story` skill.
+- Push approved at the gate → push the files with the `sync-test-cases-with-testrail` skill. The gate approved creating these cases in that section and nothing else. A dry run that does more, such as updating any case (pulled legacy cases convert to the steps template) or creating another section, stops and shows what it would change.
+- Summary, in this order: the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as questions; the number of test cases and suites, the files, and the TestRail section link when pushed.
+- Next step: open questions or open conflicts in the context file → send them to the PO with the `review-user-story` skill. Otherwise, run the cases when the build is ready. Not pushed → push with `sync-test-cases-with-testrail`.

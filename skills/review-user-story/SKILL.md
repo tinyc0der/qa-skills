@@ -77,8 +77,15 @@ Do not:
 
 ### 6. Send the feedback to the PO
 
-- Show the review to the user first.
+- Show the review to the user first, with the question below. Run inside the testing workflow, the question waits for the checklist and goes in the same message.
 - **Post it only after the user approves**, as one comment on the story through the Atlassian MCP.
+
+```
+❓ Post this review as a comment on <KEY>?
+
+1. ✅ Post
+2. ✏️ Type changes
+```
 - The comment is the only write to Jira. Never edit the story's description, fields, or subtasks.
 - After posting, add each gap and ambiguity the comment raised to the context file's open questions or conflicts, marked `asked` as [Context File](../gather-context/references/context-file.md) describes.
 

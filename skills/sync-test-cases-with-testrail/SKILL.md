@@ -53,7 +53,7 @@ node <skill>/scripts/testrail.mjs runs [--refs <keys>] [--milestone <name>] [--s
 
 1. Run `check` on the files and fix what it reports.
 2. Run `push --dry-run`.
-3. The plan creates sections or cases: show the user the plan. **Push only after the user confirms it.** New sections and cases stay in a shared TestRail project.
+3. The plan creates sections or cases: show the user the counts per section, not the dry-run output. **Push only after the user confirms it.** New sections and cases stay in a shared TestRail project. An approval the user already gave for exactly these cases and section, such as option 1 at the `qa-write-test-cases` checklist gate, is that confirmation.
 4. The plan only updates your own cases, or cases with no owner: push without asking.
 5. The dry-run marks an update to a case another QC owns with `needs --confirm-others`. Show the user each one with its owner and what changes. Push it only if they say yes, by passing its ID in `--confirm-others`. Never confirm one on their behalf. A case they decline: leave it out of the files, or revert its local edit.
 6. Run `push` with the same files and options.

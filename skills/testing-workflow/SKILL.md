@@ -28,7 +28,8 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 
 - Match the request to a flow below. Delegate to that flow's skill, then suggest its next actions.
 - Flows are examples, not exhaustive. Combine or extend them when a request spans several tasks.
-- When suggesting next steps, take into account the flows, context, user request, and results of previous steps.
+- When suggesting next steps, take into account the flows, context, user request, and results of previous steps. Suggest the one next step that fits.
+- Stop and write to the QC as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says.
 - **Assigned ticket** (a ticket to test from start to finish) → follow the Assigned Ticket Flow.
 - **Gather context** (what is known about a ticket, its sources, its open questions) → route to the `gather-context` skill.
 - **Review a user story** (gaps, testability, feedback to the PO) → route to the `review-user-story` skill.
@@ -43,18 +44,23 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 
 ### Assigned Ticket Flow
 
-Run one step at a time. After each, suggest the next one.
+Run the steps back to back. Stop only where a step needs the QC, and put every question pending at that point in one message.
 
 ```
 User: is assigned a ticket, or asks to test one from start to finish
 =>
-1. 🔎 Review the story and send the feedback to the PO (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Add `qa-thinking` when the user wants risk scenarios.
-2. 📝 Write test cases (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO.
-3. ❓ Open questions or open conflicts left in the context file → send them to the PO (with `review-user-story` skill)
-4. 💬 PO replied → re-run `gather-context`, then update the `ask` test cases from the context file's `Answers`
-5. ⬆️ Push to TestRail (with `sync-test-cases-with-testrail` skill)
-6. ▶️ Build ready → run the cases (with `run-test-suite` skill)
-7. 🐞 File a Jira Bug for each failed case (with `report-bug` skill). Fix the cases marked "case needs fix" (with `improve-test-cases` skill).
+1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Add `qa-thinking` when the user wants risk scenarios. Do not stop for the post question.
+2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review draft.
+   ⏸ Stop 1: one message with the review, then the checklist, then one question for both:
+      ❓ Post the review and write the cases?
+      1. ✅ Post the review, write the cases, and push them to TestRail
+      2. 📝 Post the review and write the cases, no push
+      3. ✏️ Type changes to the review or the checklist
+3. 💬 Do only what the answer approved: post the review, write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
+   ⏸ Stop 2: report the cases, and ask the QC to say when the build is ready.
+4. 💬 Each later request on the ticket → re-run `gather-context` first. PO replies in the story's comments update the `ask` test cases, which then get pushed.
+5. ▶️ Build ready → run the cases (with `run-test-suite` skill). Its one question, when it needs one, comes before the first case.
+6. 🐞 The run's report carries the Bug drafts for its failed cases: one answer creates them all. Fix the cases marked "case needs fix" (with `improve-test-cases` skill).
 ```
 
 ### Test Generation Flow
@@ -64,8 +70,8 @@ User: asks to generate/create test cases/checklist
 =>
 Use `qa-write-test-cases` skill to proceed with test case, checklist generation
 =>
-After generation fully completed, suggest next actions:
-1. ⬆️ Push the new test cases to TestRail (with `sync-test-cases-with-testrail` skill)
+After generation fully completed, pick the next step from:
+1. ⬆️ Push the new test cases to TestRail, when the checklist gate did not (with `sync-test-cases-with-testrail` skill)
 2. 🧹 Check for duplicate/overlapping cases (with `detect-duplicate-test-cases` skill)
 3. 🎭 Generate specific test cases using `qa-write-test-cases` skill and role name
 ```
@@ -77,7 +83,7 @@ User: asks "what could go wrong?", "what am I missing?", or "review this as QA"
 =>
 Use `qa-thinking` skill to surface edge cases, negative flows, abuses and risk scenarios
 =>
-After analysis fully completed, suggest next actions:
+After analysis fully completed, pick the next step from:
 1. 📝 Generate test cases from the scenarios (with `qa-write-test-cases` skill)
 ```
 
@@ -88,7 +94,7 @@ User: asks for test cases improvement, improve quality, make test cases better
 =>
 Use `improve-test-cases` skill to proceed with test case improvement
 =>
-After improvement step fully completed, suggest next actions:
+After improvement step fully completed, pick the next step from:
 1. ⬆️ Push the updated test cases to TestRail (with `sync-test-cases-with-testrail` skill)
 2. 🧹 Check for duplicate/overlapping cases (with `detect-duplicate-test-cases` skill)
 ```
@@ -100,8 +106,8 @@ User: asks to run test cases, a suite, regression, smoke, or a TestRail run
 =>
 Use `run-test-suite` skill to run the cases on the live app and push the results to TestRail
 =>
-After the run fully completed, suggest next actions:
-1. 🐞 File a Jira Bug for each failed case (with `report-bug` skill)
+After the run fully completed, pick the next step from:
+1. 🐞 Answer the Bug drafts the run's report carries (with `report-bug` skill)
 2. ✏️ Fix the cases marked "case needs fix" (with `improve-test-cases` skill)
 ```
 
@@ -112,7 +118,7 @@ User: asks to find duplicates, overlapping or redundant test cases
 =>
 Use `detect-duplicate-test-cases` skill to identify exact, near-duplicate and subset cases
 =>
-After detection fully completed, suggest next actions:
+After detection fully completed, pick the next step from:
 1. ✏️ Improve/merge the surviving test cases (with `improve-test-cases` skill)
 2. ⬆️ Push the cleaned-up suite to TestRail (with `sync-test-cases-with-testrail` skill)
 ```
@@ -124,7 +130,7 @@ User: asks to push test cases to TestRail, list existing TestRail cases, or pull
 =>
 Use `sync-test-cases-with-testrail` skill with its `push`, `list`, or `pull` command
 =>
-After the sync fully completed, suggest next actions:
+After the sync fully completed, pick the next step from:
 1. ✏️ Improve the pulled test cases (with `improve-test-cases` skill)
 2. 🧹 Check the pulled suite for duplicates (with `detect-duplicate-test-cases` skill)
 3. 📝 Generate test cases for features that have none in TestRail (with `qa-write-test-cases` skill)

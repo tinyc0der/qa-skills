@@ -20,10 +20,10 @@ TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync
 ## Workflow
 
 1. Select cases
-2. Prepare the session — approval gate
+2. Prepare the session — the one approval gate, when needed
 3. Run the cases
 4. Review the results
-5. Push to TestRail — approval gate for a new run
+5. Push to TestRail
 6. Hand failed cases to `report-bug`
 7. Save automation lessons
 8. Report
@@ -34,7 +34,7 @@ Create the run folder `test-runs/<YYYY-MM-DD>-<slug>/` in the QA workspace. Find
 
 | Source              | Cases                                                                                      |
 | ------------------- | ------------------------------------------------------------------------------------------ |
-| `*.test.md` files   | Files with `testrail_id`: run `push --dry-run` on them first. A case it would update differs from TestRail: ask which copy is current. TestRail's → pull it into `<run folder>/cases` and run that; the local one → push it first. |
+| `*.test.md` files   | Files with `testrail_id`: run `push --dry-run` on them first. A case it would update differs from TestRail: pull TestRail's copy into `<run folder>/cases`, run that, and list the case in the report as differing locally. |
 | TestRail section    | `pull --section <name> --out <run folder>/cases`                                           |
 | Ticket key          | Cases whose `refs` include the key, in the story's ticket folder or a pull. None found → tell the user the story's cases lack refs; never swap in a whole section on your own. |
 | TestRail run `R<id>` | `list --run <id>` for statuses, then `pull --run <id> --out <run folder>/cases`. Default scope: cases Untested or Retest in the run. |
@@ -44,7 +44,7 @@ Scope by kind of run:
 
 - New feature: every case of the story.
 - Fix verification: the failed cases, plus cases in the same flow.
-- Regression: cases in the sections the change touches. Ask which areas changed when no ticket says.
+- Regression: cases in the sections the change touches. No ticket says which areas changed → ask in the Step 2 message.
 - Smoke: cases with `smoke: yes`, or the ones the user names.
 
 Platform of each case, from its `platform`: a web option runs in the browser, an Android or iOS option on that OS, and a mobile option on each mobile OS of the run. `All`, or no platform, runs on every platform of the run: the ones the user names, else the ones the story covers.
@@ -65,22 +65,25 @@ Once per platform of the run. Android and iOS follow [Device Session](./referenc
 6. Check sign-in from the UI before logging in. A restored session can be signed out, and a live one needs no login. Log in with `agent-browser auth login <alias>` from the auth vault. Never put passwords in commands or files.
 7. Read the build from the app, not from the environment name: the version string it shows, else the version or hash in its script bundle URL, from `eval 'performance.getEntriesByType("resource").map(e => e.name)'`. Write it to `build:` in `results.md`. A run on several platforms names each build, such as `staging · web 2.14.3 · android 4.12.0 (4120) · ios 4.12.0 (812)`.
 
-Show the plan:
+Show the plan as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out:
 
 - cases to run (count and list), and cases left out with the reason
 - environment URL, account, role, build, per platform, and the device for each mobile platform
 - cases that save, change, or delete data
 - run order, and parallel lanes if any
 - estimated time: the sum of each case's latest `elapsed` in earlier `results.md` files under `test-runs/`, else its forecast or estimate that `list` prints. Add the last run's setup and waiting: its run time minus the sum of its `elapsed`. Count the cases with no number.
+- where results go: the TestRail run to create (name, milestone) or the existing run, or local only
+
+Ask before the first case only when the run creates a TestRail run, has cases in risky scope (Step 3) that save, change, or delete data, or has an open question: an environment or account no lesson file names (item 3), changed areas (Step 1), or which device ([Device Session](./references/device-session.md)). Put every such question in this one message. Otherwise show the plan and start.
 
 ```
-❓ Do you want to:
+❓ Start the run?
 
-1. ✅ Run
+1. ✅ Run and push the results
 2. ✏️ Type changes
 ```
 
-Run only after the user approves. The approval covers the data changes the listed cases make.
+The approval covers the data changes the listed cases make and creating the TestRail run the plan names. **After it, only steps a person must do (Step 3) and the Bug drafts (Step 6) wait for the QC.** The run and the push finish while the QC is away.
 
 ### Step 3: Run the cases
 
@@ -128,7 +131,7 @@ The main session reviews every block once, before the push, with the ticket's co
 - Text that differs from Expected is `failed` when a source (story, design, spec) fixes the text. It is "case needs fix" only when the sources leave the text open.
 - A product defect seen outside the case's steps is not a result. Keep it for the report, for `report-bug` or a question to the PO.
 - A failed case the user judges "case wrong, not product wrong" becomes `blocked` with "case needs fix". Fix the case later with `improve-test-cases`.
-- The user decides a rule or accepts a difference between the app and a source → record it in the context file: the rule in `Answers`, with who decided and where; the accepted difference in `Conflicts`, with the side followed. Other QCs see only TestRail and Jira: offer to post it as a comment on the story, and keep the comment's link.
+- The user decides a rule or accepts a difference between the app and a source → record it in the context file: the rule in `Answers`, with who decided and where; the accepted difference in `Conflicts`, with the side followed. Other QCs see only TestRail and Jira: list a comment on the story among the report's decisions, and keep the comment's link once posted.
 
 ### Step 5: Push to TestRail
 
@@ -138,7 +141,7 @@ node <sync skill>/scripts/testrail.mjs results <run folder>/results.md
 ```
 
 1. Run `--dry-run` and fix what it reports. A case changed on TestRail after its `run_at`: run it again, or set its block back to `untested` with the reason "case changed on <date>".
-2. The push creates a run: show the plan (name, refs, milestone, owner, case count, results by status, files to attach). **Create the run only after the user confirms:** a wrong run stays in the shared project, and deleting it needs rights the user may not have.
+2. The push creates a run: create it only when the Step 2 approval named it, since a wrong run stays in the shared project and deleting it needs rights the user may not have. A run Step 2 did not name: show its name, refs, milestone, and case count, and ask.
 3. Otherwise push without asking. TestRail adds results and never overwrites them: a wrong one gets a correction result, and both stay in the history.
 4. Run the push. It writes the IDs back into `results.md` and posts only what TestRail does not have yet, as [Results Format](./references/results-format.md) describes.
 
@@ -152,8 +155,8 @@ The user asks only to create the run → Step 1, then this step with every block
 
 ### Step 6: Hand failed cases to report-bug
 
-- Each `failed` case → `report-bug` with the case, its result block, and its evidence.
-- `report-bug` returns a Bug key → add it to the block's `defects:`. After the last Bug, push the keys through Step 5.
+- Hand every `failed` case to `report-bug` at once, with its result block and evidence. It drafts all the Bugs, and the Step 8 report carries its one question for the batch.
+- The QC answers the report → `report-bug` creates the Bugs. Add each key to its block's `defects:` and push the keys through Step 5 in the same turn.
 
 ### Step 7: Save automation lessons
 
@@ -165,11 +168,12 @@ Update `automation-lessons/<app>.md` per [Automation Lessons](./references/autom
 
 ### Step 8: Report
 
-- For the user to decide, first: product defects outside the case steps, cases that need a fix, results not pushed. The story adds or changes screens and links Figma frames → offer `detect-product-mismatches` on the live app and Figma for that feature.
-- Counts by status, zeros included, the TestRail run link, and the `results.md` path. Part of an existing run: this run's counts, then the run's totals.
-- Cases left out because they already had a result: count by status, outside this run's counts.
-- Run time against the estimate.
-- Failed: case link, failing step with Expected vs Actual, evidence, Bug key or "Bug pending".
-- Blocked: reason, owner, and what unblocks it.
-- Untested: case and reason.
-- Lessons added, changed, or removed, one line each.
+Lay it out as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says:
+
+1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, cases that need a fix, cases that differ locally (Step 1), story comments to post (Step 4), results not pushed.
+2. Counts by status, zeros included, the TestRail run link, and run time against the estimate. Part of an existing run: this run's counts, then the run's totals. Cases left out because they already had a result: count by status, outside this run's counts.
+3. Failed: one line per case, with its title, failing step, Expected vs Actual, and Bug key or "Bug pending".
+4. Blocked: one line per case, with the reason, owner, and what unblocks it. Untested: case and reason.
+5. One line: the `results.md` path and how many lessons were added, changed, or removed.
+
+The story adds or changes screens and links Figma frames → the next step is `detect-product-mismatches` on the live app and Figma for that feature.

@@ -23,10 +23,10 @@ Sources may come as pasted text, links, or MCP tools. Read Jira and Confluence t
 
 - Jira: the ticket's description, acceptance criteria, images, comments, parent, sub-tasks, and linked issues. Linked bugs record behavior settled later.
 - Read the description history (`expand: changelog`). A phrase removed while the rest stayed is a decision against it; a full rewrite makes the old draft an earlier plan. Date sources by their last content change, not Jira `updated`. Pasted text has no history: record the history as not read.
-- Images the MCP cannot download and sections that come back empty: ask for screenshots, or record them as not read.
+- Images the MCP cannot download and sections that come back empty: record them as not read. The first report that lists them asks for screenshots.
 - Linked documents: only the parts in the ticket's scope, and rules for every result of the screen.
 - Figma: screens, states, and UI copy. Read the frames of each component the ticket changes or gives a new state (picker, sheet, keyboard), not only the screen frames. Context files of related tickets list frames already found.
-- Live app: if the feature or the screens it changes are deployed, ask for a non-production URL and credentials, then explore the related pages with the `agent-browser` skill. Navigate only; submit nothing that saves data unless the user agrees. Use screenshots the user shares. Declined → record the live app as not read.
+- Live app: if the feature or the screens it changes are deployed, explore the related pages with the `agent-browser` skill. Take the non-production URL and account from the app's file in `automation-lessons/`; ask only when it has none. Navigate only; submit nothing that saves data unless the user agrees. Use screenshots the user shares. Declined → record the live app as not read.
 - Learn the UI pages, components, and API endpoints from Figma, Confluence, and the live app.
 - When these sources leave a gap, search as [Related Sources](./references/related-sources.md) describes.
 
@@ -45,7 +45,7 @@ Find the TestRail cases that already test the feature, with the `sync-test-cases
 
 - TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases the catalog does not link yet.
 - No catalog: run `list` and match sections and case titles to the feature.
-- TestRail not set up: ask for its Setup, or continue without the check and record TestRail as not read.
+- TestRail not set up: continue without the check and record TestRail as not read.
 - Do not `pull`.
 
 ### 3. Decide which source wins
@@ -64,4 +64,6 @@ Save it in the ticket's folder ([Ticket Folder](./references/ticket-folder.md)),
 
 ### 5. Report
 
-Report the file's path, the sources not read, and the conflicts and open questions that change expected behavior. The file holds the rest. Do not ask for approval.
+Report, as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out, the file's path, the sources not read, and the conflicts and open questions that change expected behavior. The file holds the rest. Do not ask for approval.
+
+Run by another skill: hand the report to that skill instead of messaging the QC. Its own message carries what matters.
