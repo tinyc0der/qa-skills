@@ -23,7 +23,6 @@ Orchestrates the test case lifecycle by routing requests to specialized skills a
 - **Dev fixed a bug** → follow the Bug Fix Flow.
 - **Continue a ticket** ("continue <KEY>", what is left on a ticket) → follow the Continue Ticket Flow.
 - **A test status report** (status and pass rate for a ticket, milestone, or date) → the `runs` command of the `sync-test-cases-with-testrail` skill.
-- **Story ready to sign off** → no skill covers this yet. Say so.
 - **Behavior questions** ("what happens when…", "can a user…", "is X supported") → check on the live app with the `agent-browser` skill, then continue with the flow the answer points to.
 
 ## Basic Flows
@@ -80,7 +79,7 @@ Event: Dev deploys a build with the story to a test environment
 2. 🐞 `run-test-suite` hands the failed cases to `report-bug`, which drafts their Bugs and creates the ones the QC approves.
 =>
 Deliverable: the results on TestRail, and a Bug in Jira for each failed case
-Next event: Dev marks a Bug fixed, or every case passed and the QC signs off the story
+Next event: Dev marks a Bug fixed. Every case passed → the story's testing is done.
 ```
 
 ### Bug Fix Flow
@@ -91,7 +90,7 @@ Event: Dev marks a Bug fixed
 Rerun the Bug's cases on a build with the fix, then close or reopen the Bug once the QC approves (with `verify-bug` skill)
 =>
 Deliverable: the retest results on TestRail, and the Bug closed or reopened
-Next event: Dev marks a reopened Bug fixed, or every case passed and every Bug closed, then the QC signs off the story
+Next event: Dev marks a reopened Bug fixed. Every case passed and every Bug closed → the story's testing is done.
 ```
 
 ### Continue Ticket Flow
