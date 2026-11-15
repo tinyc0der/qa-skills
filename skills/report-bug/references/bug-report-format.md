@@ -115,8 +115,8 @@ Leave out rows without a value.
 | Field    | Value                                 |
 | -------- | ------------------------------------- |
 | Priority | Critical                              |
-| Assignee | Jane Doe (`5b10ac8d82e05b22cc7d4ef5`) |
-| Sprint   | Sprint 42 (`137`)                     |
+| Assignee | Jane Doe                              |
+| Sprint   | Sprint 42                             |
 
 ## Description
 
