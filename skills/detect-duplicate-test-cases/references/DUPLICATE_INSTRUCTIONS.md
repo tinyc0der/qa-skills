@@ -6,10 +6,10 @@ Reference for scoring and classifying duplicate test cases.
 
 | Level | Type | Description | Example |
 |-------|------|-------------|---------|
-| 1 | Exact Duplicates | Identical titles on the same platform | "User can log in" appears in 3 sections |
-| 2 | Semantic Duplicates | Same intent, similar steps | "Check user can sign in" vs "Validate user authentication" |
-| 3 | Overlapping / Subset | One test contains another | Cart test (3 steps) inside Checkout test (8 steps) |
-| 4 | Redundant Variations | Same rule and expected result, different data | Login with john@example.com vs jane@example.com |
+| 1 | Exact Duplicates | Identical titles on the same platform | "LO buy order accepts only prices from floor to ceiling" appears in 3 sections |
+| 2 | Semantic Duplicates | Same intent, similar steps | "Pending order can be cancelled in the continuous session" vs "Cancel button cancels a pending order during continuous matching" |
+| 3 | Overlapping / Subset | One test contains another | Price band test (3 steps) inside the full LO buy order test (8 steps) |
+| 4 | Redundant Variations | Same rule and expected result, different data | LO buy order of 100 shares vs 200 shares at the reference price |
 
 ## Actions
 

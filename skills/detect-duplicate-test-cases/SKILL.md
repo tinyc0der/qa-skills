@@ -1,6 +1,6 @@
 ---
 name: detect-duplicate-test-cases
-description: Find duplicate, near-duplicate, and overlapping manual test cases in TestRail, local `*.test.md` files, or a TestRail CSV export. Identifies exact matches, semantically similar cases, subsets, and variations that differ only in data. Recommends which cases to keep, merge, or remove. Use when asked to find or clean up duplicate test cases or dedupe a TestRail section. Not for pruning cases that duplicate nothing.
+description: Find duplicate, near-duplicate, and overlapping manual test cases in TestRail or local `*.test.md` files. Identifies exact matches, semantically similar cases, subsets, and variations that differ only in data. Recommends which cases to keep, merge, or remove. Use when asked to find or clean up duplicate test cases or dedupe a TestRail section. Not for pruning cases that duplicate nothing.
 ---
 
 # Detect Duplicate Test Cases
@@ -14,7 +14,6 @@ Detect duplicate test cases in TestRail. Recommend cleanup actions.
 - Input, one of:
   - cases downloaded with the `pull` command of the `sync-test-cases-with-testrail` skill
   - local `*.test.md` files
-  - a TestRail CSV export the user provides
 - Parse each case to extract: `C<id>`, section, title, platform, preconditions, steps, expected results, priority, and refs.
 - Identify each case by `C<id>` and section. A local case without `testrail_id:` is identified by file and title.
 
@@ -49,7 +48,6 @@ The script cannot delete TestRail cases. Changes reach TestRail as updates pushe
 Rewritten cases follow the `qa-write-test-cases` [Test Case Format](../qa-write-test-cases/references/testrail-test-case-format.md) and [Writing Rules](../qa-write-test-cases/references/writing-rule.md).
 
 - Merge: rewrite the canonical case in its `*.test.md` file.
-  - With CSV input, first download the affected sections with the `pull` command.
   - Keep the canonical case's `testrail_id:` line.
   - Combine unique preconditions, steps, and expected results from all merged cases.
   - Merge `refs` from all merged cases.

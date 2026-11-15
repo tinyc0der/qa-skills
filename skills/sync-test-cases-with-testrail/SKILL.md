@@ -17,8 +17,8 @@ The script reads these variables from the environment, then from `.env` in the c
 | `TESTRAIL_USER`        | TestRail user email                                                         |
 | `TESTRAIL_API_KEY`     | API key from **My Settings → API Keys**                                     |
 | `TESTRAIL_PROJECT_ID`  | Project ID, the number in `index.php?/projects/overview/<id>`               |
-| `TESTRAIL_SUITE_ID`    | Only for projects with several suites                                       |
-| `TESTRAIL_TEMPLATE_ID` | Only when the project has no template named like "Test Case (Steps)"        |
+| `TESTRAIL_SUITE_ID`    | Only for projects with several suites. Without it, the script lists their IDs |
+| `TESTRAIL_TEMPLATE_ID` | Only when no template name contains "Steps". Without it, the script lists the template IDs |
 | `TESTRAIL_FIELDS`      | Metadata keys to send as case fields, as `key:field_system_name` pairs: `smoke:custom_case_smoketest,automation:custom_automation_type,platform:custom_case_platform` |
 | `TESTRAIL_OWNER`       | Your name as the project's owner field writes it. New cases get it as owner, and it tells your cases from other QCs' cases |
 
@@ -79,7 +79,7 @@ Use `list` when titles are enough. Use `pull` when a skill needs full case conte
 
 Rules:
 
-- One file per section that holds cases. The file name is the section path, slugified and joined with `--` (`web-login--sso.test.md`). The suite title is the section's own name.
+- One file per section that holds cases. The file name is the section path, slugified and joined with `--` (`trade--order-book.test.md`). The suite title is the section's own name.
 - Each file carries `testrail_section_id`, `testrail_id`, `priority` (lowercase name), `refs`, the keys mapped in `TESTRAIL_FIELDS`, preconditions, and separated steps with `*Expected*`. A pulled file passes `check`, and `push --dry-run` on it shows no updates for unchanged cases.
 - A case from a template without separated steps becomes one step: the Steps text as the action, the Expected text as the result. Pushing it back converts it to the steps template and shows as an update.
 - Pull never replaces a local file that differs from the download. It lists those files and writes nothing. Pass `--overwrite` only after the user agrees to lose the local edits.
@@ -90,5 +90,3 @@ Exit code 1 is a config or validation error. Exit code 2 is an API error that na
 
 - `401`: wrong user or API key, or the API is disabled.
 - `403`: the user lacks permission to add or edit cases in the project.
-- Several suites: set `TESTRAIL_SUITE_ID` to one of the suites the script lists.
-- No steps template: set `TESTRAIL_TEMPLATE_ID` to one of the templates the script lists.

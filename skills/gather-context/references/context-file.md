@@ -22,35 +22,36 @@ Updates:
 - A new doubt → add it to `Open questions`.
 
 ```markdown
-# Saved cards
+# Cancel a pending order
 
 Date: 2026-11-10
 
 Sources read:
 
-- Jira [ABC-123](https://jira.example.com/browse/ABC-123), updated 2026-11-03; parent ABC-100
-- Confluence [Saved cards](https://wiki.example.com/x/Ab12), updated 2026-10-28
-- Figma [Checkout › Payment](https://figma.com/design/Ab12), updated 2026-10-30
-- Live app: staging, Checkout › Payment, build 4.12.0
+- Jira [TRADE-205](https://example.atlassian.net/browse/TRADE-205), updated 2026-11-03; parent TRADE-200
+- Confluence [Order rules](https://example.atlassian.net/wiki/x/Ab12), updated 2026-09-15
+- Figma [Trade › Order book](https://figma.com/design/Ab12), updated 2026-10-30
+- Live app: UAT, Trade › Order book, build 4.12.0
 
-Not read: Confluence "Payments FAQ" (no access)
+Not read: Confluence "Order rules FAQ" (no access)
 
 Found by search:
 
-- Jira [ABC-130](https://jira.example.com/browse/ABC-130) (same epic), updated 2026-10-15: card expiry rules
+- Jira [TRADE-180](https://example.atlassian.net/browse/TRADE-180) (same epic, released), updated 2026-10-15: order statuses in Trade › Order book
 
-Existing cases: 8 in TestRail section Checkout › Payment (C101–C108)
+Existing cases: 5 in TestRail section Trade › Order book (C201–C205)
 
 Conflicts:
 
-- Expired cards at checkout: the live app lists them; ABC-123 hides them. Follows ABC-123.
-- Default card: the acceptance criteria pick the newest card; a later comment picks the first one added. Follows neither side. (open)
+- Cancel during ATO and ATC: the story lets the investor cancel any pending order; a later PO comment blocks cancel during ATO and ATC, as Confluence "Order rules" does. Follows the comment.
+- Cancel during ATO: the live app shows "Cancel"; TRADE-205 blocks it. Follows TRADE-205.
+- Partially matched order: the acceptance criteria let the investor cancel the unmatched quantity; a later comment says a partially matched order cannot be cancelled. Follows neither side. (open)
 
 Open questions:
 
-- Saved cards limit per user: no source says; asked 2026-11-11 ([ABC-123 comment](https://jira.example.com/browse/ABC-123?focusedCommentId=1002))
+- Order matched before the cancel reaches the exchange: no source says what the investor sees; asked 2026-11-11 ([TRADE-205 comment](https://example.atlassian.net/browse/TRADE-205?focusedCommentId=1002))
 
 Answers:
 
-- Card nickname length: 20 characters, PO in [ABC-123 comment](https://jira.example.com/browse/ABC-123?focusedCommentId=1001)
+- Cancel confirmation: the investor confirms in a dialog before the order is cancelled, PO in [TRADE-205 comment](https://example.atlassian.net/browse/TRADE-205?focusedCommentId=1001)
 ```

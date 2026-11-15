@@ -62,7 +62,7 @@ Items follow the context file:
 
 ### Step 2: Choose coverage scope
 
-Use the scope the user named: a tier, a number ("around 10"), or a description ("just the API contract, no UI"). Otherwise use ⚖️ Balanced. Do not ask.
+Use the scope the user named: a tier, a number ("around 10"), or a description ("only price and quantity validation, no layout"). Otherwise use ⚖️ Balanced. Do not ask.
 
 | Tier          | Covers                                                                                                                          |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -114,14 +114,14 @@ Item rules:
 Example:
 
 ```markdown
-- 1 Signup
-  - 1.1 🔴 [critical] [smoke] Signup with valid email
-  - 1.2 🟡 [medium] Signup with valid phone number
+- 1 LO buy order
+  - 1.1 🔴 [critical] [smoke] LO buy order at the reference price shows as pending in the order book
+  - 1.2 🟠 [high] LO buy order accepts only prices from floor to ceiling
+  - 1.3 🟡 [medium] Quantity not in lots of 100 shows an error
 
-- 2 Login
-  - 2.1 🔴 [critical] [smoke] Login with valid email
-  - 2.2 🟡 [medium] Login with valid phone number
-  - 2.3 🟠 [high] Login with invalid password
+- 2 Cancel a pending order
+  - 2.1 🔴 [critical] [smoke] Pending order can be cancelled in the continuous session
+  - 2.2 🟠 [high] Pending order cannot be cancelled during ATC
 ```
 
 #### Self review

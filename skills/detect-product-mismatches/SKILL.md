@@ -48,7 +48,7 @@ Per feature, what each source says is rewritten as behaviors in one shape ([feat
 **Not a mismatch:**
 
 - Same behavior in other words.
-- **Silence on a detail.** A coarser source agrees with a finer one unless it contradicts it (`Customer can save a card.` agrees with `Customer can save up to 5 cards.`).
+- **Silence on a detail.** A coarser source agrees with a finer one unless it contradicts it (`Investor can place an LO buy order.` agrees with `Investor can place an LO buy order in lots of 100.`).
 - A behavior only the live app has, inside a feature the other sources have.
 - Superseded issues; behaviors of another version; content outside a catalog Scope (open issues, drafts, deprecated pages).
 - Can't tell (vague behavior, unreadable content) → open question.
@@ -121,14 +121,13 @@ Live app compared: one subagent runs the app checks in one `agent-browser` sessi
 - Open the app at the catalog link, follow the steps, state what the user gets ([features.md](references/features.md) › Behaviors).
 - Matches every source → no page. Contradicts a source → Differs. Absent → Not observed in app. Same behavior already on a mismatch → add the app side to it.
 - Evidence: URL, navigation path, steps, screenshot ([layout.md](references/layout.md) › Page).
-- Can't reach (role, plan, or data the test account lacks) or can't tell → open question.
+- Can't reach (role, account type, or data the test account lacks) or can't tell → open question.
 
 ## 5. Merge
 
 1. Write the confirmed mismatch pages ([layout.md](references/layout.md) › Page). Same disagreement from several features → one mismatch page, every disagreeing source on it.
 2. `update`: remove resolved mismatches.
 3. In `mismatches/README.md`, write the mismatches list ([layout.md](references/layout.md) › README).
-4. New `sources/` or `mismatches/` → add a link and purpose for it to the root `README.md`.
 
 ## 6. Validate
 
