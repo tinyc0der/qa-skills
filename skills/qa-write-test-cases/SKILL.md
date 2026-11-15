@@ -14,6 +14,11 @@ References:
 - [Test Design Techniques](./references/test-design-techniques.md) lists how Step 4 derives checklist items.
 - [Review Checklist](./references/review-checklist.md) lists what Self review checks.
 
+**When to skip steps:**
+
+- The QC gives the finished cases → skip Steps 2 to 4 and write only those cases. Format them, set `refs:`, and compare them with the story's existing cases. Steps 6 and 7 still run, and the push asks first, since no checklist approved it.
+- The PO answered `ask` items in cases already written → pull those cases fresh, change only what the answers settle, and skip Steps 2 to 4. Steps 6 and 7 still run.
+
 ## User interaction
 
 - **Always generate a checklist before test cases**, even if the user asks for test cases directly.

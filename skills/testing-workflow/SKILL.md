@@ -7,6 +7,10 @@ description: Route manual QA work across the QA skills, from requirements in Jir
 
 Orchestrates the test case lifecycle by routing requests to specialized skills and suggesting next steps. A ticket's flows start from real events in the QC's work and span many conversations: each flow ends when its deliverable exists.
 
+**When to skip steps:**
+
+- Assigned a story that already has your review comment, or cases with its key → run the Continue Ticket Flow instead of the Assigned Story Flow.
+
 ## Specialized Skills
 
 | Skill                           | Purpose                                                                     |

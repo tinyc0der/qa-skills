@@ -26,11 +26,16 @@ description: What it does + when to trigger it.
 
 One or two sentences on what the skill does.
 
+**When to skip steps:** (optional)
+
+- <situation> → <what to do instead>
+
 ## Workflow / Rules / Steps (whatever fits)
 ```
 
 - The frontmatter `description` is the only text used for activation — put the triggers there, as categories of intent (what the user wants done, on which sources), not a growing list of example phrasings.
 - Do not repeat triggers in the body. "When to Use" sections are redundant.
+- A skill with a multi-step procedure may add a short **When to skip steps** list after its intro. The description picks the skill; this list stops the agent from running every step when a request that picked it correctly makes some steps pointless. Each item names the situation, then the steps to skip and what still runs. The skill still runs: a request that belongs to another skill goes in the description as "Not for …". Never skip write approvals, format checks, duplicate checks, or read-back.
 - One H1. Steps as H2/H3. No "NAME SKILL: What I do" headings.
 - Keep detail in `references/*.md`, orchestration in SKILL.md. Link each reference where it is used. State each fact in one place only.
 

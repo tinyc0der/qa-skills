@@ -21,6 +21,10 @@ The target format and rules are owned by the `qa-write-test-cases` skill:
 - Original test intent.
 - The natural language the tests are written in.
 
+**When to skip steps:**
+
+- The QC names the cases or the change (a run's "case needs fix", one wrong step) → change only those. Step 5's dry run and push question still apply.
+
 ## Step 1: Get Test Cases
 
 - Use the local `*.test.md` files the user points at.
