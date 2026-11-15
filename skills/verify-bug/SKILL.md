@@ -96,4 +96,4 @@ Report as `message-the-qc` says:
 - `2 fixed · 1 not fixed · 0 side regressions · 0 not verified`
 - each Bug as a Jira link with its new status, and each new Bug
 - writes not done, with the reason
-- the next step: every Bug closed and every case passed → the QC signs off the story. A reopened Bug → Dev fixes it again. A Bug reopened twice before → its Expected may be unclear: settle it with the PO before the next retest.
+- the next step: every Bug closed and every case passed → the story's testing is done. A reopened Bug → Dev fixes it again. A Bug reopened twice before → its Expected may be unclear: settle it with the PO before the next retest.
