@@ -64,6 +64,7 @@ A step that reads a value right after switching context (record, tab, filter, ac
 
 - Capture the change: `record start <run folder>/C<id>-step<n>.webm` (`.mp4` on a device) before the action and `record stop` once it settles, or screenshots at about 0, 250, 500, 1000 and 2000 ms named `C<id>-step<n>-<ms>.png`.
 - A frame showing the previous context's data or a wrong state (an empty form, a "new" state flashing) fails the step, even when the final value is right. Put the frame and its time in the result.
+- A realtime value (price, volume, order status pushed by the server): read it again after the tolerance the case or `domain/` gives, and compare it with the case's reference (another screen, the API response). No tolerance → the step is not observed, with the delay measured.
 
 ## Check the Screenshots
 

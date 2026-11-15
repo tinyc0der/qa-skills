@@ -44,6 +44,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - Invalid input combinations.
 - An ordering rule: data where creation order, text order, and numeric order all differ (2, 5, 10).
 - A rule that picks one of several records (latest period, latest version, effective date): one item where a newer record wins and an older one does not show, and one where a record re-imported while shown leaves no duplicate or mixed rows.
+- An order action (place, change, cancel): each trading session crossed with each order state the action can meet (pending, partially matched, matched, cancelled, rejected, expired), one outcome per cell. Sessions and their rules come from `domain/` or the sources. A cell no source decides is an `ask` row.
 
 **State transition**
 
@@ -53,6 +54,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - A trigger (status change, scheduled event): the result arrives at the trigger's time, does not repeat while the state stays, and holds for each state the record can be in when it fires (cancelled, edited).
 - Several records hit by one trigger: each gets its own result with its own values.
 - A check that passes on screen and can fail at submit: the value changes in between (time passes, the balance is used elsewhere).
+- A state only the market creates (a partial match needs a counterparty order, a sell needs settled shares): the preconditions name the session window and the counterparty account or seeded data that produces it. No way to produce it → `ask`.
 - An input that calls the server while typing: changing the keyword before the results arrive shows only the latest keyword's results.
 - A change that moves, renames, or removes something the previous app version saved (last tab, filter, setting): one item that updates over the previous version with that state saved.
 
@@ -75,6 +77,8 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - One item per error class a source names or implies (timeout, 5xx, 4xx, offline) that has its own expected result.
 - Each precondition the feature itself checks (OTP at submit, session at a save): one item for when it does not hold. Not the login every read-only screen needs. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
 - An action that moves money or cannot be undone (place or cancel an order, transfer money): one item where it is submitted twice fast (double tap, submit again while the first is loading), and one where it is interrupted between submit and result (app sent to the background during OTP, network lost, back pressed). Each ends with one result or none, and every screen that shows it agrees (order book, buying power, history).
+- An order or money action: each result also checks buying power, cash, holdings, and the order in the order book. A rejected order leaves them as they were. After a partial match, the fee and the cash spent follow the matched quantity, and the hold on the unmatched quantity is released when it is cancelled or expires. Fee rates and rounding come from `domain/` or the source.
+- Realtime data (prices on the price board and order form, order status pushed by the server): one item where the feed drops and reconnects, and one where the app returns from the background. The value shown catches up within the tolerance a source or `domain/` gives. No tolerance → `ask`.
 - A new instance of a shared component (a new tab with the same table, a new export): each bug fixed on the other instances is a row or step for the new one.
 - An intermittent bug (race, timing): repeat the repro about 3/p times for a reported rate p (1 in 15 → 45 rounds), 10 times when no source gives a rate.
 

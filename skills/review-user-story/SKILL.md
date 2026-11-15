@@ -36,6 +36,7 @@ Report only the checks the story fails, each quoting the story text it concerns 
   - money values the investor acts on (fees, tax, buying power, P&L): formula, inputs, and rounding
   - trading sessions (ATO, continuous, lunch break, ATC, PLO): which ones allow the action, and what happens when the session changes mid-flow
   - order and request statuses: each status and what moves it, including partial match, expiry, and session close
+  - realtime prices and order status: how fast they update, and what shows when the feed drops
   - scope: what is out, platforms, screens
   - what each role sees and can do, when roles differ
   - what happens to existing data; which existing features change
