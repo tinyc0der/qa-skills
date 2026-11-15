@@ -9,8 +9,7 @@
     "requirements",
     "features",
     "user-stories",
-    "acceptance-criteria",
-    "wiki"
+    "acceptance-criteria"
   ],
   "skills": "./skills/"
 }
