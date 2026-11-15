@@ -1,11 +1,11 @@
 ---
 name: detect-duplicate-test-cases
-description: Find duplicate, near-duplicate, overlapping, and low-value manual test cases in TestRail, local `*.test.md` files, or a TestRail CSV export. Identifies exact matches, semantically similar cases, subsets, and cases with little business value. Recommends which cases to keep, merge, or delete. Use when asked to find or clean up duplicate test cases, dedupe a TestRail section, find low-value test cases, or "which test cases can we delete?".
+description: Find duplicate, near-duplicate, and overlapping manual test cases in TestRail, local `*.test.md` files, or a TestRail CSV export. Identifies exact matches, semantically similar cases, subsets, and variations that differ only in data. Recommends which cases to keep, merge, or remove. Use when asked to find or clean up duplicate test cases or dedupe a TestRail section. Not for pruning cases that duplicate nothing.
 ---
 
 # Detect Duplicate Test Cases
 
-Detect duplicate and low-value test cases in TestRail. Recommend cleanup actions.
+Detect duplicate test cases in TestRail. Recommend cleanup actions.
 
 ## Workflow
 
@@ -34,20 +34,14 @@ Each group includes:
 - Detection level.
 - Proposed canonical test.
 
-### 3. Find Low-Value Cases
-
-Flag the remaining cases that match the low-value rules in `./references/DUPLICATE_INSTRUCTIONS.md`.
-Recommend `Remove`, `Merge`, or `Simplify` for each.
-
-### 4. Generate Report
+### 3. Generate Report
 
 Follow the report template in `./references/DUPLICATE_INSTRUCTIONS.md`. Include:
-- Summary statistics (total scanned, duplicates found by category, low-value cases).
+- Summary statistics (total scanned, duplicates found by category).
 - Each duplicate group with `C<id>`, section, and title of every case.
 - Recommendation for each group (`keep`/`merge`/`remove`).
-- Low-value cases with the business-value problem of each.
 
-### 5. Execute Actions
+### 4. Execute Actions
 
 **Apply actions only after the user approves the recommendations.**
 
@@ -62,7 +56,6 @@ Rewritten cases follow the `qa-write-test-cases` [Test Case Format](../qa-write-
   - Redundant variations (Level 4): each merged case's data becomes a row of the canonical case's examples table.
   - Push the file. The push updates the canonical case in place.
   - Add the merged-away cases to the delete list.
-- Simplify: rewrite the case to its smallest scenario and push it the same way.
 - Remove: add the case to the delete list.
   - A local case without `testrail_id:` is deleted from its file instead.
 - Keep: change nothing. State why the cases stay apart (different platforms, data that reaches a different rule or expected result, or other coverage).

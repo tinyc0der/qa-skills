@@ -21,7 +21,7 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 | Source     | Used for                                     | Connect                                                                                              |
 | ---------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Jira       | Epics, stories, acceptance criteria, bugs    | Atlassian MCP server                                                                                 |
-| Confluence | Specs, requirements, user docs               | Atlassian MCP server (same connection as Jira)                                                       |
+| Confluence | Specs and requirements                       | Atlassian MCP server (same connection as Jira)                                                       |
 | Figma      | Screens, states, copy                        | Figma MCP server                                                                                     |
 | TestRail   | Test cases                                   | `.env` with the variables listed in [`sync-test-cases-with-testrail`](./skills/sync-test-cases-with-testrail/SKILL.md) |
 | Live app   | Exploring and checking actual behavior       | A staging URL and [agent-browser](https://github.com/vercel-labs/agent-browser): `npm i -g agent-browser && agent-browser install`, then `npx skills add vercel-labs/agent-browser` |
@@ -38,7 +38,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | `gather-context`            | Collect what every source says about a ticket or feature into a context file: sources, conflicts, open questions |
 | `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps and open questions                  |
 | `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
-| `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing, differs, or is undocumented |
+| `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing or differs |
 
 ### Test cases
 
@@ -46,7 +46,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | ------------------------------- | ----------------------------------------------------------------------------------- |
 | `qa-write-test-cases`           | Generate TestRail test cases and checklists from Jira, Confluence, Figma, or the live app |
 | `improve-test-cases`            | Improve existing test cases for clarity and format                                  |
-| `detect-duplicate-test-cases`   | Find duplicate, overlapping, and low-value test cases                               |
+| `detect-duplicate-test-cases`   | Find duplicate and overlapping test cases                                           |
 | `sync-test-cases-with-testrail` | Push test cases to TestRail, pull existing cases, list sections, and push run results |
 | `run-test-suite`                | Run test cases on the live app, record results with evidence, and push them to a TestRail run |
 

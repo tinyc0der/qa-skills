@@ -23,7 +23,7 @@ README.md in catalog root:
 | Fact    | Value                                                                                                 |
 | ------- | ----------------------------------------------------------------------------------------------------- |
 | Type    | Jira, Confluence, TestRail, live app, or other                                                        |
-| Role    | Actual, Intended, or Documented (SKILL.md › Source roles)                                             |
+| Role    | Actual or Intended (SKILL.md › Source roles)                                             |
 | Scope   | Defined by user (or inferred)                                                                         |
 | History | Important for sources like Jira                                                                       |
 | Access  | Atlassian MCP, `sync-test-cases-with-testrail`, `agent-browser`, URL, files                                   |
