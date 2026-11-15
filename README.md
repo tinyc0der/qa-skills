@@ -61,12 +61,14 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 
 | Skill                      | Description                                                                                   |
 | -------------------------- | --------------------------------------------------------------------------------------------- |
-| `testing-workflow`         | Orchestrate the test case lifecycle: requirements review, generation, improvement, TestRail sync |
+| `testing-workflow`         | Run the workflow for what just happened on a ticket, or continue a ticket where it stands     |
 | `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
 | `plan-qc-subtasks`         | Create your QC subtasks in Jira, estimate their story points, and set their dates from Dev's   |
 | `message-the-qc`           | When the skills stop to ask you, and how every message to you is laid out                     |
 
 ## Typical flow
+
+A ticket spans several conversations, since it waits for the PO, a build, and Bug fixes. Tell `testing-workflow` what happened (you were assigned a story, a build is ready, Dev fixed a bug) and it runs that workflow, or say "continue <KEY>" and it finds where the ticket stands from Jira, TestRail, and the ticket folder.
 
 1. Review the Jira story with `review-user-story` and post the feedback to the PO. Use `qa-thinking` for your own risk scenarios. Both start with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
 2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Through `testing-workflow`, the same answer creates your QC subtask with `plan-qc-subtasks`. Open questions left in the context file go back to the PO through `review-user-story`.
