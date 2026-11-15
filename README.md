@@ -46,7 +46,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | ------------------------------- | ----------------------------------------------------------------------------------- |
 | `qa-write-test-cases`           | Generate TestRail test cases and checklists from Jira, Confluence, Figma, or the live app |
 | `improve-test-cases`            | Improve existing test cases for clarity and format                                  |
-| `detect-duplicate-test-cases`   | Find duplicate, overlapping, and low-value test cases                               |
+| `detect-duplicate-test-cases`   | Find duplicate and overlapping test cases                                           |
 | `sync-test-cases-with-testrail` | Push test cases to TestRail, pull existing cases, list sections, and push run results |
 | `run-test-suite`                | Run test cases on the live app, record results with evidence, and push them to a TestRail run |
 
