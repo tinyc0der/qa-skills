@@ -12,6 +12,10 @@ References:
 - [Bug Report Format](./references/bug-report-format.md) defines the title, fields, and description, and maps each part to Jira.
 - [Writing Rules](../qa-write-test-cases/references/writing-rule.md) of `qa-write-test-cases` cover steps, expected results, and tone.
 
+**When to skip steps:**
+
+- A failed case from a `run-test-suite` run → its result block and evidence are the reproduction, so skip the rerun in Step 3. The duplicate search, the approval, and the read-back still apply.
+
 ## Workflow
 
 1. Find the user story

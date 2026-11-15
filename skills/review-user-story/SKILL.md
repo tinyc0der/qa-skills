@@ -9,6 +9,11 @@ Review a user story before testing starts: find what is unclear, missing, or unt
 
 The deliverable is a brief, useful review, not a sentence-by-sentence audit or a critique of ticket organization.
 
+**When to skip steps:**
+
+- No Jira story to comment on (pasted text, a Confluence page) → end with the review, without the post question. Record its gaps as open questions in the context file.
+- A follow-up review finds nothing new → post nothing, and report the `asked` items still unanswered.
+
 ## Workflow
 
 ### 1. Gather context

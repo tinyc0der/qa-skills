@@ -15,6 +15,10 @@ Output folder:
   - all paths are relative inside the output folder
   - default: `mismatches/`
 
+**When to skip steps:**
+
+- One feature, the live app against its Figma frames (the handoff from `run-test-suite`) → catalog only that feature's area, with the URL and role from the story's context file, without asking for scope.
+
 ## Modes
 
 `build` (from scratch) or `update` (for changes since the last check).

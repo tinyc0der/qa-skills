@@ -7,6 +7,10 @@ description: Create, estimate, and schedule the QC's own QC subtasks in Jira. Fi
 
 A QC subtask is the QC's own Jira issue for testing one story: it carries the QC's assignee, story points, and dates. This skill creates the missing ones and fills their empty fields, in one change set the QC approves once.
 
+**When to skip steps:**
+
+- The QC only asks which stories they test → run Step 1 and list the stories. Skip the plan and the question, and offer the plan in one line.
+
 ## Settings
 
 Jira field keys come from the project's create and edit metadata, found by field name. Never hardcode field IDs.
