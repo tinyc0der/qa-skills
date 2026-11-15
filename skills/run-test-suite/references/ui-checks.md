@@ -1,6 +1,6 @@
 ---
 title: UI Checks
-description: How a runner reads display assertions, transient states, and screenshots with agent-browser before it records a step as passed or failed.
+description: How a runner reads display assertions, transient states, requests, timing, and screenshots before it records a step as passed or failed.
 ---
 
 # UI Checks
@@ -24,6 +24,21 @@ A screenshot is evidence, not the check. Read each displayed value from the page
 - Name a computed color with its common name and compare that with Expected. A semi-transparent color or one on another background: read the background and `opacity` first.
 - `font-family` lists fallbacks. The design font is in use only when `[...document.fonts].filter(f => f.status === 'loaded')` includes it.
 - Hover and focus states: `hover` or `focus` the element, then read again. Android and iOS have no hover.
+
+## API and Network
+
+- The app's own request: after the step's action, `agent-browser network requests --filter <path>`. Check the method, status, and the response fields the step names. On Android and iOS, as [Device Session](./device-session.md#network) says.
+- A direct call: `eval` with `fetch` inside the signed-in page, so the session cookie never leaves the browser. A no-session check adds `credentials: 'omit'`. A check that one account cannot reach another's data runs in a second test account's lane, never with a copied token.
+- An error the case names (timeout, 5xx, offline): `agent-browser network route <url> --abort`, or `--body <json>` for a server response, before the action. Run `agent-browser network unroute <url>` right after the step.
+- Evidence: `C<id>-step<n>.json` with the method, URL, status, and response body. Remove cookies, `Authorization` headers, and tokens first. Never save a HAR: it keeps them.
+
+## Timing
+
+- Web page load: `agent-browser vitals <url> --json` (TTFB, FCP, LCP). One request: `eval` reading `performance.getEntriesByType('resource')` for its URL.
+- Android and iOS: `agent-device perf frames --json` for dropped frames. A wait on screen: a `record` video, from the frame of the action to the frame of the result.
+- Measure five times on the same build, environment, and network. `observed` holds the median and the maximum, such as `2 passed (median 1.2 s, max 1.9 s; limit 2 s)`.
+- Expected gives no limit → record the numbers and mark the step not observed.
+- Many users at once (load) cannot run with these tools: such a case is `blocked` with "Needs a load test tool".
 
 ## Judge from a Screenshot
 

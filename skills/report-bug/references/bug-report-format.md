@@ -54,6 +54,7 @@ Screenshots and recordings attached below.
 | Sprint                 | The story's sprint, or the user's choice. Story with a verified empty sprint → empty                                                        |
 | Labels                 | Project conventions                                                                                                                         |
 | Root cause and similar | Only when the user names it or the cause is confirmed. Never inferred from the symptom                                                     |
+| Security Level         | A security finding: the restricted level the project's create metadata offers. None offered → tell the user before creating |
 | Other required fields  | Allowed values from the project's create metadata                                                                                           |
 
 Leave out rows without a value.
