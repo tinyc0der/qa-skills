@@ -1,17 +1,9 @@
 ---
 title: Bug Report Format
-description: Markdown format for a Jira Bug draft (title, fields, description) and how each part maps to Jira.
+description: Markdown format for a Jira Bug draft (title, fields, description).
 ---
 
 # Bug Report Format
-
-## Format Overview
-
-The draft is structured as:
-
-1. **Title**: one `#` heading
-2. **Fields**: Jira fields other than the description
-3. **Description**: environment, steps to reproduce, expected and actual results, evidence
 
 ## Document Structure
 
@@ -97,15 +89,6 @@ Leave out rows without a value.
 - One line per failing step in each section, starting `Step <n>:`, in the same order, so both sections have the same number of lines.
 - Each line leads with the point that differs.
 - On an Actual line, after `;`: what was seen at that step and helps locate the defect, such as the related request, still wrong after reload, or another path that works.
-
-## Mapping to Jira
-
-| Draft                     | Jira                                           |
-| ------------------------- | ---------------------------------------------- |
-| `#` title                 | Summary                                        |
-| `## Fields` rows          | Issue fields, keys from the create metadata    |
-| `## Description` sections | Description                                    |
-| Evidence files            | Attachments                                    |
 
 ## Bug from a failed test case
 

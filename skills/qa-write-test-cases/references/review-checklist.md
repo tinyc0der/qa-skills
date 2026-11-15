@@ -4,34 +4,22 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 
 ## Checklist review
 
-- Every acceptance criterion has an item. At the Smoke tier, only criteria on the critical path need one.
-- Every validation rule, edge case, and error message in the sources has an item, or the context file says why not. A missing expected result is not a reason. Not at the Smoke tier.
-- Each [Test Design Technique](./test-design-techniques.md) that fits the feature produced its items, and high-risk areas have the most items.
-- No item falls under "Not worth a test" in Test Design Techniques.
+- Every rule in `qa-write-test-cases` Steps 1 and 4, the Keep scope rule in Step 5, and every [Test Design Techniques](./test-design-techniques.md) rule.
 - **Every item comes from a source.** Flag items that test behavior no source states or implies.
-- Items follow the ticket. Where the context file records a conflict, they follow the side it names.
 - The item count and categories fit the tier and the role.
-- Each item is one test objective. No two items differ only in test data or share preconditions and steps.
-- Groups follow user journeys in flow order, with the happy path first.
-- The main flow has a higher priority than its edge cases.
 - No item repeats another item or an existing case.
-- No item tests a linked feature the user did not ask for, a role or data scope another story defines, or generic behavior of a shared component the story does not change.
 
 ## Test case review
 
 Checklist:
 
-- One new test per approved checklist item. No missing tests, no extra tests.
-- Each test checks its item's objective and has its item's priority and `smoke:` value.
+- Every rule in `qa-write-test-cases` Steps 1 and 5.
 - No new test repeats an existing test in the file or an existing case.
 
 Sources:
 
-- No test of a linked feature the user did not ask for.
 - **Every expected result comes from a source.** Flag error texts, limits, redirects, and UI copy that no source states.
-- Expected results follow the ticket. Where the context file records a conflict, they follow the side it names.
 - UI labels, messages, and values match the source word for word.
-- `refs:` holds the Jira key the test comes from.
 
 Executable:
 

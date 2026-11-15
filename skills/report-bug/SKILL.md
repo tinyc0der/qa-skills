@@ -9,7 +9,7 @@ Creates a Jira Bug that a developer can reproduce on the first read without aski
 
 References:
 
-- [Bug Report Format](./references/bug-report-format.md) defines the title, fields, and description, and maps each part to Jira.
+- [Bug Report Format](./references/bug-report-format.md) defines the title, fields, and description.
 - [Writing Rules](../qa-write-test-cases/references/writing-rule.md) of `qa-write-test-cases` cover steps, expected results, and tone.
 
 **When to skip steps:**
