@@ -34,7 +34,7 @@ Every page: `# Title`, then a breadcrumb that matches folders (links to the pare
 
 1. Compared: one row per source: name, role, scope, history, catalog link, Date. App version. Check date.
 2. Differs, Not observed in app: one list per kind, highest impact first: page link + impact level + sources + likely cause.
-3. Missing features: one list per silent source (Not observed in app, Unspecified, Undocumented, Missing in {source}): feature + where found (catalog feature links) + where searched.
+3. Missing features: one `Missing in {source}` list per silent source: feature + where found (catalog feature links) + where searched.
 4. Open questions: vague behaviors, unread content, or unclear Scope that blocks a comparison.
 
 ## Page
