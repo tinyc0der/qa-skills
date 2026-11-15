@@ -13,29 +13,16 @@ Detect duplicate and low-value test cases in TestRail. Recommend cleanup actions
 
 - Input, one of:
   - cases downloaded with the `pull` command of the `sync-test-cases-with-testrail` skill
-  - local `test-cases/*.test.md` files
+  - local `*.test.md` files
   - a TestRail CSV export the user provides
 - Parse each case to extract: `C<id>`, section, title, preconditions, steps, expected results, priority, and refs.
 - Identify each case by `C<id>` and section. A local case without `testrail_id:` is identified by file and title.
 
 ### 2. Analyze Duplicates
 
-Normalize test content before comparison:
-- Convert titles to lowercase.
-- Remove punctuation and formatting differences.
-- Normalize step wording where possible.
-- Treat parameterized values (emails, IDs, usernames) as variable data.
+Compare cases by what they test: title, steps, expected results, preconditions, refs, and section. Differences in wording, formatting, and test data values (emails, IDs, usernames) do not make two cases different.
 
-Compare tests using multiple similarity signals:
-- Title similarity.
-- Step similarity.
-- Expected result similarity.
-- Preconditions or setup.
-- Shared refs.
-- Section.
-
-Score each pair using the scoring rules in `./references/DUPLICATE_INSTRUCTIONS.md`.
-Classify each pair into a detection level (defined in the same reference):
+Classify each pair into a detection level (defined in `./references/DUPLICATE_INSTRUCTIONS.md`):
 - Level 1: exact duplicates.
 - Level 2: semantic duplicates.
 - Level 3: overlapping / subset tests.
@@ -44,7 +31,6 @@ Classify each pair into a detection level (defined in the same reference):
 Build duplicate groups where multiple tests represent the same testing intent.
 Each group includes:
 - All related tests.
-- Similarity score.
 - Detection level.
 - Proposed canonical test.
 
@@ -58,7 +44,6 @@ Recommend `Remove`, `Merge`, or `Simplify` for each.
 Follow the report template in `./references/DUPLICATE_INSTRUCTIONS.md`. Include:
 - Summary statistics (total scanned, duplicates found by category, low-value cases).
 - Each duplicate group with `C<id>`, section, and title of every case.
-- Similarity percentage.
 - Recommendation for each group (`keep`/`merge`/`remove`).
 - Low-value cases with the business-value problem of each.
 

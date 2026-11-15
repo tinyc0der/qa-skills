@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { basename, dirname, resolve } from 'node:path';
+import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
@@ -23,6 +23,7 @@ Commands:
   list --run <id>                           Print the cases of a test run with their status
   push <files...> [--dry-run]               Create or update cases in TestRail and write IDs back
        [--parent-section <name>]
+       [--confirm-others <ids>]             Also update these cases another QC owns, e.g. C12,C13
   pull [--section <name>] [--out <dir>]     Download cases into .test.md files (default dir test-cases/)
        [--run <id>] [--overwrite]           --run keeps only the run's cases; --overwrite replaces differing files
   runs [--refs <keys>] [--milestone <name>] Print status counts of matching test runs, plan runs included
@@ -36,6 +37,8 @@ Environment (or .env in the current directory):
   TESTRAIL_SUITE_ID, TESTRAIL_TEMPLATE_ID (optional)
   TESTRAIL_FIELDS (optional) metadata keys sent as case fields, e.g.
     smoke:custom_case_smoketest,automation:custom_automation_type,platform:custom_case_platform
+  TESTRAIL_OWNER (optional) your name in the field mapped as owner, e.g. owner:custom_case_owner.
+    New cases get it; push updates a case with another owner only with --confirm-others
 
 Exit codes: 0 ok, 1 usage/validation/config error, 2 API error`;
 
@@ -283,19 +286,15 @@ export function toCasePayload(test, suite, ctx) {
     }
     payload.priority_id = priorityId;
   }
-  const refs = test.meta?.refs ?? suite.meta?.refs;
-  if (refs) payload.refs = refs;
+  payload.refs = test.meta?.refs ?? suite.meta?.refs ?? '';
   for (const field of ctx.fields?.values() ?? []) {
     const value = test.meta?.[field.key] ?? suite.meta?.[field.key];
     if (value !== undefined && String(value).trim()) payload[field.systemName] = toFieldValue(field, value, test.title);
   }
-  const preconds = [test.description?.trim(), test.examples ? `Test data:\n${test.examples}` : '']
+  payload.custom_preconds = [test.description?.trim(), test.examples ? `Test data:\n${test.examples}` : '']
     .filter(Boolean)
     .join('\n\n');
-  if (preconds) payload.custom_preconds = preconds;
-  if (test.steps?.length) {
-    payload.custom_steps_separated = test.steps.map((s) => ({ content: s.content, expected: s.expected }));
-  }
+  payload.custom_steps_separated = (test.steps ?? []).map((s) => ({ content: s.content, expected: s.expected }));
   return payload;
 }
 
@@ -504,6 +503,7 @@ function readConfig(env) {
     suiteId: env.TESTRAIL_SUITE_ID || null,
     templateId: env.TESTRAIL_TEMPLATE_ID || null,
     fieldSpec: parseFieldSpec(env.TESTRAIL_FIELDS),
+    owner: env.TESTRAIL_OWNER?.trim() || null,
   };
 }
 
@@ -579,13 +579,18 @@ async function loadRunCases(client, runId) {
   return { run, tests, caseIds: new Set(tests.map((t) => t.case_id)) };
 }
 
+const estimateNote = (item) => {
+  const [label, value] = item.estimate_forecast ? ['forecast', item.estimate_forecast] : item.estimate ? ['estimate', item.estimate] : [];
+  return value ? ` (${label} ${value})` : '';
+};
+
 async function cmdList(opts, cfg) {
   const client = createClient(cfg);
   if (opts.run) {
     const { run, tests } = await loadRunCases(client, runIdOf(opts.run));
     const labels = new Map((await client.get('get_statuses')).map((s) => [s.id, s.label]));
     console.log(`R${run.id} ${run.name}${run.is_completed ? ' (closed)' : ''}`);
-    for (const t of tests) console.log(`  C${t.case_id} [${labels.get(t.status_id) ?? t.status_id}] ${t.title}`);
+    for (const t of tests) console.log(`  C${t.case_id} [${labels.get(t.status_id) ?? t.status_id}] ${t.title}${estimateNote(t)}`);
     return 0;
   }
   const suiteId = await resolveSuite(client, cfg);
@@ -601,7 +606,7 @@ async function cmdList(opts, cfg) {
   const print = (section, depth) => {
     const pad = '  '.repeat(depth);
     console.log(`${pad}${section.name} [section ${section.id}]`);
-    for (const c of cases.filter((c) => c.section_id === section.id)) console.log(`${pad}  C${c.id} ${c.title}`);
+    for (const c of cases.filter((c) => c.section_id === section.id)) console.log(`${pad}  C${c.id} ${c.title}${estimateNote(c)}`);
     for (const child of children(section.id)) print(child, depth + 1);
   };
   for (const root of roots) print(root, 0);
@@ -798,7 +803,14 @@ async function cmdRuns(opts, cfg) {
 
 async function cmdPush(files, opts, cfg, cwd) {
   if (!files.length) throw new CliError('push needs at least one file');
-  const loaded = files.map((f) => loadFile(f, cwd));
+  const byPath = new Map();
+  for (const f of files) {
+    const loadedFile = loadFile(f, cwd);
+    const real = realpathSync.native(loadedFile.path);
+    if (!byPath.has(real)) byPath.set(real, loadedFile);
+  }
+  const loaded = [...byPath.values()];
+  const holders = new Map();
   for (const { file, doc } of loaded) {
     for (const suite of doc.suites) {
       if (!suite.title) throw new CliError(`${file}: a test appears before any suite or a suite has no title`);
@@ -806,9 +818,19 @@ async function cmdPush(files, opts, cfg, cwd) {
       if (sid && !/^\d+$/.test(sid)) throw new CliError(`${file}: invalid testrail_section_id "${sid}"`);
       for (const t of suite.tests) {
         if (!t.title) throw new CliError(`${file}: a test in suite "${suite.title}" has no title`);
-        if (t.meta.testrail_id && !/^C?\d+$/i.test(t.meta.testrail_id)) {
+        if (!t.meta.testrail_id) continue;
+        if (!/^C?\d+$/i.test(t.meta.testrail_id)) {
           throw new CliError(`${file}: invalid testrail_id "${t.meta.testrail_id}" in "${t.title}"`);
         }
+        const id = Number(t.meta.testrail_id.replace(/^C/i, ''));
+        const holder = holders.get(id);
+        if (holder) {
+          throw new CliError(
+            `${file}: ${JSON.stringify(t.title)} has testrail_id C${id}, which ${JSON.stringify(holder.title)} in ${holder.file} already has. ` +
+              'Remove the testrail_id from the test that is not that case, so push creates a new case for it',
+          );
+        }
+        holders.set(id, { file, title: t.title });
       }
     }
   }
@@ -822,6 +844,17 @@ async function cmdPush(files, opts, cfg, cwd) {
   const usedKeys = new Set(loaded.flatMap(({ doc }) => doc.suites.flatMap((s) => [s.meta, ...s.tests.map((t) => t.meta)]).flatMap(Object.keys)));
   const unmapped = STANDARD_KEYS.filter((key) => usedKeys.has(key) && !ctx.fields.has(key));
   if (unmapped.length) console.log(`warning: ${unmapped.join(', ')} not sent; map them to TestRail case fields in TESTRAIL_FIELDS`);
+  const ownerField = ctx.fields.get('owner');
+  if (cfg.owner && !ownerField) {
+    throw new CliError('TESTRAIL_OWNER is set but TESTRAIL_FIELDS maps no owner field; add one such as owner:custom_case_owner');
+  }
+  const myOwnerValue = cfg.owner ? toFieldValue(ownerField, cfg.owner, 'TESTRAIL_OWNER') : undefined;
+  const confirmed = new Set(
+    listOf(opts['confirm-others']).map((id) => {
+      if (!/^C?\d+$/i.test(id)) throw new CliError(`--confirm-others expects case IDs such as C12,C13, got "${id}"`);
+      return caseNum(id);
+    }),
+  );
   const payloads = loaded.map(({ file, doc }) => {
     try {
       return doc.suites.map((suite) => suite.tests.map((test) => toCasePayload(test, suite, ctx)));
@@ -838,6 +871,34 @@ async function cmdPush(files, opts, cfg, cwd) {
     );
     return remoteCases.get(String(id));
   };
+
+  const updates = new Map();
+  for (const [fileIndex, { doc }] of loaded.entries()) {
+    for (const [suiteIndex, suite] of doc.suites.entries()) {
+      for (const [testIndex, test] of suite.tests.entries()) {
+        if (!test.meta.testrail_id) continue;
+        const caseId = test.meta.testrail_id.replace(/^C/i, '');
+        const payload = { ...payloads[fileIndex][suiteIndex][testIndex] };
+        if (ownerField) delete payload[ownerField.systemName];
+        const remote = await remoteCase(caseId);
+        if (caseMatches(payload, remote)) continue;
+        const owner = ownerField ? fromFieldValue(ownerField, remote?.[ownerField.systemName]) : 'an unknown QC (TESTRAIL_FIELDS maps no owner field)';
+        const mine = Boolean(cfg.owner) && owner.toLowerCase() === cfg.owner.toLowerCase();
+        const unconfirmed = owner && !mine && !confirmed.has(caseNum(caseId));
+        updates.set(caseId, { title: test.title, payload, unconfirmedOwner: unconfirmed ? owner : '' });
+      }
+    }
+  }
+  const refused = [...updates].filter(([, u]) => u.unconfirmedOwner);
+  if (refused.length && !dry) {
+    throw new CliError(
+      [
+        'Refusing to update cases another QC owns. Nothing was written:',
+        ...refused.map(([id, u]) => `  C${id} ${JSON.stringify(u.title)} owned by ${u.unconfirmedOwner}`),
+        `Confirm with the user, then pass --confirm-others ${refused.map(([id]) => `C${id}`).join(',')}.`,
+      ].join('\n'),
+    );
+  }
 
   async function ensureSection(name, parentId, description) {
     const found = sections.find((s) => s.parent_id === parentId && s.name === name);
@@ -876,21 +937,24 @@ async function cmdPush(files, opts, cfg, cwd) {
         }
         if (!dry) ids.sections.push({ suiteIndex, sectionId });
         for (const [testIndex, test] of suite.tests.entries()) {
-          const payload = payloads[fileIndex][suiteIndex][testIndex];
           if (test.meta.testrail_id) {
             const caseId = test.meta.testrail_id.replace(/^C/i, '');
             if (!dry) ids.cases.push({ suiteIndex, testIndex, caseId });
-            if (caseMatches(payload, await remoteCase(caseId))) {
+            const update = updates.get(caseId);
+            if (!update) {
               stats.unchanged++;
               continue;
             }
-            console.log(`${tag}update case C${caseId} ${JSON.stringify(test.title)}`);
-            if (!dry) await client.post(`update_case/${caseId}`, payload);
+            const note = update.unconfirmedOwner ? ` (owner ${update.unconfirmedOwner}, needs --confirm-others)` : '';
+            console.log(`${tag}update case C${caseId} ${JSON.stringify(test.title)}${note}`);
+            if (!dry) await client.post(`update_case/${caseId}`, update.payload);
             stats.updated++;
           } else {
             console.log(`${tag}add case ${JSON.stringify(test.title)} in section ${JSON.stringify(suite.title)}`);
             if (!dry) {
-              const created = await client.post(`add_case/${sectionId}`, payload);
+              const payload = payloads[fileIndex][suiteIndex][testIndex];
+              const body = myOwnerValue === undefined ? payload : { ...payload, [ownerField.systemName]: myOwnerValue };
+              const created = await client.post(`add_case/${sectionId}`, body);
               ids.cases.push({ suiteIndex, testIndex, caseId: created.id });
             }
             stats.added++;
@@ -933,6 +997,18 @@ export function parseResultsMd(text) {
   return { runs: blocks.filter((b) => b.kind === 'run'), results: blocks.filter((b) => b.kind === 'result') };
 }
 
+const RUN_AT_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+const STEP_RE = /^(\d+) (passed|failed|not observed)\b/;
+const stepsOf = (observed) => String(observed ?? '').split(/\s+·\s+(?=\d+\s)/).map((s) => s.trim()).filter(Boolean);
+const CONTENT_FIELDS = new Set(['preconds', 'steps_separated', 'steps', 'expected']);
+const STALE_GRACE_SECONDS = 60;
+const runAtSeconds = (value) => Math.floor(new Date(`${value.slice(0, 10)}T${value.slice(11)}`).getTime() / 1000);
+const pad2 = (n) => String(n).padStart(2, '0');
+function formatLocal(seconds) {
+  const d = new Date(seconds * 1000);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
 export function checkResults(doc, dir) {
   const problems = [];
   const [run] = doc.runs;
@@ -950,9 +1026,28 @@ export function checkResults(doc, dir) {
     else seen.add(caseNum(r.meta.case));
     if (!status) problems.push(`${where}: missing status`);
     if (r.meta.elapsed && !ELAPSED_RE.test(r.meta.elapsed)) problems.push(`${where}: elapsed must look like 1m 30s, got "${r.meta.elapsed}"`);
+    if (r.meta.run_at && !(RUN_AT_RE.test(r.meta.run_at) && Number.isFinite(runAtSeconds(r.meta.run_at)))) {
+      problems.push(`${where}: run_at must look like 2026-11-10 10:14, got "${r.meta.run_at}"`);
+    }
+    if (status === 'passed' && !r.meta.testrail_result_id) {
+      const steps = stepsOf(r.meta.observed);
+      const notPassed = steps.map((s) => s.match(STEP_RE)).filter((m) => m && m[2] !== 'passed');
+      if (!steps.length) problems.push(`${where}: a passed result needs observed, each step and what was seen`);
+      else if (!steps.every((s) => STEP_RE.test(s))) problems.push(`${where}: observed must read like "1 passed (form shown) · 2 passed", got "${r.meta.observed}"`);
+      else if (notPassed.length) problems.push(`${where}: passed, but observed has ${notPassed.map((m) => `step ${m[1]} ${m[2]}`).join(', ')}`);
+      if (listOf(r.meta.evidence).length && !r.meta.checked) problems.push(`${where}: a passed result with evidence needs checked, what the screenshot check found`);
+    }
     if (r.meta.testrail_result_id && !runId) problems.push(`${where}: has testrail_result_id but the run has no testrail_run_id`);
     if (r.meta.testrail_result_id && status === 'untested') problems.push(`${where}: TestRail cannot set a posted result back to untested`);
-    for (const f of listOf(r.meta.evidence)) if (!existsSync(resolve(dir, f))) problems.push(`${where}: evidence file not found: ${f}`);
+    for (const f of listOf(r.meta.evidence)) {
+      const path = resolve(dir, f);
+      if (!existsSync(path)) {
+        problems.push(`${where}: evidence file not found: ${f}`);
+        continue;
+      }
+      const rel = relative(realpathSync(dir), realpathSync(path));
+      if (rel.split(sep)[0] === '..' || isAbsolute(rel)) problems.push(`${where}: evidence must be a file in the results folder: ${f}`);
+    }
   }
   return problems;
 }
@@ -977,6 +1072,34 @@ async function resolveMilestone(client, cfg, name) {
   if (found.length === 1) return found[0].id;
   const listing = all.map((m) => `  ${m.name}`).join('\n');
   throw new CliError(`${found.length ? 'Several milestones' : 'No milestone'} named ${JSON.stringify(name)}. Milestones:\n${listing}`);
+}
+
+async function refuseStaleCases(client, cfg, suiteId, doc, plan) {
+  const runAtOf = new Map(doc.results.filter((r) => r.meta.case).map((r) => [caseNum(r.meta.case), r.meta.run_at]));
+  const checked = plan.filter((p) => p.action === 'add' || p.action === 'correct');
+  const missing = checked.filter((p) => !runAtOf.get(p.caseId));
+  if (missing.length) {
+    throw new CliError(missing.map((p) => `C${p.caseId}: add run_at (when the case ran) before pushing its result`).join('\n'));
+  }
+  if (!checked.length) return;
+  const ranAt = new Map(checked.map((p) => [p.caseId, runAtSeconds(runAtOf.get(p.caseId))]));
+  const since = Math.min(...ranAt.values());
+  const cases = await client.getAll(`get_cases/${cfg.projectId}&suite_id=${suiteId}&updated_after=${since}`, 'cases');
+  const stale = [];
+  for (const c of cases) {
+    const ran = ranAt.get(c.id);
+    if (ran === undefined || !(c.updated_on > ran)) continue;
+    const entries = await client.getAll(`get_history_for_case/${c.id}`, 'history');
+    const edits = entries
+      .map((e) => ({ at: e.timestamp ?? e.created_on, fields: (e.changes ?? []).map((ch) => String(ch.field).replace(/^custom_/, '')).filter((f) => CONTENT_FIELDS.has(f)) }))
+      .filter((e) => e.fields.length && e.at >= ran + STALE_GRACE_SECONDS && !(c.created_on > ran && e.at <= c.created_on))
+      .sort((a, b) => a.at - b.at);
+    if (edits.length) {
+      const fields = [...new Set(edits.flatMap((e) => e.fields))];
+      stale.push(`C${c.id}: ${fields.join(', ')} changed on TestRail at ${formatLocal(edits[0].at)}, after the case ran at ${formatLocal(ran)}. Run it again before pushing its result.`);
+    }
+  }
+  if (stale.length) throw new CliError(stale.join('\n'));
 }
 
 async function cmdResults(files, opts, cfg, cwd) {
@@ -1010,26 +1133,18 @@ async function cmdResults(files, opts, cfg, cwd) {
   let runId = run.meta.testrail_run_id ? runIdOf(run.meta.testrail_run_id) : null;
   let tests = [];
   let posted = new Map();
+  let suiteId;
+  let existingRun;
   if (runId) {
     const loaded = await loadRunCases(client, runId);
     if (loaded.run.is_completed) throw new CliError(`Run R${runId} is closed; TestRail does not take results for a closed run`);
     const missing = caseIds.filter((id) => !loaded.caseIds.has(id));
     if (missing.length) throw new CliError(`Not in run R${runId}: ${missing.map((id) => `C${id}`).join(', ')}`);
     tests = loaded.tests;
+    existingRun = loaded.run;
+    suiteId = loaded.run.suite_id;
     if (doc.results.some((r) => r.meta.testrail_result_id)) {
       posted = new Map((await client.getAll(`get_results_for_run/${runId}`, 'results')).map((r) => [String(r.id), r]));
-    }
-  } else {
-    const body = { suite_id: await resolveSuite(client, cfg), name: run.title, include_all: false, case_ids: caseIds };
-    if (run.text) body.description = run.text;
-    if (run.meta.refs) body.refs = run.meta.refs;
-    if (run.meta.milestone) body.milestone_id = await resolveMilestone(client, cfg, run.meta.milestone);
-    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`].filter(Boolean);
-    console.log(`${tag}create run ${JSON.stringify(run.title)} with ${caseIds.length} cases${extras.length ? ` (${extras.join(', ')})` : ''}`);
-    if (!dry) {
-      runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
-      persist({ run: { testrail_run_id: `R${runId}` } });
-      tests = (await loadRunCases(client, runId)).tests;
     }
   }
 
@@ -1043,8 +1158,10 @@ async function cmdResults(files, opts, cfg, cwd) {
     const version = r.meta.build || run.meta.build;
     if (version) result.version = version;
     if (r.meta.defects) result.defects = r.meta.defects;
+    const ran = status === 'passed' ? '' : `Ran ${r.meta.run_at}`;
     if (!item.resultId) {
-      if (r.text) result.comment = r.text;
+      const comment = [r.text, ran].filter(Boolean).join('\n\n');
+      if (comment) result.comment = comment;
       if (r.meta.elapsed) result.elapsed = r.meta.elapsed;
       return { ...item, action: 'add', result };
     }
@@ -1053,12 +1170,47 @@ async function cmdResults(files, opts, cfg, cwd) {
     if (prev.status_id !== result.status_id) {
       item.attached = [];
       item.files = listOf(r.meta.evidence);
-      return { ...item, action: 'correct', result: { ...result, comment: ['Corrected result.', r.text].filter(Boolean).join('\n\n') } };
+      return { ...item, action: 'correct', result: { ...result, comment: ['Corrected result.', r.text, ran].filter(Boolean).join('\n\n') } };
     }
     const keys = (v) => splitKeys(v).sort().join();
     if (keys(prev.defects) !== keys(r.meta.defects)) return { ...item, action: 'defects', result: { ...result, comment: 'Defects updated.' } };
     return { ...item, action: 'in sync' };
   });
+
+  suiteId ??= await resolveSuite(client, cfg);
+  await refuseStaleCases(client, cfg, suiteId, doc, plan);
+
+  if (existingRun) {
+    const have = splitKeys(existingRun.refs);
+    const missingRefs = splitKeys(run.meta.refs).filter((k, i, all) => !have.includes(k) && all.indexOf(k) === i);
+    if (missingRefs.length) {
+      console.log(`${tag}add refs ${missingRefs.join(', ')} to run R${runId}`);
+      if (!dry) await client.post(`update_run/${runId}`, { refs: [...have, ...missingRefs].join(', ') });
+    }
+  }
+
+  if (!runId) {
+    const owner = await client.get('get_current_user');
+    const body = { suite_id: suiteId, name: run.title, include_all: false, case_ids: caseIds, assignedto_id: owner.id, start_on: Math.floor(Date.now() / 1000) };
+    if (run.text) body.description = run.text;
+    if (run.meta.refs) body.refs = run.meta.refs;
+    if (run.meta.milestone) body.milestone_id = await resolveMilestone(client, cfg, run.meta.milestone);
+    const extras = [run.meta.refs && `refs ${run.meta.refs}`, run.meta.milestone && `milestone ${run.meta.milestone}`, `assigned to ${owner.name}`].filter(Boolean);
+    console.log(`${tag}create run ${JSON.stringify(run.title)} with ${caseIds.length} cases${extras.length ? ` (${extras.join(', ')})` : ''}`);
+    if (!dry) {
+      runId = String((await client.post(`add_run/${cfg.projectId}`, body)).id);
+      persist({ run: { testrail_run_id: `R${runId}` } });
+      const created = await loadRunCases(client, runId);
+      tests = created.tests;
+      const missing = caseIds.filter((id) => !created.caseIds.has(id));
+      const extra = [...created.caseIds].filter((id) => !caseIds.includes(id));
+      if (missing.length || extra.length) {
+        const ids = (list) => list.map((id) => `C${id}`).join(', ');
+        const diff = [missing.length && `missing ${ids(missing)}`, extra.length && `extra ${ids(extra)}`].filter(Boolean).join('; ');
+        throw new CliError(`Run R${runId} was created with the wrong cases (${diff}). Fix the run in TestRail, then push again.`);
+      }
+    }
+  }
 
   const verbs = { add: 'add', correct: 'correct', defects: 'update defects of' };
   for (const p of plan) {
@@ -1122,6 +1274,7 @@ export async function main(argv = process.argv.slice(2), env = process.env, cwd 
         options: {
           'dry-run': { type: 'boolean' },
           'parent-section': { type: 'string' },
+          'confirm-others': { type: 'string' },
           section: { type: 'string' },
           out: { type: 'string' },
           overwrite: { type: 'boolean' },

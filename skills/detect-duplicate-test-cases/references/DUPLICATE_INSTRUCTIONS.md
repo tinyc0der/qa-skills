@@ -11,17 +11,6 @@ Reference for scoring and classifying duplicate and low-value test cases.
 | 3 | Overlapping / Subset | One test contains another | Cart test (3 steps) inside Checkout test (8 steps) |
 | 4 | Redundant Variations | Same logic, different data | Login with john@example.com vs jane@example.com |
 
-## Similarity Scoring
-
-Compare test pairs on: title -> steps -> expected results -> preconditions -> refs.
-
-| Score | Category |
-|-------|----------|
-| 100% | Exact duplicate |
-| 80-99% | Semantic duplicate |
-| 50-79% | Overlapping |
-| <50% | Different tests |
-
 ## Low-Value Cases
 
 Flag cases that primarily cover:
@@ -70,7 +59,6 @@ When a defect requires protection, keep the smallest regression scenario possibl
 - C{id} "{title}" (section: {section})
 - C{id} "{title}" (section: {section})
 
-**Similarity:** {X}%
 **Canonical:** C{id}
 **Recommendation:** {Keep / Merge / Remove}
 

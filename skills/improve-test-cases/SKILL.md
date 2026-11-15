@@ -19,56 +19,43 @@ The target format and rules are owned by the `qa-write-test-cases` skill:
 **DO NOT CHANGE:**
 - `testrail_id:` and `testrail_section_id:` lines.
 - Original test intent.
-- Original language (fix only clarity, grammar, typos).
+- The natural language the tests are written in.
 
 ## Step 1: Get Test Cases
 
-- Use the local `test-cases/*.test.md` files the user points at.
-- Otherwise download the cases with the `pull` command of the `sync-test-cases-with-testrail` skill.
+- Use the local `*.test.md` files the user points at.
+- Otherwise download the cases with the `pull` command of the `sync-test-cases-with-testrail` skill, into the ticket's folder ([Ticket Folder](../gather-context/references/ticket-folder.md)).
 
 ## Step 2: Analyze Test Quality
 
-Read each test and flag every place it breaks the format or the writing rules. Also flag:
+Run `check` of the `sync-test-cases-with-testrail` skill on the files and flag what it reports. Then read each test and flag every place it breaks a check in the "Executable" and "Rules" sections of the [Review Checklist](../qa-write-test-cases/references/review-checklist.md). Skip its other sections: they need the sources and an approved checklist.
 
-Steps and expected results:
-- Missing expected results.
-- Unclear actions.
-- Steps not ordered logically.
-- Expected results not relevant to the steps.
-- Missing pass/fail criteria.
+## Step 3: Improve Tests
 
-Formatting:
-- Broken markdown syntax.
-- Missing sections.
-- Inconsistent header hierarchy.
-
-Ambiguity:
-- Generic or subjective terms ("should work", "might fail").
-- Vague language that could be interpreted multiple ways.
-- Steps that cannot be verified objectively.
-- Missing specific values, data, or conditions.
-
-## Step 3: Show Summary to User
-
-- List issues found per test.
-- Give specific recommendations for improvements.
-- **Ask the user to confirm before proceeding.**
-- If the user does not confirm, do not change anything.
-
-## Step 4: Improve Tests
-
-- Rewrite each flagged test to the format and writing rules.
+- Rewrite each flagged test to the format and writing rules. Do not ask first: the summary shows each change.
+- A fact the test needs and no file or user answer gives (an error text, how to cause a failure) is a question for the PO. Do not invent it. Add it to the ticket's context file when there is one.
 - Include context from the parent suite in a description when relevant.
 - Keep `priority:`, `refs:`, `smoke:`, `automation:`, `platform:`, and other metadata values.
 
-## Step 5: Save and Push
+## Step 4: Save
 
 - Overwrite the original files.
 - Keep the same file names and directory structure.
-- Push the changed files with the `sync-test-cases-with-testrail` skill. Its dry-run and confirmation step apply.
 
-## Step 6: Show Final Summary
+## Step 5: Summarize and Push
 
-- Number of files modified.
-- Number of tests improved.
-- Key improvements made.
+Run `push --dry-run` of the `sync-test-cases-with-testrail` skill on the changed files, then send one message as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out:
+
+1. The question below. Name each case another QC owns, with its owner.
+2. Counts: tests improved, files changed.
+3. One line per improved test: its title and what changed.
+4. Facts no source gives, as questions for the PO.
+
+```
+❓ Push the <N> improved cases to TestRail?
+
+1. ✅ Push
+2. ✏️ Type changes
+```
+
+Push after a yes. The yes is the confirmation that skill asks for, `--confirm-others` for the cases this message named included. These are rewrites the QC did not write, so ask even for their own cases.

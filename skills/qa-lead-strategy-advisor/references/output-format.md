@@ -42,7 +42,7 @@ Optimize for **scanning** by eyes: the user should understand each item and what
 
 ```
 
-## Example roadmap output (follow it strictly)
+## Example roadmap output (illustrative: follow the format; the items come from discovery)
 
 ```
 🗺️ **QA roadmap**

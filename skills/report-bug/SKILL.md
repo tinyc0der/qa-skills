@@ -1,6 +1,6 @@
 ---
 name: report-bug
-description: Create a Jira Bug from a failed TestRail case or a defect found in the live app. Find the user story it belongs to, search Jira for duplicates first, write reproducible steps with Expected vs Actual per failing step, link the Bug to the story and the TestRail case, and read it back after creating. Use when the user says "create a bug", "log a bug", "report this in Jira", "this case failed, file a bug", "write a bug report", "raise a defect for PROJ-123", or describes wrong behavior they want recorded, including when they only share a screenshot of the error. Not for retesting a fixed bug.
+description: Create a Jira Bug from a failed TestRail case or a defect found in the live app. Find the user story it belongs to, search Jira for duplicates first, write reproducible steps with Expected vs Actual per failing step, link the Bug to the story and the TestRail case, and read it back after creating. Use when the user asks to create, log, file, or raise a bug or defect in Jira, write a bug report, or record a failed case or wrong behavior, including when they only share a screenshot of the error. Not for retesting a fixed bug.
 ---
 
 # Report Bug
@@ -10,14 +10,14 @@ Creates a Jira Bug that a developer can reproduce on the first read without aski
 References:
 
 - [Bug Report Format](./references/bug-report-format.md) defines the title, fields, and description, and maps each part to Jira.
-- [Writing Rules](../qa-write-test-cases/references/writing-rule.md) of `qa-write-test-cases` cover steps, expected results, and AI writing patterns to avoid.
+- [Writing Rules](../qa-write-test-cases/references/writing-rule.md) of `qa-write-test-cases` cover steps, expected results, and tone.
 
 ## Workflow
 
 1. Find the user story
 2. Check for duplicates
 3. Confirm the defect
-4. Draft the Bug — approval gate
+4. Draft the Bug — one approval gate for every Bug drafted together
 5. Create the Bug and its links
 6. Show the result
 
@@ -26,9 +26,9 @@ References:
 **Every Bug links to a user story. Do not create a Bug until the story is known.**
 
 - Jira ticket: a story is used as is. For a subtask or another issue, find the story through `parent`, issue links, and keys in the text. Never use a subtask, task, bug, or epic in place of the story.
-- TestRail case `C<id>`: if a local `*.test.md` holds it (`test-cases/`, or `cases/` in a run folder), read its `refs` there. Otherwise, with the `sync-test-cases-with-testrail` skill, run `list` to find its section, then `pull --section <section> --out <scratch dir>`. Read the case's `refs`, preconditions, and steps from the pulled file, and resolve the story from `refs`.
+- TestRail case `C<id>`: if a local `*.test.md` holds it (the story's folder under `tickets/`, or `cases/` in a run folder), read its `refs` there. Otherwise, with the `sync-test-cases-with-testrail` skill, run `list` to find its section, then `pull --section <section> --out <scratch dir>`. Read the case's `refs`, preconditions, and steps from the pulled file, and resolve the story from `refs`.
 - Any other source: use only a story key it names. Never guess the story from a title, screen, or section name.
-- No story, several candidates, or conflicting sources → ask the user for the story key and list the candidates. Check duplicates and draft meanwhile.
+- No story, several candidates, or conflicting sources → check duplicates and draft anyway, and ask for the story key in the Step 4 message, with the candidates.
 
 From the story, read:
 
@@ -47,7 +47,7 @@ Always search Jira before drafting a new Bug:
 - open Bugs in the same area
 - recently closed Bugs
 
-On a match, propose the action and write only after the user approves:
+On a match, propose the action in the Step 4 message, and write only after the user approves it:
 
 - Same defect, other data or conditions → no new Bug. Report the existing key; for a failed result, Step 6 lists it for the result's Defects. Do not edit the old Bug's title, description, or attachments.
 - Closed Bug that recurs → reopen it with a comment instead of creating a new one.
@@ -58,8 +58,8 @@ On a match, propose the action and write only after the user approves:
 
 - Check the expected behavior against the story, its comments, and its linked pages. Behavior descoped there is not a bug.
 - If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
-- If a context file (`test-cases/*.context.md`) names the story, read it and the sources it lists.
-- The expected behavior is not obvious and the story does not define it → search as [Related Sources](../qa-thinking/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
+- If the story has a context file (`tickets/<KEY>-*/context.md`), read it and the sources it lists.
+- The expected behavior is not obvious and the story does not define it → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - Web on a non-production environment: reproduce with the `agent-browser` skill. Ask before any action that saves data.
   - Read the app's file in `automation-lessons/` first, if there is one.
   - Use the same screen, tab, filters, data, and build as the report.
@@ -78,7 +78,7 @@ Format rules:
 
 Writing rules:
 
-- Follow the Steps and AI Writing Patterns sections of [Writing Rules](../qa-write-test-cases/references/writing-rule.md). Where they differ from the Bug Report Format, the format wins.
+- Follow the Steps and Tone sections of [Writing Rules](../qa-write-test-cases/references/writing-rule.md). Where they differ from the Bug Report Format, the format wins.
 - Write in the language the user asks for. Otherwise use the language of the project's existing Bugs. Keep Jira field names as Jira shows them.
 - Setup steps hold only the account, data, and settings the defect depends on. Never passwords.
 - Actual holds observations only: values, messages, error codes, requests. Never a guessed cause.
@@ -100,20 +100,22 @@ Priority and severity:
 
 #### Approval gate
 
-Show the title, fields, and description. Also show:
+One message for every Bug drafted together, as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out. One Bug: show its draft. Several, such as a run's failed cases: save the drafts to `bugs.md` in the run folder, else the ticket folder, and show one line per Bug with its title, priority, story, and any duplicate action or `Unverified` value from the list below.
 
-- story key, how it was found, and the link type and direction
-- story assignee (name and `accountId`), the basis for the Bug's assignee
-- story sprint (name and ID), or "no sprint" when verified
-- web link to each TestRail case whose failed result gets this Bug
-- files to attach
-- reasons for priority and severity
-- sources the search found for the expected behavior
+Questions earlier steps raised (the story key, which sprint, the expected behavior, a save while reproducing, filing a Bug not reproduced) go in this message, not before it. Draft meanwhile from what is known.
 
-Mark each unknown value `Unverified`. Do not create the Bug while the story, found-on environment, platform, build, or sprint is `Unverified`.
+With each Bug, show only what the QC checks:
+
+- priority and severity, each with its reason in a few words
+- assignee and sprint by name, and the story key
+- the duplicate match and the proposed action (Step 2)
+- the source of the expected behavior, when it is not the story
+- each `Unverified` value
+
+Keep account IDs, sprint IDs, link types, and TestRail links for the read-back in Step 5. Mark each unknown value `Unverified`. Do not create the Bug while the story, found-on environment, platform, build, or sprint is `Unverified`.
 
 ```
-❓ Do you want to:
+❓ Create these Bugs?
 
 1. ✅ Create
 2. ✏️ Type changes

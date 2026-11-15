@@ -1,24 +1,23 @@
 # Test Writing Rules
 
-If the user provided example test cases, follow their style first; then apply these rules.
-
 ## Test Suites
 
 - Formulas, business rules, edge-case reasoning, and feature context live in the suite/test description.
-- Prerequisites common to all test cases go as bullet points in the suite description: the environment, such as role, account type, language, app settings, the screen every test starts on, and tools every test uses (DevTools).
+- Prerequisites common to all test cases go as bullet points in the suite description: the environment, such as role and account type when no expected result depends on them, language, app settings, the screen every test starts on, and tools every test uses (DevTools).
 - Keep test data and the state a test relies on out of the suite description. TestRail shows a case without its section description.
 - Formulas and diagrams relevant to all test cases can be included as code blocks in the suite description.
 
 ## Test Cases
 
-- A test case consists of a description and steps.
+- A test case consists of an optional description and steps.
 - Golden rule: "why" in the description, "what" in the steps.
 - Add the intent to the description if the title is not enough to explain it.
-- Keep the description clear and concise.
 - Put preparations into preconditions/description, not into steps.
 - Focus on black-box testing: every action and observable result goes through public APIs or UI (unless the user specifies otherwise).
 - Prefer UI over public APIs when possible. When the app can show a value (add a column, open details), read it there. Use DevTools or an API only for what the UI cannot show, and cover every page of a paged list.
 - Add system checks only when it is not clear how to test via public APIs or UI. This is not a unit test; usually no direct server or code access is allowed.
+- Drive a backend story through the system that feeds it (the CMS, the app) and capture the request in DevTools. Send requests directly only for inputs that system blocks.
+- Mock or check an endpoint only when a source names it as the one serving the data, or the step copies the request from DevTools while doing the action under test. Otherwise describe the data state in preconditions (`Most searched has 2 tickers`).
 
 ## Title
 
@@ -63,51 +62,16 @@ Good vs bad:
 
 ## Steps
 
-A step consists of an action (with optional test data) and an expected result. A wait step (`Wait until 10:05`) may have no expected result.
+A step is an action (with optional test data) and an expected result, in the format of [Test Case Format](./testrail-test-case-format.md) §7. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
 
-Test steps use the `## Steps` header section with a nested markdown list format:
-
-```markdown
-## Steps
-
-- (Step Action)
-  *Expected*: ... (Observable behavior)
-- ...
-  *Expected*: ...
-```
-
-e.g.
-
-```markdown
-## Steps
-
-- Open the *Login* page
-  *Expected*: Login form shows **Email**, **Password** and **Log in**
-- Enter `jane@example.com` and `Secret-123` and click **Log in**
-  *Expected*: Dashboard opens; header shows "Jane Doe"
-```
-
-Step format rules:
-
-- Steps must be under a `## Steps` heading.
-- Use nested markdown lists (bulleted `-`/`*` or numbered `1.`).
-- Top-level items describe the action to perform.
-- Nested items with `*Expected*` (or `*Expected*:`, `*Expected result*`) describe the observable behavior.
-- Expected results should be specific and verifiable.
 - Each expected result passes or fails: no "either X or Y", no "record whether X". An outcome no source gives is an `ask` item, not two accepted outcomes.
-
-Step content rules:
-
 - Each step is a simple sentence. Avoid commas and sub-sentences.
 - Steps are mechanical: click, send, read, assert.
 - Each step includes exact instructions with concrete, realistic values a tester can act on directly.
-- Do NOT parametrize by default — first-pass test cases should read as executable manual steps, not templates.
-- Use a placeholder variable like `${domain}` only when the value is genuinely reused across steps or is data-driven (see the Examples section in the format reference). A plain UI/API acceptance step needs concrete values, not placeholders.
-- Do not turn data unrelated to the test into placeholders.
-- Do not add preconditions as placeholders.
+- Use a `${variable}` placeholder, in backticks, only for a value reused across steps, a data-driven value (the examples table), or environment data no source gives that the tester supplies (test account, customer name). Never for other data or preconditions.
 - Prefer URL paths over full URLs, e.g. `/auth/login`.
 - Use specific values when they are important for the scenario (boundary values, format validation, locale-specific input).
-- Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)"; replace them with concrete, literal values.
+- Avoid vague qualifiers like "small", "known", "around", "e.g.", "like", "(…)", and subjective outcomes like "should work" or "might fail"; replace them with concrete, literal values.
 - For data that changes with time (market prices, the clock, balances), give the rule to derive it from what the screen shows: `ceiling price + 0.10`, `current time − 7 minutes`.
 - Avoid general statements in steps. Move them to the description.
 - Do not chain multiple distinct actions or use unnecessary And / Or combinations in a single step.
@@ -144,18 +108,6 @@ Avoid:
 - Emphasis for visual weight; rephrase or split the step instead.
 - Bold/italic in place of a placeholder (`[url]`) or a code block.
 
-## AI Writing Patterns to Avoid
+## Tone
 
-Be specific, not grandiose. Say what it actually does. Avoid marketing language and emojis (unless explicitly intended).
-
-Avoid:
-
-- Puffery: pivotal, crucial, vital, testament, enduring legacy, indelible mark, deeply rooted, profound heritage, steadfast dedication, key turning point
-- Promotional adjectives: groundbreaking (figurative), seamless/seamlessly, robust, cutting-edge, vibrant, nuanced, multifaceted, intricate/intricacies, stunning natural beauty
-- Overused AI vocabulary: delve/delves, leverage/leveraging, foster/fostering, realm, tapestry, landscape, interplay, streamline, shed light on, garnered, notably, key (as adjective)
-- Empty "-ing" phrases: ensuring, showcasing, highlighting, emphasizing, reflecting, underscoring, aligning with, contributing to, enhancing, underpinning
-- Filler frames: stands/serves as, is a testament/reminder, plays a vital/significant/crucial/pivotal role, underscores/highlights its importance, reflects broader, symbolizing its ongoing/enduring/lasting impact, continues to captivate, nestled in the heart of, boasts a
-- Hedges and closers: it's important/critical/crucial to note/remember/consider, may vary, In summary, In conclusion, Overall
-- "Challenges/Legacy" framing: Despite its... faces several challenges, Despite these challenges, Challenges and Legacy, Future Outlook
-- Parallel "not/but/however" constructions: "Not only ... but ...", "It is not just about ..., it's ..." — common in LLM writing but unsuitable for a neutral tone
-- Formatting overuse: excessive bullets, emoji decorations, bold on every other word
+Write in a neutral, literal tone: say what the system does and what the tester sees. No marketing or emphatic adjectives, filler phrases, or emoji, unless the user asks for them. Use bold and italic only as Bold and italic in steps describes.

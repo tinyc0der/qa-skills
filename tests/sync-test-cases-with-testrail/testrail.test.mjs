@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { copyFileSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -316,6 +316,12 @@ const CASE_FIELDS = [
       { context: { is_global: false, project_ids: [1] }, options: { items: '1, All\n2, Web\n3, Mobile' } },
     ],
   },
+  {
+    system_name: 'custom_case_owner',
+    name: 'case_owner',
+    type_id: 6,
+    configs: [{ context: { is_global: true, project_ids: null }, options: { items: '1, Dana\n2, Minh' } }],
+  },
 ];
 
 test('parseFieldSpec reads key:field pairs and rejects malformed ones', () => {
@@ -379,9 +385,9 @@ test('toCasePayload falls back to the suite priority, omits a missing one and re
   assert.ok(!('priority_id' in toCasePayload(mkTest(), emptySuite, ctx)));
 });
 
-test('toCasePayload builds preconditions, refs and steps and omits empty fields', () => {
+test('toCasePayload builds preconditions, refs and steps and sends empty ones so TestRail clears them', () => {
   const bare = toCasePayload(mkTest(), emptySuite, ctx);
-  assert.deepEqual(bare, { title: 'T', template_id: 7 });
+  assert.deepEqual(bare, { title: 'T', template_id: 7, refs: '', custom_preconds: '', custom_steps_separated: [] });
 
   const full = toCasePayload(
     mkTest({
@@ -524,8 +530,13 @@ function startMock(opts = {}) {
             sections: slice,
           });
         }
-        case 'get_cases':
-          return json(res, 200, { offset: 0, limit: 250, size: state.cases.length, _links: { next: null, prev: null }, cases: state.cases });
+        case 'get_cases': {
+          const after = Number(query.get('updated_after') ?? 0);
+          const cases = state.cases.filter((c) => !after || (c.updated_on ?? 0) >= after);
+          return json(res, 200, { offset: 0, limit: 250, size: cases.length, _links: { next: null, prev: null }, cases });
+        }
+        case 'get_history_for_case':
+          return json(res, 200, { _links: { next: null }, history: opts.history?.[id] ?? [] });
         case 'add_section': {
           const s = { id: state.nextSection++, suite_id: body.suite_id, name: body.name, parent_id: body.parent_id ?? null };
           state.sections.push(s);
@@ -549,10 +560,17 @@ function startMock(opts = {}) {
           const run = state.runs.find((r) => r.id === Number(id));
           return run ? json(res, 200, run) : json(res, 400, { error: 'Field :run_id is not a valid test run.' });
         }
+        case 'get_current_user':
+          return json(res, 200, opts.user ?? { id: 77, name: 'Dana QA' });
+        case 'update_run': {
+          const run = state.runs.find((r) => r.id === Number(id));
+          Object.assign(run, body);
+          return json(res, 200, run);
+        }
         case 'add_run': {
           const run = { id: state.nextRun++, ...body, is_completed: false };
           state.runs.push(run);
-          state.tests[run.id] = body.case_ids.map((caseId) => ({ id: state.nextTest++, case_id: caseId, status_id: 3, title: `Case ${caseId}` }));
+          state.tests[run.id] = (opts.runCases ? opts.runCases(body.case_ids) : body.case_ids).map((caseId) => ({ id: state.nextTest++, case_id: caseId, status_id: 3, title: `Case ${caseId}` }));
           return json(res, 200, run);
         }
         case 'add_results_for_cases': {
@@ -660,7 +678,13 @@ test('push creates the section and cases, writes ids back, then only updates on 
     assert.doesNotMatch(first.stdout + first.stderr, /secret-key/);
 
     mock.state.requests.length = 0;
-    const second = await runCli(['push', 'login.test.md'], { env: baseEnv(mock.port), cwd });
+    const unconfirmed = await runCli(['push', 'login.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(unconfirmed.code, 1);
+    assert.match(unconfirmed.stderr, /C100 .* owned by an unknown QC \(TESTRAIL_FIELDS maps no owner field\)/);
+    assert.match(unconfirmed.stderr, /--confirm-others C100,C101\./);
+    assert.deepEqual(posts(mock.state), []);
+
+    const second = await runCli(['push', 'login.test.md', '--confirm-others', 'C100,C101'], { env: baseEnv(mock.port), cwd });
     assert.equal(second.code, 0, second.stderr);
     assert.equal(named(mock.state, 'add_section').length, 0);
     assert.equal(named(mock.state, 'add_case').length, 0);
@@ -747,6 +771,112 @@ test('push rejects a field value or a field map TestRail cannot take before writ
     assert.match(malformed.stderr, /TESTRAIL_FIELDS expects key:field_name pairs/);
     assert.equal(posts(mock.state).length, 0);
     assert.doesNotMatch(readFileSync(join(cwd, 'order.test.md'), 'utf8'), /testrail_/);
+  } finally {
+    await mock.close();
+  }
+});
+
+const OWNER_SPEC = 'owner:custom_case_owner';
+const DANA = 1;
+const MINH = 2;
+const remoteOwned = (id, title, owner) => ({
+  id,
+  section_id: 6,
+  title,
+  template_id: 2,
+  refs: 'OLD-1',
+  custom_preconds: '',
+  custom_steps_separated: [],
+  custom_case_owner: owner,
+});
+const ownerMock = () =>
+  startMock({
+    sections: [{ id: 6, name: 'Checkout', parent_id: null }],
+    cases: [remoteOwned(50, 'Dana case', DANA), remoteOwned(51, 'Blank case', null), remoteOwned(52, 'Minh case', MINH), remoteOwned(53, 'Owner only', MINH)],
+  });
+const ownedTest = (meta, title) => `<!-- test\n${meta}\n-->\n\n# ${title}\n\n`;
+const OWNER_MD =
+  '<!-- suite\ntestrail_section_id: 6\n-->\n\n# Checkout\n\n' +
+  ownedTest('testrail_id: C50\nrefs: NEW-1\nowner: Minh', 'Dana case') +
+  ownedTest('testrail_id: C51\nrefs: NEW-1', 'Blank case') +
+  ownedTest('testrail_id: C53\nrefs: OLD-1\nowner: Dana', 'Owner only') +
+  ownedTest('owner: Minh', 'New case');
+const MINH_EDIT = ownedTest('testrail_id: C52\nrefs: NEW-1', 'Minh case');
+const NEW_SECTION = `<!-- suite -->\n\n# Payments\n\n${ownedTest('', 'Pay by card')}`;
+const updateIds = (state) => named(state, 'update_case').map((r) => r.id);
+const sentOwners = (state, name) => named(state, name).map((r) => r.body.custom_case_owner);
+
+test('push updates own and ownerless cases without asking, never sends an owner on update, and makes the pusher own new cases', async () => {
+  const mock = await ownerMock();
+  const cwd = fieldsWorkdir(OWNER_MD);
+  try {
+    const run = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC, TESTRAIL_OWNER: ' dana ' }), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(updateIds(mock.state), ['50', '51']);
+    assert.deepEqual(sentOwners(mock.state, 'update_case'), [undefined, undefined]);
+    assert.deepEqual(sentOwners(mock.state, 'add_case'), [DANA]);
+    assert.match(run.stdout, /cases added 1, updated 2, unchanged 1/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push refuses to update a case another QC owns before writing anything, shows it in --dry-run, and updates it with --confirm-others', async () => {
+  const mock = await ownerMock();
+  const text = OWNER_MD + MINH_EDIT + NEW_SECTION;
+  const cwd = fieldsWorkdir(text);
+  const env = baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC, TESTRAIL_OWNER: 'Dana' });
+  const args = ['push', 'order.test.md', '--parent-section', 'Web'];
+  try {
+    const refused = await runCli(args, { env, cwd });
+    assert.equal(refused.code, 1);
+    assert.match(refused.stderr, /^ {2}C52 "Minh case" owned by Minh$/m);
+    assert.match(refused.stderr, /^Confirm with the user, then pass --confirm-others C52\.$/m);
+    assert.doesNotMatch(refused.stderr, /C5[013]/);
+    assert.equal(posts(mock.state).length, 0);
+    assert.equal(readFileSync(join(cwd, 'order.test.md'), 'utf8'), text);
+
+    const dry = await runCli([...args, '--dry-run'], { env, cwd });
+    assert.equal(dry.code, 0, dry.stderr);
+    assert.match(dry.stdout, /^\[dry-run\] update case C52 "Minh case" \(owner Minh, needs --confirm-others\)$/m);
+    assert.match(dry.stdout, /^\[dry-run\] update case C50 "Dana case"$/m);
+    assert.equal(posts(mock.state).length, 0);
+
+    const confirmed = await runCli([...args, '--confirm-others', '99,C51,c52'], { env, cwd });
+    assert.equal(confirmed.code, 0, confirmed.stderr);
+    assert.deepEqual(updateIds(mock.state), ['50', '51', '52']);
+    assert.deepEqual(sentOwners(mock.state, 'update_case'), [undefined, undefined, undefined]);
+    assert.deepEqual(named(mock.state, 'add_section').map((r) => r.body.name), ['Web', 'Payments']);
+    assert.deepEqual(sentOwners(mock.state, 'add_case'), [DANA, DANA]);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push without TESTRAIL_OWNER asks to confirm every owned case, and TESTRAIL_OWNER needs a mapped owner field that offers it', async () => {
+  const mock = await ownerMock();
+  const cwd = fieldsWorkdir(OWNER_MD + MINH_EDIT);
+  try {
+    const unset = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC }), cwd });
+    assert.equal(unset.code, 1);
+    assert.match(unset.stderr, /^ {2}C50 "Dana case" owned by Dana$/m);
+    assert.match(unset.stderr, /^ {2}C52 "Minh case" owned by Minh$/m);
+    assert.match(unset.stderr, /--confirm-others C50,C52\.$/m);
+    assert.doesNotMatch(unset.stderr, /C5[13]/);
+
+    const unmapped = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_OWNER: 'Dana' }), cwd });
+    assert.equal(unmapped.code, 1);
+    assert.match(unmapped.stderr, /TESTRAIL_OWNER is set but TESTRAIL_FIELDS maps no owner field/);
+
+    const unknown = await runCli(['push', 'order.test.md'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC, TESTRAIL_OWNER: 'Lan' }), cwd });
+    assert.equal(unknown.code, 1);
+    assert.match(unknown.stderr, /invalid owner "Lan" in "TESTRAIL_OWNER"; TestRail options: Dana, Minh/);
+    assert.equal(posts(mock.state).length, 0);
+
+    const confirmed = await runCli(['push', 'order.test.md', '--confirm-others', 'C50,C52'], { env: baseEnv(mock.port, { TESTRAIL_FIELDS: OWNER_SPEC }), cwd });
+    assert.equal(confirmed.code, 0, confirmed.stderr);
+    assert.deepEqual(updateIds(mock.state), ['50', '51', '52']);
+    assert.deepEqual(sentOwners(mock.state, 'add_case'), [MINH]);
   } finally {
     await mock.close();
   }
@@ -840,6 +970,74 @@ test('push rejects a priority TestRail does not have before writing anything', a
     assert.match(run.stderr, /Low, Medium, High, Critical/);
     assert.equal(posts(mock.state).length, 0);
     assert.doesNotMatch(readFileSync(file, 'utf8'), /testrail_/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push clears preconditions, refs and steps that were removed from the file', async () => {
+  const stale = { refs: 'OLD-1', custom_preconds: 'Old precondition', custom_steps_separated: [{ content: 'Old step', expected: 'Old result' }] };
+  const mock = await startMock({
+    sections: [{ id: 6, name: 'S', parent_id: null }],
+    cases: [{ id: 50, section_id: 6, title: 'T', template_id: 2, ...stale }],
+  });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  writeFileSync(join(cwd, 'a.test.md'), '<!-- suite\ntestrail_section_id: 6\n-->\n\n# S\n\n<!-- test\ntestrail_id: C50\n-->\n\n# T\n');
+  try {
+    const first = await runCli(['push', 'a.test.md', '--confirm-others', 'C50'], { env: baseEnv(mock.port), cwd });
+    assert.equal(first.code, 0, first.stderr);
+    const [update] = named(mock.state, 'update_case');
+    assert.equal(update?.id, '50', first.stdout);
+    assert.deepEqual(
+      { refs: update.body.refs, custom_preconds: update.body.custom_preconds, custom_steps_separated: update.body.custom_steps_separated },
+      { refs: '', custom_preconds: '', custom_steps_separated: [] },
+    );
+
+    mock.state.cases[0] = { id: 50, section_id: 6, title: 'T', template_id: 2, refs: null, custom_preconds: null, custom_steps_separated: null };
+    mock.state.requests.length = 0;
+    const second = await runCli(['push', 'a.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(second.code, 0, second.stderr);
+    assert.equal(named(mock.state, 'update_case').length, 0);
+    assert.match(second.stdout, /updated 0, unchanged 1/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push sends a file named twice only once, also in another letter case on a case-insensitive disk', async () => {
+  const mock = await startMock();
+  const cwd = workdir();
+  const otherCase = existsSync(join(cwd, 'LOGIN.test.md')) ? ['LOGIN.test.md'] : [];
+  try {
+    const run = await runCli(['push', 'login.test.md', './login.test.md', ...otherCase], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'add_case').length, 2);
+    assert.equal(run.stdout.match(/cases added/g).length, 1);
+    const written = readFileSync(join(cwd, 'login.test.md'), 'utf8');
+    assert.deepEqual(written.match(/testrail_id: C\d+/g), ['testrail_id: C100', 'testrail_id: C101']);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push rejects two tests with the same testrail_id, in one file or across files, before calling TestRail', async () => {
+  const mock = await startMock();
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-'));
+  const testBlock = (id, title) => `<!-- test\ntestrail_id: ${id}\n-->\n\n# ${title}\n\n`;
+  writeFileSync(join(cwd, 'a.test.md'), `<!-- suite -->\n\n# S\n\n${testBlock('C50', 'A')}${testBlock('C50', 'A copy')}`);
+  writeFileSync(join(cwd, 'b.test.md'), `<!-- suite -->\n\n# S2\n\n${testBlock('C60', 'B')}`);
+  writeFileSync(join(cwd, 'c.test.md'), `<!-- suite -->\n\n# S3\n\n${testBlock('c60', 'B old copy')}`);
+  try {
+    const inFile = await runCli(['push', 'a.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(inFile.code, 1);
+    assert.match(inFile.stderr, /a\.test\.md: "A copy" has testrail_id C50, which "A" in a\.test\.md already has/);
+
+    const across = await runCli(['push', 'b.test.md', 'c.test.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(across.code, 1);
+    assert.match(across.stderr, /c\.test\.md: "B old copy" has testrail_id C60, which "B" in b\.test\.md already has/);
+
+    assert.equal(mock.state.requests.length, 0);
+    assert.doesNotMatch(readFileSync(join(cwd, 'a.test.md'), 'utf8') + readFileSync(join(cwd, 'b.test.md'), 'utf8'), /testrail_section_id/);
   } finally {
     await mock.close();
   }
@@ -1220,6 +1418,9 @@ build: staging · 2.14.3
 case: C11
 status: passed
 elapsed: 1m 10s
+run_at: 2026-11-10 10:14
+observed: 1 passed (login form) · 2 passed · 3 passed (dashboard, header "qa-admin")
+checked: 1 screenshot, nothing wrong
 evidence: C11.png
 -->
 
@@ -1229,6 +1430,7 @@ evidence: C11.png
 case: C12
 status: failed
 elapsed: 2m 15s
+run_at: 2026-11-10 10:20
 evidence: C12.png, C12-02.png
 -->
 
@@ -1284,8 +1486,25 @@ test('checkResults reports every problem in one pass', () => {
     'C5: has testrail_result_id but the run has no testrail_run_id',
     'C5: TestRail cannot set a posted result back to untested',
     'C5: duplicate case',
+    'C5: a passed result needs observed, each step and what was seen',
   ]);
   assert.deepEqual(checkResults(parseResultsMd(RESULTS_MD), dir), []);
+});
+
+test('checkResults refuses evidence outside the results folder', () => {
+  const parent = mkdtempSync(join(tmpdir(), 'testrail-evidence-'));
+  const dir = join(parent, 'run');
+  const secret = join(parent, '.env');
+  mkdirSync(join(dir, 'shots'), { recursive: true });
+  writeFileSync(secret, 'TESTRAIL_API_KEY=secret-key');
+  writeFileSync(join(dir, 'shots', 'C1.png'), 'png');
+  symlinkSync(secret, join(dir, 'link.png'));
+  const doc = parseResultsMd(`<!-- run -->\n\n# R\n\n<!-- result\ncase: C1\nstatus: failed\nevidence: shots/C1.png, ../.env, ${secret}, link.png\n-->\n`);
+  assert.deepEqual(checkResults(doc, dir), [
+    'C1: evidence must be a file in the results folder: ../.env',
+    `C1: evidence must be a file in the results folder: ${secret}`,
+    'C1: evidence must be a file in the results folder: link.png',
+  ]);
 });
 
 test('writeBackResults sets several keys on one block without corrupting the next', () => {
@@ -1320,7 +1539,10 @@ test('results creates the run, posts results, attaches evidence, writes IDs back
       description: '- Environment: https://staging.example.com, account qa-admin',
       refs: 'PROJ-1',
       milestone_id: 3,
+      assignedto_id: 77,
+      start_on: addRun.body.start_on,
     });
+    assert.ok(Math.abs(addRun.body.start_on - Date.now() / 1000) < 60, 'start_on is the current Unix time in seconds');
     const [post] = named(mock.state, 'add_results_for_cases');
     assert.equal(post.id, '500');
     assert.deepEqual(post.body.results, [
@@ -1329,7 +1551,7 @@ test('results creates the run, posts results, attaches evidence, writes IDs back
         case_id: 12,
         status_id: 5,
         version: 'staging · 2.14.3',
-        comment: '**Step 3 failed: lock message**\n- Expected: "Account locked" message\n- Actual: "Invalid password" message',
+        comment: '**Step 3 failed: lock message**\n- Expected: "Account locked" message\n- Actual: "Invalid password" message\n\nRan 2026-11-10 10:20',
         elapsed: '2m 15s',
       },
     ]);
@@ -1372,7 +1594,7 @@ test('results posts a correction for a changed status and a defects-only result 
     const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
     assert.equal(run.code, 0, run.stderr);
     assert.deepEqual(named(mock.state, 'add_results_for_cases')[0].body.results, [
-      { case_id: 11, status_id: 2, version: 'staging · 2.14.3', comment: 'Corrected result.\n\n**Blocked: SSO page down**' },
+      { case_id: 11, status_id: 2, version: 'staging · 2.14.3', comment: 'Corrected result.\n\n**Blocked: SSO page down**\n\nRan 2026-11-10 10:14' },
       { case_id: 12, status_id: 5, version: 'staging · 2.14.3', defects: 'PROJ-9', comment: 'Defects updated.' },
     ]);
     assert.deepEqual(mock.state.uploads.slice(3), [{ resultId: 7002, name: 'C11.png' }]);
@@ -1381,6 +1603,67 @@ test('results posts a correction for a changed status and a defects-only result 
     assert.match(written, /testrail_result_id: 7003\n/);
     assert.match(run.stdout, /correct C11 blocked/);
     assert.match(run.stdout, /update defects of C12 failed \(defects PROJ-9\)/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results ends a failed or blocked comment with the run time, and leaves passed results and defects updates without it', async () => {
+  const mock = await resultsMock();
+  const text = RESULTS_MD.replace('case: C13\nstatus: untested', 'case: C13\nstatus: blocked\nrun_at: 2026-11-11 09:05');
+  const cwd = resultsDir(text);
+  const file = join(cwd, 'results.md');
+  try {
+    assert.equal((await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd })).code, 0);
+    const [first] = named(mock.state, 'add_results_for_cases');
+    const byCase = (results, id) => results.find((r) => r.case_id === id);
+    assert.equal(byCase(first.body.results, 11).comment, undefined);
+    assert.ok(byCase(first.body.results, 12).comment.endsWith('\n\nRan 2026-11-10 10:20'));
+    assert.equal(byCase(first.body.results, 13).comment, 'Not run: the reset email never arrived.\n\nRan 2026-11-11 09:05');
+
+    writeFileSync(
+      file,
+      readFileSync(file, 'utf8')
+        .replace('case: C11\nstatus: passed', 'case: C11\nstatus: failed')
+        .replace('case: C12\nstatus: failed', 'case: C12\nstatus: failed\ndefects: PROJ-9')
+        .replace('case: C13\nstatus: blocked\nrun_at: 2026-11-11 09:05', 'case: C13\nstatus: blocked\nrun_at: 2026-11-11 09:05\ndefects: PROJ-8'),
+    );
+    mock.state.requests.length = 0;
+    assert.equal((await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd })).code, 0);
+    const second = named(mock.state, 'add_results_for_cases')[0].body.results;
+    assert.equal(byCase(second, 11).comment, 'Corrected result.\n\nRan 2026-11-10 10:14');
+    assert.equal(byCase(second, 12).comment, 'Defects updated.');
+    assert.equal(byCase(second, 13).comment, 'Defects updated.');
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results stops when the created run holds other cases than asked for, keeps the run id, and posts nothing', async () => {
+  const mock = await resultsMock({ runCases: (ids) => [...ids.filter((id) => id !== 12 && id !== 13), 99] });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.equal(
+      run.stderr.trim(),
+      'Run R500 was created with the wrong cases (missing C12, C13; extra C99). Fix the run in TestRail, then push again.',
+    );
+    assert.deepEqual(named(mock.state, 'add_results_for_cases'), []);
+    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /testrail_run_id: R500\n-->/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results names only the extra cases when the created run has nothing missing', async () => {
+  const mock = await resultsMock({ runCases: (ids) => [...ids, 98] });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.equal(run.stderr.trim(), 'Run R500 was created with the wrong cases (extra C98). Fix the run in TestRail, then push again.');
+    assert.deepEqual(named(mock.state, 'add_results_for_cases'), []);
   } finally {
     await mock.close();
   }
@@ -1395,7 +1678,7 @@ test('results --dry-run plans without writing to TestRail or the file', async ()
     assert.equal(run.code, 0, run.stderr);
     assert.deepEqual(posts(mock.state), []);
     assert.equal(readFileSync(file, 'utf8'), RESULTS_MD);
-    assert.match(run.stdout, /\[dry-run\] create run "PROJ-1 Login" with 3 cases \(refs PROJ-1, milestone Sprint 12\)/);
+    assert.match(run.stdout, /\[dry-run\] create run "PROJ-1 Login" with 3 cases \(refs PROJ-1, milestone Sprint 12, assigned to Dana QA\)/);
     assert.match(run.stdout, /\[dry-run\] add C12 failed, attach C12\.png, C12-02\.png/);
     assert.doesNotMatch(run.stdout, /C13/);
   } finally {
@@ -1464,7 +1747,7 @@ test('results adds to an existing open run without creating one', async () => {
     assert.equal(run.code, 0, run.stderr);
     assert.deepEqual(named(mock.state, 'add_run'), []);
     assert.equal(named(mock.state, 'add_results_for_cases')[0].id, '40');
-    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /case: C11\nstatus: passed\nelapsed: 1m 10s\nevidence: C11\.png\ntestrail_result_id: 7000/);
+    assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /case: C11\nstatus: passed\nelapsed: 1m 10s\nrun_at: 2026-11-10 10:14\nobserved: [^\n]+\nchecked: [^\n]+\nevidence: C11\.png\ntestrail_result_id: 7000/);
   } finally {
     await mock.close();
   }
@@ -1499,6 +1782,136 @@ test('list --run prints the run cases with status; pull --run keeps only the run
   }
 });
 
+const localSeconds = (value) => Math.floor(new Date(`${value.slice(0, 10)}T${value.slice(11)}`).getTime() / 1000);
+const RAN = localSeconds('2026-11-10 10:14');
+const staleCase = (extra = {}) => ({ id: 11, section_id: 1, title: 'Successful login', created_on: RAN - 86400, updated_on: RAN + 86400, ...extra });
+const historyEntry = (field, at) => ({ timestamp: at, type_id: 2, user_id: 1, changes: [{ field, old_value: 'a', new_value: 'b' }] });
+
+test('results checks staleness in the suite of an existing run without TESTRAIL_SUITE_ID', async () => {
+  const tests = { 40: [11, 12, 13].map((c, i) => ({ id: 100 + i, case_id: c, status_id: 3 })) };
+  const mock = await resultsMock({
+    suites: [{ id: 1, name: 'Web' }, { id: 2, name: 'Mobile' }],
+    runs: [{ id: 40, name: 'Open', suite_id: 2, is_completed: false }],
+    tests,
+  });
+  const cwd = resultsDir(RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: R40\n'));
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'get_cases')[0].query.get('suite_id'), '2');
+    assert.equal(named(mock.state, 'add_results_for_cases').length, 1);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results refuses a case whose steps changed on TestRail after it ran, before any write', async () => {
+  const edited = localSeconds('2026-11-11 09:30');
+  for (const args of [[], ['--dry-run']]) {
+    const mock = await resultsMock({
+      cases: [staleCase()],
+      history: { 11: [historyEntry('custom_steps_separated', edited), historyEntry('title', edited + 10)] },
+    });
+    const cwd = resultsDir();
+    try {
+      const run = await runCli(['results', 'results.md', ...args], { env: baseEnv(mock.port), cwd });
+      assert.equal(run.code, 1);
+      assert.match(run.stderr, /C11: steps_separated changed on TestRail at 2026-11-11 09:30, after the case ran at 2026-11-10 10:14\. Run it again before pushing its result\./);
+      assert.deepEqual(posts(mock.state), []);
+      assert.equal(readFileSync(join(cwd, 'results.md'), 'utf8'), RESULTS_MD);
+    } finally {
+      await mock.close();
+    }
+  }
+});
+
+test('results still pushes when only metadata changed after the case ran', async () => {
+  const mock = await resultsMock({
+    cases: [staleCase()],
+    history: { 11: [historyEntry('refs', RAN + 3600), historyEntry('priority_id', RAN + 3700), historyEntry('section_id', RAN + 3800)] },
+  });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'add_results_for_cases').length, 1);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results still pushes a case created on TestRail after it ran', async () => {
+  const mock = await resultsMock({
+    cases: [staleCase({ created_on: RAN + 3600, updated_on: RAN + 3600 })],
+    history: { 11: [historyEntry('custom_steps_separated', RAN + 3600)] },
+  });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(named(mock.state, 'add_results_for_cases').length, 1);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results refuses an edit made after a case created later was first saved', async () => {
+  const mock = await resultsMock({
+    cases: [staleCase({ created_on: RAN + 3600, updated_on: RAN + 7200 })],
+    history: { 11: [historyEntry('custom_expected', RAN + 7200)] },
+  });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /C11: expected changed on TestRail/);
+    assert.deepEqual(posts(mock.state), []);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results needs run_at for every result it would post, but not for untested ones', async () => {
+  const mock = await resultsMock();
+  const cwd = resultsDir(RESULTS_MD.replace('run_at: 2026-11-10 10:14\n', ''));
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /C11: add run_at \(when the case ran\) before pushing its result/);
+    assert.deepEqual(posts(mock.state), []);
+    assert.doesNotMatch(run.stderr, /C13/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('checkResults keeps a passed result to what the steps observed and the screenshot check', () => {
+  const dir = resultsDir();
+  const withC11 = (lines) => parseResultsMd(RESULTS_MD.replace(/observed: [^\n]+\nchecked: [^\n]+\n/, lines));
+  assert.deepEqual(checkResults(withC11('observed: 1 passed · 2 passed (build staging · 2.14.3)\nchecked: nothing wrong\n'), dir), []);
+  assert.deepEqual(checkResults(withC11(''), dir), [
+    'C11: a passed result needs observed, each step and what was seen',
+    'C11: a passed result with evidence needs checked, what the screenshot check found',
+  ]);
+  assert.deepEqual(checkResults(withC11('observed: 1 passed · 2 passed after reload · 3 not observed (toast gone)\nchecked: nothing wrong\n'), dir), [
+    'C11: passed, but observed has step 3 not observed',
+  ]);
+  assert.deepEqual(checkResults(withC11('observed: all good\nchecked: nothing wrong\n'), dir), [
+    'C11: observed must read like "1 passed (form shown) · 2 passed", got "all good"',
+  ]);
+  assert.deepEqual(checkResults(withC11('observed: 1 passed · 2 failed (old value)\nchecked: nothing wrong\n'), dir), [
+    'C11: passed, but observed has step 2 failed',
+  ]);
+});
+
+test('checkResults rejects a run_at that is not YYYY-MM-DD HH:MM', () => {
+  const dir = resultsDir();
+  for (const bad of ['yesterday', '2026-11-10', '2026-11-10T10:14', '2026-13-45 99:99']) {
+    const doc = parseResultsMd(RESULTS_MD.replace('run_at: 2026-11-10 10:14', `run_at: ${bad}`));
+    assert.deepEqual(checkResults(doc, dir), [`C11: run_at must look like 2026-11-10 10:14, got "${bad}"`]);
+  }
+});
+
 test('results skips local-only cases and keeps a $ in file names intact', async () => {
   const mock = await resultsMock();
   const text = RESULTS_MD.replace('evidence: C12.png, C12-02.png', () => "evidence: C12.png, a$'b.png").replace(
@@ -1514,6 +1927,105 @@ test('results skips local-only cases and keeps a $ in file names intact', async 
     assert.match(run.stdout, /skip "New case not on TestRail": no TestRail case/);
     assert.match(run.stdout, /skipped without a case 1/);
     assert.match(readFileSync(join(cwd, 'results.md'), 'utf8'), /testrail_attachments: C12\.png, a\$'b\.png\n/);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('list shows the forecast time of a case, else its estimate, else nothing; list --run does the same for tests', async () => {
+  const sections = [{ id: 1, name: 'Login', parent_id: null }];
+  const cases = [
+    { id: 11, section_id: 1, title: 'Both', estimate: '3m', estimate_forecast: '2m 10s' },
+    { id: 12, section_id: 1, title: 'Estimate only', estimate: '3m', estimate_forecast: null },
+    { id: 13, section_id: 1, title: 'Neither', estimate: null, estimate_forecast: null },
+  ];
+  const tests = { 40: cases.map((c, i) => ({ id: 100 + i, case_id: c.id, status_id: 3, title: c.title, estimate: c.estimate, estimate_forecast: c.estimate_forecast })) };
+  const mock = await startMock({ sections, cases, runs: [{ id: 40, name: 'Sprint run', suite_id: 1, is_completed: false }], tests });
+  const cwd = mkdtempSync(join(tmpdir(), 'testrail-estimate-'));
+  try {
+    const list = await runCli(['list'], { env: baseEnv(mock.port), cwd });
+    assert.equal(list.code, 0, list.stderr);
+    assert.equal(list.stdout, 'Login [section 1]\n  C11 Both (forecast 2m 10s)\n  C12 Estimate only (estimate 3m)\n  C13 Neither\n');
+    const run = await runCli(['list', '--run', 'R40'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.equal(
+      run.stdout,
+      'R40 Sprint run\n  C11 [Untested] Both (forecast 2m 10s)\n  C12 [Untested] Estimate only (estimate 3m)\n  C13 [Untested] Neither\n',
+    );
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results --dry-run reads the current user for a new run, names them, and posts nothing', async () => {
+  const mock = await resultsMock({ user: { id: 5, name: 'Lee Tester' } });
+  const cwd = resultsDir();
+  try {
+    const run = await runCli(['results', 'results.md', '--dry-run'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.match(run.stdout, /create run "PROJ-1 Login" with 3 cases \([^)]*assigned to Lee Tester\)/);
+    assert.equal(named(mock.state, 'get_current_user').length, 1);
+    assert.deepEqual(posts(mock.state), []);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results does not read the current user when the run already exists', async () => {
+  const tests = { 40: [11, 12, 13].map((c, i) => ({ id: 100 + i, case_id: c, status_id: 3 })) };
+  const mock = await resultsMock({ runs: [{ id: 40, name: 'Open', is_completed: false, refs: 'PROJ-1' }], tests });
+  const cwd = resultsDir(RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: R40\n'));
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(named(mock.state, 'get_current_user'), []);
+  } finally {
+    await mock.close();
+  }
+});
+
+async function existingRunWithRefs(refs) {
+  const tests = { 40: [11, 12, 13].map((c, i) => ({ id: 100 + i, case_id: c, status_id: 3 })) };
+  const mock = await resultsMock({ runs: [{ id: 40, name: 'Open', is_completed: false, refs }], tests });
+  const text = RESULTS_MD.replace('<!-- run\n', '<!-- run\ntestrail_run_id: R40\n').replace('refs: PROJ-1', 'refs: proj-1, PROJ-2');
+  return { mock, cwd: resultsDir(text) };
+}
+
+test('results adds the refs an existing run lacks and keeps the ones it has, before posting results', async () => {
+  const { mock, cwd } = await existingRunWithRefs('PROJ-1, OLD-9');
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.match(run.stdout, /^add refs PROJ-2 to run R40$/m);
+    const [update] = named(mock.state, 'update_run');
+    assert.equal(update.id, '40');
+    assert.deepEqual(update.body, { refs: 'PROJ-1, OLD-9, PROJ-2' });
+    const order = mock.state.requests.map((r) => r.name);
+    assert.ok(order.indexOf('update_run') < order.indexOf('add_results_for_cases'));
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results --dry-run logs the missing refs of an existing run and does not post them', async () => {
+  const { mock, cwd } = await existingRunWithRefs('');
+  try {
+    const run = await runCli(['results', 'results.md', '--dry-run'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.match(run.stdout, /^\[dry-run\] add refs PROJ-1, PROJ-2 to run R40$/m);
+    assert.deepEqual(posts(mock.state), []);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('results leaves an existing run alone when it has every ref, in any letter case', async () => {
+  const { mock, cwd } = await existingRunWithRefs('proj-2 PROJ-1');
+  try {
+    const run = await runCli(['results', 'results.md'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    assert.deepEqual(named(mock.state, 'update_run'), []);
+    assert.doesNotMatch(run.stdout, /add refs/);
   } finally {
     await mock.close();
   }

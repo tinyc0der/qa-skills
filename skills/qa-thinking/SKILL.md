@@ -9,9 +9,7 @@ Think about a feature like a senior QA engineer and surface risk scenarios.
 Explain these risks to the team and the product owner.
 You are provided with a Jira ticket, a Confluence requirement, a Figma design, or a feature in the live app.
 You must provide a critical review of it from QA perspective and ask clarifying questions.
-Read Jira and Confluence through the Atlassian MCP, Figma through the Figma MCP, and the live app with the `agent-browser` skill. Missing connection → stop and ask for it.
-If a context file (`test-cases/*.context.md`) names the ticket, read it and the sources it lists.
-When the given sources leave a gap, search as [Related Sources](./references/related-sources.md) describes. List each found source and the gap it fills in `👷 Must be aknowledged`. Ask in `👓 Must be clarified` only what no source answers.
+Run the [`gather-context`](../gather-context/SKILL.md) skill first. List each source it found by search and the gap it fills in `👷 Must be acknowledged`. Ask in `👓 Must be clarified` only what the context file leaves open.
 
 ## Think as QA
 
@@ -25,15 +23,11 @@ When the given sources leave a gap, search as [Related Sources](./references/rel
 
 ## Output
 
-Only requested section named exactly the way we provide
-Information in section written as numbered lists
+Write only the sections below, with their headings exactly as written. Write each section as a numbered list.
 
-Requested sections:
-
-
-- Section `👷 Must be aknowledged`: brief summary in bullet points. Potential correlation with other areas. Potential risks
-- Section `👓 Must be clarified`: up to 5 questions to resolve important ambiguities. Start each with "What if".
-- Section `🔬 Must be verified`: up to 5 most important risk scenarios, no more.
+- Section `👷 Must be acknowledged`: brief summary. Potential correlation with other areas. Potential risks
+- Section `👓 Must be clarified`: only questions whose answer would change expected behavior. Start each with "What if".
+- Section `🔬 Must be verified`: only risk scenarios with a concrete consequence, highest impact first.
 - Prefer simple wording and short sentences.
 
 ## Next actions

@@ -1,11 +1,13 @@
 ---
 title: Automation Lessons
-description: Per-app lesson files in the QA workspace that make the next agent-browser run faster and its results more reliable.
+description: Per-app lesson files in the QA workspace that make the next agent-browser or agent-device run faster and its results more reliable.
 ---
 
 # Automation Lessons
 
-`automation-lessons/` in the QA workspace holds one file per app: `automation-lessons/<app>.md`. Read it before the first `agent-browser` command against the app. `run-test-suite` updates it after each run.
+`automation-lessons/` in the QA workspace holds one file per app and platform: `automation-lessons/<app>.md` for the web app, `automation-lessons/<app>-android.md` and `automation-lessons/<app>-ios.md` for the mobile apps. Read it before the first `agent-browser` or `agent-device` command against the app. `run-test-suite` updates it after each run.
+
+An Android or iOS file names the package or bundle ID and, under Session, the devices by environment, with their serials or UDIDs, and any proxy that captures the app's traffic on a device.
 
 A lesson is how to drive the app, never what the app should do. It never becomes an Expected result.
 

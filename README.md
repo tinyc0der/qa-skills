@@ -25,8 +25,9 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 | Figma      | Screens, states, copy                        | Figma MCP server                                                                                     |
 | TestRail   | Test cases                                   | `.env` with the variables listed in [`sync-test-cases-with-testrail`](./skills/sync-test-cases-with-testrail/SKILL.md) |
 | Live app   | Exploring and checking actual behavior       | A staging URL and [agent-browser](https://github.com/vercel-labs/agent-browser): `npm i -g agent-browser && agent-browser install`, then `npx skills add vercel-labs/agent-browser` |
+| Mobile app | Running cases on Android and iOS             | A device, emulator, or simulator and [agent-device](https://github.com/callstack/agent-device): `npm i -g agent-device` |
 
-Keep test cases (`test-cases/`), test run results (`test-runs/`), automation lessons (`automation-lessons/`), and `.env` in one shared QA workspace repo. `automation-lessons/` holds one file per app with the deep links, waits, and session tips that make the next run faster.
+Each QC keeps their own QA workspace, with no shared repo: one folder per ticket under `tickets/` (context file and test cases), test run results (`test-runs/`), automation lessons (`automation-lessons/`), and `.env`. TestRail holds the cases every QC shares, and Jira holds the decisions. `automation-lessons/` holds one file per app and platform with the deep links, waits, and session tips that make the next run faster. See [Ticket Folder](./skills/gather-context/references/ticket-folder.md).
 
 ## Skills
 
@@ -34,6 +35,7 @@ Keep test cases (`test-cases/`), test run results (`test-runs/`), automation les
 
 | Skill                       | Description                                                                                      |
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| `gather-context`            | Collect what every source says about a ticket or feature into a context file: sources, conflicts, open questions |
 | `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps, risks, acceptance criteria         |
 | `qa-thinking`               | Analyze a ticket, requirement, or design from a QA perspective: edge cases, negative flows, abuse |
 | `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
@@ -61,15 +63,17 @@ Keep test cases (`test-cases/`), test run results (`test-runs/`), automation les
 | -------------------------- | --------------------------------------------------------------------------------------------- |
 | `testing-workflow`         | Orchestrate the test case lifecycle: requirements review, generation, improvement, TestRail sync |
 | `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
+| `message-the-qc`           | When the skills stop to ask you, and how every message to you is laid out                     |
 
 ## Typical flow
 
-1. Review the Jira story with `qa-thinking` or `review-user-story`.
-2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`.
-3. Push to TestRail with `sync-test-cases-with-testrail` after a dry run.
-4. Run the cases on the live app with `run-test-suite`. It pushes the results to a TestRail run.
-5. File a Jira Bug for each failed case, with `report-bug`.
-6. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+1. Review the Jira story with `review-user-story` and post the feedback to the PO. Use `qa-thinking` for your own risk scenarios. Both start with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
+2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Open questions left in the context file go back to the PO through `review-user-story`.
+3. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
+4. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
+5. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+
+Skills stop only for input only you have and for writes others see that cannot be undone, and ask everything pending in one message. See the [`message-the-qc`](./skills/message-the-qc/SKILL.md) skill.
 
 ## Claude Code plugins
 
@@ -77,9 +81,9 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`   |
-| `test-management` | `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking` |
-| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`                                                     |
+| `requirements`    | `gather-context`, `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`, `message-the-qc` |
+| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking`, `message-the-qc` |
+| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`, `gather-context`, `message-the-qc`                 |
 
 ## Repository structure
 

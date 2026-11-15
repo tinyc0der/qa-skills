@@ -115,7 +115,7 @@ Structure
 - [ ] Every area README lists its subareas and features; the tree mirrors the source
 
 Content
-- [ ] Every feature yml is according to the `references/layout.md`
+- [ ] Every feature YAML follows `references/layout.md`
 - [ ] Update: features gone from scope removed
 - [ ] Only existing keys and urls are used in the catalog
 ```

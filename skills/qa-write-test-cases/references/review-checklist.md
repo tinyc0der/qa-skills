@@ -6,7 +6,8 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 
 - Every acceptance criterion has an item. At the Smoke tier, only criteria on the critical path need one.
 - Every validation rule, edge case, and error message in the sources has an item, or the context file says why not. A missing expected result is not a reason. Not at the Smoke tier.
-- Each [Test Design Technique](./test-design-techniques.md) that fits the feature produced its items.
+- Each [Test Design Technique](./test-design-techniques.md) that fits the feature produced its items, and high-risk areas have the most items.
+- No item falls under "Not worth a test" in Test Design Techniques.
 - **Every item comes from a source.** Flag items that test behavior no source states or implies.
 - Items follow the ticket. Where the context file records a conflict, they follow the side it names.
 - The item count and categories fit the tier and the role.
@@ -21,11 +22,12 @@ Self review checks the checklist (Step 4) or the new test cases (Step 6) against
 Checklist:
 
 - One new test per approved checklist item. No missing tests, no extra tests.
-- Each test checks its item's objective and has its item's priority and smoke tag.
-- A new test that repeats an existing test in the file or an existing case.
+- Each test checks its item's objective and has its item's priority and `smoke:` value.
+- No new test repeats an existing test in the file or an existing case.
 
 Sources:
 
+- No test of a linked feature the user did not ask for.
 - **Every expected result comes from a source.** Flag error texts, limits, redirects, and UI copy that no source states.
 - Expected results follow the ticket. Where the context file records a conflict, they follow the side it names.
 - UI labels, messages, and values match the source word for word.
@@ -34,17 +36,17 @@ Sources:
 Executable:
 
 - A tester who has not read the sources can run every step with the values given.
-- Each expected result passes or fails on the point the test is about: no "either X or Y", no "record whether X".
+- Steps run in the order given.
+- Each expected result follows from its own step's action.
 - Preconditions set up every role, record, state, and value the steps assume, without pointing to data in the suite description.
-- Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy.
-- Every precondition can be set up on the day of the run (no past dates the UI rejects).
+- Each expected result is visible in the UI or a public API response, or in the data source an acceptance criterion names for data accuracy. Behavior with no UI (tracking, counters, scheduled jobs) is read in the data store or log the backend team opens to QC; the preconditions name that access.
+- Every precondition can be set up on the day of the run (no past dates the UI rejects). Past data the UI cannot create comes from seeded test data; the precondition line of that record names who seeds it. Records a tester can create in the UI need no seeding note.
 - A test does not depend on another test's data or order.
 
 Rules:
 
-- Every rule in Test Case Format and Writing Rules.
-- No `testrail_id:`, `testrail_section_id:`, or custom IDs in new tests.
-- No test of a linked feature the user did not ask for.
+- Every rule in Test Case Format and Writing Rules, and the ID rule in `qa-write-test-cases` Step 5.
+- The same thing has the same name in every test.
 
 ## Findings
 
@@ -55,4 +57,4 @@ Write each finding as:
 - the broken check or rule, with the source quote or link
 - for `fix`, the exact change
 
-`fix` is a change the fixer can make within the sources, the tier, and the approved checklist. It includes adding, splitting, merging, removing, and reprioritizing checklist items, writing a missing test for an approved item, and removing a test with no item. `ask` needs the user: a conflict the ticket does not settle (the context file side came from a lesser source), a fact no source gives, or a coverage trade-off the tier does not decide.
+`fix` is a change the fixer can make within the sources, the tier, and the approved checklist. It includes adding, splitting, merging, removing, and reprioritizing checklist items, writing a missing test for an approved item, and removing a test with no item. `ask` needs a person: the PO for a conflict the context file marks `(open)` or a fact no source gives, the user for a coverage trade-off the tier does not decide.
