@@ -63,12 +63,13 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | -------------------------- | --------------------------------------------------------------------------------------------- |
 | `testing-workflow`         | Orchestrate the test case lifecycle: requirements review, generation, improvement, TestRail sync |
 | `qa-lead-strategy-advisor` | Interview the team, assess QA maturity, and deliver a prioritized roadmap                     |
+| `plan-qc-subtasks`         | Create your QC subtasks in Jira, estimate their story points, and set their dates from Dev's   |
 | `message-the-qc`           | When the skills stop to ask you, and how every message to you is laid out                     |
 
 ## Typical flow
 
 1. Review the Jira story with `review-user-story` and post the feedback to the PO. Use `qa-thinking` for your own risk scenarios. Both start with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
-2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Open questions left in the context file go back to the PO through `review-user-story`.
+2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Through `testing-workflow`, the same answer creates your QC subtask with `plan-qc-subtasks`. Open questions left in the context file go back to the PO through `review-user-story`.
 3. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
 4. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
 5. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
@@ -83,13 +84,13 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `requirements`    | `gather-context`, `review-user-story`, `qa-thinking`, `catalog-features`, `detect-product-mismatches`, `message-the-qc` |
 | `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `review-user-story`, `qa-thinking`, `message-the-qc` |
-| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `qa-thinking`, `gather-context`, `message-the-qc`                 |
+| `qa-process`      | `testing-workflow`, `qa-lead-strategy-advisor`, `plan-qc-subtasks`, `qa-thinking`, `gather-context`, `message-the-qc` |
 
 ## Repository structure
 
 - `skills/` holds each skill (the canonical source).
 - `plugins/<plugin>/skills/` holds symlinks into `skills/`.
-- `tests/` holds the TestRail script tests and the skill reference check.
+- `tests/` holds the script tests and the skill reference check.
 
 ## Maintaining the fork
 

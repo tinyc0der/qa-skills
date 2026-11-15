@@ -1,7 +1,7 @@
 {
   "name": "qa-process",
-  "version": "1.0.0",
-  "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, and orchestrate the test case lifecycle",
+  "version": "1.1.0",
+  "description": "QA process advisory for manual QC: assess maturity, prioritize a roadmap, think through quality risks, orchestrate the test case lifecycle, and plan QC subtasks in Jira",
   "repository": "https://github.com/tinyc0der/qa-skills",
   "license": "MIT",
   "keywords": [
