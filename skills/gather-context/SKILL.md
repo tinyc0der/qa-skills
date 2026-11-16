@@ -35,7 +35,6 @@ Sources may come as pasted text, links, or MCP tools. Read Jira and Confluence t
 A catalog's README `Type` names its source. Default folders: `catalog/` and `mismatches/sources/*/catalog/`.
 
 - Live app catalog: the feature's URL and navigation path are where exploring starts.
-- Jira catalog: the feature's other issues, read as context.
 - TestRail catalog: see Existing test cases.
 - Mismatch pages (`mismatches/mismatches/README.md`): read the ones for the feature. They are known conflicts.
 - Domain rules: read `domain/index.md`, then only the topic files whose line matches the ticket. Read each rule as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says.
