@@ -23,8 +23,8 @@ Keeps the rules that hold beyond one ticket in `domain/` of the QC's own QA work
 
 ### 1. Find the topic file
 
-- Read `domain/index.md` and open only the topic files whose line matches the rule. No `domain/` yet → create it with an `index.md` titled `# Domain rules`.
-- No topic fits → a new topic file and its index line.
+- Read `domain/index.md` and open only the topic files whose line matches the rule or the topic asked about. No `domain/` yet → there are no notes; when saving, create it with an `index.md` titled `# Domain rules`.
+- No topic fits → when saving, a new topic file and its index line.
 
 ### 2. Compare with the rules there
 

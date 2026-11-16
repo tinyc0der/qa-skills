@@ -49,6 +49,8 @@ domain/
 
 ## Example
 
+Illustrative: these rules show the format, not real market rules.
+
 `domain/index.md`:
 
 ```markdown
