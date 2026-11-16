@@ -61,7 +61,7 @@ On a match, propose the action in the Step 4 message, and write only after the u
 ### Step 3: Confirm the defect
 
 - Check the expected behavior against the story, its comments, and its linked pages. Behavior descoped there is not a bug.
-- If the QA workspace has mismatch pages (`mismatches/mismatches/README.md`), read the ones for the feature. Likely cause `Bug` supports the Bug; its `Steps in the app` and screenshot are evidence. Likely cause `Decide`, or specs that contradict each other → a question for the PO, not a Bug.
+- Specs that contradict each other on the expected behavior → a question for the PO, not a Bug.
 - If the story has a context file (`tickets/<KEY>-*/context.md`), read it and the sources it lists.
 - The expected behavior is not obvious and the story does not define it → a confirmed rule in `domain/` gives it, read as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says. No rule → search as [Related Sources](../gather-context/references/related-sources.md) describes. A found issue is context, never the Bug's story. Nothing found → ask the user for the expected behavior.
 - A non-production environment: reproduce on the web with the `agent-browser` skill, or on Android and iOS with the `agent-device` skill as the Device Session reference of `run-test-suite` says. Ask before any action that saves data.

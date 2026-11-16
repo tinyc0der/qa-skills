@@ -37,8 +37,6 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
 | `gather-context`            | Collect what every source says about a ticket or feature into a context file: sources, conflicts, open questions |
 | `review-user-story`         | Review a Jira user story and draft feedback for the PO: gaps and open questions                  |
-| `catalog-features`          | Catalog the features of one source (Jira, Confluence, TestRail, or the live app) as key, title, and link |
-| `detect-product-mismatches` | Compare the live app, Jira, Confluence, Figma, and TestRail: what is missing or differs |
 | `save-domain-knowledge`     | Save a rule the PO or a source confirmed that holds beyond one ticket to `domain/`, so later tickets reuse it |
 
 ### Test cases
@@ -85,7 +83,7 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `gather-context`, `review-user-story`, `catalog-features`, `detect-product-mismatches`, `save-domain-knowledge`, `message-the-qc` |
+| `requirements`    | `gather-context`, `review-user-story`, `save-domain-knowledge`, `message-the-qc` |
 | `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `save-domain-knowledge`, `message-the-qc` |
 | `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `save-domain-knowledge`, `message-the-qc` |
 

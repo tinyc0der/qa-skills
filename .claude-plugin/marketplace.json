@@ -10,7 +10,7 @@
     {
       "name": "requirements",
       "source": "./plugins/requirements",
-      "description": "Review requirements from Jira, Confluence, and Figma: user stories and their acceptance criteria, feature catalogs, and mismatches with the live app"
+      "description": "Review requirements from Jira, Confluence, and Figma: user stories, their acceptance criteria, and the business rules that hold beyond one ticket"
     },
     {
       "name": "test-management",
