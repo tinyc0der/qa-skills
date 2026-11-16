@@ -6,10 +6,12 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// This fork serves Vietcap manual QC without access to the product codebase; these upstream skills need code, automation, or Testomat.io, or do another role's work.
+// This fork serves Vietcap manual QC without access to the product codebase; these upstream skills need code, automation, or Testomat.io, do another role's work, or cover the whole product at once, which is too big to run.
 const REMOVED = [
   'automate-manual-test-cases',
+  'catalog-features',
   'debug-fix-failed-flaky-autotests',
+  'detect-product-mismatches',
   'detect-useless-tests',
   'epic-requirement-reviewer',
   'epic-requirements-specification',

@@ -32,19 +32,13 @@ Sources may come as pasted text, links, or MCP tools. Read Jira and Confluence t
 
 #### QA workspace
 
-A catalog's README `Type` names its source. Default folders: `catalog/` and `mismatches/sources/*/catalog/`.
-
-- Live app catalog: the feature's URL and navigation path are where exploring starts.
-- TestRail catalog: see Existing test cases.
-- Mismatch pages (`mismatches/mismatches/README.md`): read the ones for the feature. They are known conflicts.
 - Domain rules: read `domain/index.md`, then only the topic files whose line matches the ticket. Read each rule as [Domain File](../save-domain-knowledge/references/domain-file.md#reading-a-rule) says.
 
 #### Existing test cases
 
 Find the TestRail cases that already test the feature, with the `sync-test-cases-with-testrail` skill:
 
-- TestRail catalog: find the feature there. Its links are the existing cases, and its area folder is their section. Run `list --section <section>` for cases the catalog does not link yet.
-- No catalog: run `list` and match sections and case titles to the feature.
+- Run `list` and match sections and case titles to the feature.
 - TestRail not set up: continue without the check and record TestRail as not read.
 - Do not `pull`.
 

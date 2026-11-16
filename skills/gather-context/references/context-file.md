@@ -9,7 +9,7 @@ Sections, in this order. Leave out an empty one.
 - `Not read`: sources that could not be read, and why
 - `Found by search`: each source with the gap it fills
 - `Existing cases`: count, TestRail section, `C<id>` range
-- `Conflicts`: what each side says and the side followed, including known mismatches. Mark `(open)` the ones the source rules leave open.
+- `Conflicts`: what each side says and the side followed. Mark `(open)` the ones the source rules leave open.
 - `Open questions`: gaps no source fills, and doubts a skill recorded
 - `Left without a test`: validation rules and error messages without a checklist item, and why
 - `Answers`: answers the user or the PO gave, each with who gave it and where

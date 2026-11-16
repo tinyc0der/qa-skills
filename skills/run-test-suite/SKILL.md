@@ -182,5 +182,3 @@ Lay it out as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says:
 3. Failed: one line per case, with its title, failing step, Expected vs Actual, and Bug key or "Bug pending".
 4. Blocked: one line per case, with the reason, owner, and what unblocks it. Untested: case and reason.
 5. One line: the `results.md` path and how many lessons were added, changed, or removed.
-
-The story adds or changes screens and links Figma frames → the next step is `detect-product-mismatches` on the live app and Figma for that feature.

@@ -20,7 +20,6 @@ The deliverable is a brief, useful review, not a sentence-by-sentence audit or a
 
 - Run the [`gather-context`](../gather-context/SKILL.md) skill for the story.
 - Do not review the parent epic. Use it only for the rules and decisions that apply to this story.
-- Cite a known mismatch instead of raising it as new.
 - The context file's open questions are Ready to test candidates. Its open conflicts are unresolved decisions for Questions, even when a comment seems to answer them.
 - Distinguish the original request, later clarifications, and implementation reports. A closed subtask or a comment saying PASS is not your own execution evidence.
 - An important source not read: state the limitation in one line above the headings. Continue unless the story cannot be understood.
