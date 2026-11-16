@@ -16,6 +16,7 @@ Collect what every source says about one ticket or feature, decide which source 
 - Do not ask the user again about a source under `Not read`, unless the user offers it.
 - Ignore the context file when the user asks for an independent run.
 - No ticket, document, or description given: ask once for one, then continue from the prompt.
+- A feature not released yet, given without its Jira story (a Confluence page, a design, pasted text): search Jira for the story as [Related Sources](./references/related-sources.md) describes. Not found → the report asks for its key, and the folder is `tickets/<slug>/` until it exists.
 
 ### 2. Read the sources
 
