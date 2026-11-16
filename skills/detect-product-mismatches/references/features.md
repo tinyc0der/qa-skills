@@ -16,11 +16,17 @@ Per source:
 | Source     | Search                                                                                                         |
 | ---------- | -------------------------------------------------------------------------------------------------------------- |
 | Live app   | Catalog only in step 3; not there → Verify looks for it in the app, starting from related features' screens    |
-| Jira       | Text search inside the catalog's Scope query (JQL `text ~ "term"`)                                             |
-| Confluence | Search under the root page or space (CQL `text ~ "term"`); headings of long documents                          |
+| Jira       | Rovo Search, then JQL `text ~ "term"` inside the catalog's Scope query                                         |
+| Confluence | Rovo Search, then CQL `text ~ "term"` under the root page or space; headings of long documents                 |
 | Figma      | Frames linked from the feature's Jira issues and Confluence pages; else Figma search by screen name and labels |
 | TestRail   | Sections and case titles in the pulled files; text in expected results                                         |
 | Other      | The source's own search                                                                                        |
+
+Rovo Search (`search`, `targetApp` `JIRA` or `CONFLUENCE`, `limit` 30):
+
+- Query the feature's name and what users do with it, in the language the source is written in. Rovo matches meaning, so it finds a feature the source names differently.
+- Rovo cannot apply the Scope: keep a result only when the Scope query or page tree holds it (JQL `key in (<keys>) AND (<scope>)`; CQL `id in (<ids>)` with the root page or space).
+- Run the `text ~` search too, and merge: Rovo returns at most 30 ranked results, and a feature can span several issues or pages.
 
 - Found at the source, missing from the catalog → use it and report a catalog error.
 - Found, but outside the catalog's Scope (open issue, draft, deprecated page or copy, other version) → not a behavior. Mention it on the mismatch page when it explains one.
