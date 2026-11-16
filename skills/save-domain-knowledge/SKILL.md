@@ -1,6 +1,6 @@
 ---
 name: save-domain-knowledge
-description: Save a business rule that holds beyond one ticket (trading session windows, fee and tax formulas and their rounding, price band and step, lot size, order and cancel rules, buying power, settlement, OTP, realtime price tolerance) to `domain/` in the QA workspace, with its scope, status, source, and who confirmed it, so later tickets reuse it instead of asking again; and answer what those notes say. Use when the QC asks to save, remember, or note a rule; when a PO answer, a Confluence rule, or session times the QC typed hold beyond the current ticket; or when the QC asks what the notes say about a topic. Not for one ticket's facts (the `gather-context` context file) or how to drive the app (the `run-test-suite` automation lessons).
+description: Save a business rule that holds beyond one ticket, such as session times, fees, or order rules, to `domain/` in the QA workspace so later tickets reuse it, and answer what those notes say. Use when the QC asks to save, remember, or look up such a rule, or when a PO answer or a source states one. Not for one ticket's facts (the `gather-context` context file) or how to drive the app (the `run-test-suite` automation lessons).
 ---
 
 # Save Domain Knowledge
