@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: observed-contradicts-confirmed-rule
+expected_outcome: |
+  Treats the QC's observation as an observed rule that conflicts with the confirmed order-rules-1, shows both sides with their sources and dates, asks which one holds, and leaves order-rules.md unchanged.
+context:
+  scaffold_script: place-files.sh
