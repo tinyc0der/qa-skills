@@ -1,8 +1,3 @@
----
-title: UI Checks
-description: How a runner reads display assertions, transient states, requests, timing, and screenshots before it records a step as passed or failed.
----
-
 # UI Checks
 
 A screenshot is evidence, not the check. Read each displayed value from the page, then compare it with Expected.

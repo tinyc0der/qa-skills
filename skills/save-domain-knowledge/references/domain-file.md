@@ -1,8 +1,3 @@
----
-title: Domain File
-description: The layout of `domain/` in the QA workspace, the format of a rule entry, and how other skills read a rule.
----
-
 # Domain File
 
 `domain/` in the QA workspace keeps the rules that apply beyond one ticket, one business topic per file.

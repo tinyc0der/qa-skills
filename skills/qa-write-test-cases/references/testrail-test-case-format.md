@@ -1,8 +1,3 @@
----
-title: Test Case Markdown Format
-description: Markdown format for manual test cases (`*.test.md`) and how the `sync-test-cases-with-testrail` skill maps each part to TestRail.
----
-
 # Test Case Markdown Format
 
 ## Document Structure
