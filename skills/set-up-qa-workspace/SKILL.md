@@ -1,6 +1,7 @@
 ---
 name: set-up-qa-workspace
 description: Set up a QC's QA workspace. Check that the QA skills can reach Jira, Confluence, Figma, TestRail, and the app tools, and draft or refresh the workspace's `AGENTS.md`, a short overview of the product's modules, users, and terms that agents load every session. Use when the QC starts a new workspace, asks to set up or check their setup, or asks to write or update the product overview, such as after a release adds a module.
+disable-model-invocation: true
 ---
 
 # Set Up QA Workspace
