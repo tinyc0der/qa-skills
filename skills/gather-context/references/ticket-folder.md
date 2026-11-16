@@ -10,7 +10,6 @@ Each QC keeps their own QA workspace, and no repo is shared. TestRail holds the 
 ```text
 tickets/<KEY>-<slug>/
   context.md          # written by gather-context
-  pasted.md           # source text the user pasted, when there is any
   <slug>.test.md      # cases written for the ticket
   *.test.md           # sections pulled to expand, under the names pull gives them
 test-runs/<YYYY-MM-DD>-<slug>/
