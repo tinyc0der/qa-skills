@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: question-with-no-notes
+expected_outcome: |
+  Replies in Vietnamese that the notes hold no rule about HOSE ATC times, gives no session times from its own knowledge, and creates no domain/ folder or file.
+context:
+  scaffold_script: place-files.sh
