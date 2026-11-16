@@ -12,6 +12,8 @@ automation-lessons/
 domain/
   index.md            # one line per topic file
   <topic>.md          # rules that hold beyond one ticket
+AGENTS.md             # product overview, written by set-up-qa-workspace, loaded every session
+CLAUDE.md             # @AGENTS.md, for Claude Code
 .env
 ```
 

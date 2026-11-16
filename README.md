@@ -29,6 +29,8 @@ Other ways to install (Claude Code plugin, Codex, Cursor): see [install details]
 
 Each QC keeps their own QA workspace, with no shared repo: one folder per ticket under `tickets/` (context file and test cases), test run results (`test-runs/`), automation lessons (`automation-lessons/`), domain rules (`domain/`), and `.env`. TestRail holds the cases every QC shares, and Jira holds the decisions. `automation-lessons/` holds one file per app and platform with the deep links, waits, and session tips that make the next run faster. `domain/` keeps the rules that apply beyond one ticket, such as session times, fees, and order rules, each with its source and who confirmed it. See [Ticket Folder](./skills/gather-context/references/ticket-folder.md).
 
+In a new workspace, run `set-up-qa-workspace` first. It checks every connection above, and drafts the workspace's `AGENTS.md` from your product's sources: a short overview of its modules, users, and terms that agents load at the start of every session, so each ticket starts with a map of the product.
+
 ## Skills
 
 ### Requirements
@@ -60,6 +62,7 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 
 | Skill                      | Description                                                                                   |
 | -------------------------- | --------------------------------------------------------------------------------------------- |
+| `set-up-qa-workspace`      | Check the connections the skills use, and write the workspace's product overview (`AGENTS.md`) |
 | `testing-workflow`         | Run the workflow for what just happened on a ticket, or continue a ticket where it stands     |
 | `plan-qc-subtasks`         | Create your QC subtasks in Jira, estimate their story points, and set their dates from Dev's   |
 | `message-the-qc`           | When the skills stop to ask you, and how every message to you is laid out                     |
@@ -83,9 +86,9 @@ Skills are also bundled as Claude Code plugins in this repo's marketplace:
 
 | Plugin            | Bundled skills                                                                                                    |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `gather-context`, `review-user-story`, `save-domain-knowledge`, `message-the-qc` |
-| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `save-domain-knowledge`, `message-the-qc` |
-| `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `save-domain-knowledge`, `message-the-qc` |
+| `requirements`    | `gather-context`, `review-user-story`, `save-domain-knowledge`, `set-up-qa-workspace`, `message-the-qc` |
+| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `save-domain-knowledge`, `set-up-qa-workspace`, `message-the-qc` |
+| `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `save-domain-knowledge`, `set-up-qa-workspace`, `message-the-qc` |
 
 ## Repository structure
 
