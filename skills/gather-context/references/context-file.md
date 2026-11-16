@@ -1,6 +1,6 @@
 # Context File
 
-One file per ticket: `context.md` in the ticket's folder ([Ticket Folder](./ticket-folder.md)). Name sources and link them; do not copy their content. Pasted text has no link: save it as `pasted.md` in the same folder and link that.
+One file per ticket: `context.md` in the ticket's folder ([Ticket Folder](./ticket-folder.md)). Name sources and link them; do not copy their content. Pasted text has no link: list it as `pasted by the QC, <date>`.
 
 Sections, in this order. Leave out an empty one.
 
