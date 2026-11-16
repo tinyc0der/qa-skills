@@ -1,8 +1,3 @@
----
-title: Bug Report Format
-description: Markdown format for a Jira Bug draft (title, fields, description).
----
-
 # Bug Report Format
 
 ## Document Structure

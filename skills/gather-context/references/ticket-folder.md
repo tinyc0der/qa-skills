@@ -1,8 +1,3 @@
----
-title: Ticket Folder
-description: Where a QC keeps a ticket's context file and test cases in their own QA workspace, and where shared decisions go instead.
----
-
 # Ticket Folder
 
 Each QC keeps their own QA workspace, and no repo is shared. TestRail holds the cases every QC shares, and Jira holds the decisions. Local files are one QC's working copies for one ticket.

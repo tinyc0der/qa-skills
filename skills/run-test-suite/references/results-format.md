@@ -1,8 +1,3 @@
----
-title: Results Format
-description: Markdown format for a test run's results (`results.md`) and how the `results` command of `sync-test-cases-with-testrail` maps each part to TestRail.
----
-
 # Results Format
 
 One `results.md` per run, in `test-runs/<YYYY-MM-DD>-<slug>/`, next to its evidence files. It holds one run block, then one result block per case.

@@ -1,8 +1,3 @@
----
-title: Device Session
-description: How a runner picks an Android or iOS device, opens the app with agent-device, reads its build, takes evidence, and closes the session.
----
-
 # Device Session
 
 Mobile cases run with the `agent-device` skill: Android on a real device or an emulator, iOS on a simulator or a real iPhone. Command shapes, flags, and platform limits are in `agent-device help manual-qa`, `help physical-device`, and `help <command>`. This file holds only what a QA run decides.
