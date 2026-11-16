@@ -45,11 +45,11 @@ Read Jira and Confluence through the Atlassian MCP and Figma through the Figma M
 
 ### Step 2: Check for duplicates
 
-Always search Jira before drafting a new Bug:
+Always search Jira before drafting a new Bug. Never filter on the title prefix: older Bugs may lack it.
 
-- by feature keywords and symptom, without filtering on the title prefix (older Bugs may lack it)
-- open Bugs in the same area
-- recently closed Bugs
+1. Rovo Search (`search`, `targetApp` `JIRA`, `limit` 30): the symptom and the feature, in the language of the project's Bugs. Rovo matches meaning, so it finds Bugs worded differently from this one. Nothing relevant → rephrase once, or switch language when the project writes in two. Keep only Bugs.
+2. JQL, for the filters Rovo lacks: open Bugs in the same area (the story's project and component, or linked to the story), and recently closed Bugs.
+3. Rovo fails or warns that results may be incomplete → JQL `issuetype = Bug AND text ~ "<symptom or feature>"` in the story's project.
 
 On a match, propose the action in the Step 4 message, and write only after the user approves it:
 
