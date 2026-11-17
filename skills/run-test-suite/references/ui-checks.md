@@ -29,6 +29,7 @@ A screenshot is evidence, not the check. Read each displayed value from the page
 
 - The app's own request: after the step's action, `agent-browser network requests --filter <path>`. Check the method, status, and the response fields the step names. On Android and iOS, as [Device Session](./device-session.md#network) says.
 - A direct call: `eval` with `fetch` inside the signed-in page, so the session cookie never leaves the browser. A no-session check adds `credentials: 'omit'`. A check that one account cannot reach another's data runs in a second test account's lane, never with a copied token.
+- A request sent again after its session ended: keep the old cookie or token only for that replay, never in evidence or a file.
 - An error the case names (timeout, 5xx, offline): `agent-browser network route <url> --abort`, or `--body <json>` for a server response, before the action. Run `agent-browser network unroute <url>` right after the step.
 - Evidence: `C<id>-step<n>.json` with the method, URL, status, and response body. Remove cookies, `Authorization` headers, and tokens first. Never save a HAR: it keeps them.
 
