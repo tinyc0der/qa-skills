@@ -81,22 +81,16 @@ A ticket spans several conversations, since it waits for the PO, a build, and Bu
 
 Skills stop only for input only you have and for writes others see that cannot be undone, and ask everything pending in one message. See the [`message-the-qc`](./skills/message-the-qc/SKILL.md) skill.
 
-## Claude Code plugins
+## Claude Code plugin
 
-Skills are also bundled as Claude Code plugins in this repo's marketplace:
-
-| Plugin            | Bundled skills                                                                                                    |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `requirements`    | `gather-context`, `review-user-story`, `save-domain-knowledge`, `set-up-qa-workspace`, `message-the-qc` |
-| `test-management` | `gather-context`, `qa-write-test-cases`, `improve-test-cases`, `detect-duplicate-test-cases`, `sync-test-cases-with-testrail`, `run-test-suite`, `report-bug`, `verify-bug`, `review-user-story`, `save-domain-knowledge`, `set-up-qa-workspace`, `message-the-qc` |
-| `qa-process`      | `testing-workflow`, `plan-qc-subtasks`, `gather-context`, `save-domain-knowledge`, `set-up-qa-workspace`, `message-the-qc` |
+The repository root is also a Claude Code plugin, `qa-skills`, that bundles every skill in `skills/`. Its marketplace is `vietcap-plugins`.
 
 ## Repository structure
 
 - `skills/` holds each skill (the canonical source).
-- `plugins/<plugin>/skills/` holds symlinks into `skills/`.
+- `.claude-plugin/` holds the plugin and marketplace manifests.
 - `tests/` holds the script tests and the skill reference check.
 
 ## Maintaining the fork
 
-`tests/skill-refs.test.mjs` lists the upstream skills this fork removed. Run `npm test` after every merge from upstream. It fails when a merge brings back a removed skill or a reference to one, or leaves a broken plugin link.
+`tests/skill-refs.test.mjs` lists the upstream skills this fork removed. Run `npm test` after every merge from upstream. It fails when a merge brings back a removed skill or a reference to one, or brings back the `plugins/` folder.

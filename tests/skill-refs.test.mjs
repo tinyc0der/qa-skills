@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, relative, sep } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 
@@ -48,13 +48,10 @@ const walk = (dir) =>
     .filter((e) => e.isFile())
     .map((e) => join(e.parentPath, e.name));
 
-const plugins = readdirSync(join(ROOT, 'plugins'));
-
 const textFiles = [
   ...walk('skills'),
   ...walk('docs'),
-  ...['README.md', 'SKILL-GUIDE.md', '.claude-plugin/marketplace.json'].map((f) => join(ROOT, f)),
-  ...plugins.map((p) => join(ROOT, 'plugins', p, '.claude-plugin/plugin.json')),
+  ...['README.md', 'SKILL-GUIDE.md', '.claude-plugin/marketplace.json', '.claude-plugin/plugin.json'].map((f) => join(ROOT, f)),
 ].filter((f) => /\.(md|json|mjs|js|ya?ml|txt)$/.test(f));
 
 const rel = (f) => relative(ROOT, f);
@@ -73,40 +70,22 @@ test('no file mentions a removed skill', () => {
   assert.deepEqual(hits, []);
 });
 
-test('every plugin skill link resolves', () => {
-  const broken = plugins.flatMap((p) =>
-    readdirSync(join(ROOT, 'plugins', p, 'skills'))
-      .map((s) => join(ROOT, 'plugins', p, 'skills', s))
-      .filter((s) => !existsSync(s))
-      .map(rel),
-  );
-  assert.deepEqual(broken, []);
+test('the marketplace ships one plugin from the repository root', () => {
+  const { plugins } = JSON.parse(readFileSync(join(ROOT, '.claude-plugin/marketplace.json'), 'utf8'));
+  assert.deepEqual(plugins.map((p) => p.source), ['./']);
+  assert.equal(existsSync(join(ROOT, 'plugins')), false);
 });
 
-test('every marketplace plugin bundles at least one skill', () => {
-  const { plugins: listed } = JSON.parse(readFileSync(join(ROOT, '.claude-plugin/marketplace.json'), 'utf8'));
-  const empty = listed.filter((p) => readdirSync(join(ROOT, p.source, 'skills')).length === 0).map((p) => p.name);
-  assert.deepEqual(empty, []);
-  assert.deepEqual(listed.map((p) => p.source.replace('./plugins/', '')).sort(), [...plugins].sort());
-});
-
-test('relative links inside skills resolve in skills/ and in every plugin that bundles the skill', () => {
-  const homes = (skill) => [
-    'skills',
-    ...plugins.map((p) => join('plugins', p, 'skills')).filter((home) => existsSync(join(ROOT, home, skill))),
-  ];
+test('relative links inside skills resolve', () => {
   const broken = walk('skills')
     .filter((f) => f.endsWith('.md'))
     .flatMap((f) => {
-      const path = relative(join(ROOT, 'skills'), f);
       const targets = [...readFileSync(f, 'utf8').replace(/^```[\s\S]*?^```/gm, '').matchAll(/\]\(([^)\s]+)\)/g)]
         .map((m) => m[1].split('#')[0])
         .filter((target) => /[./]/.test(target) && !/^[a-z]+:/i.test(target));
-      return homes(path.split(sep)[0]).flatMap((home) =>
-        targets
-          .filter((target) => !existsSync(join(ROOT, home, dirname(path), target)))
-          .map((target) => `${join(home, path)} -> ${target}`),
-      );
+      return targets
+        .filter((target) => !existsSync(join(dirname(f), target)))
+        .map((target) => `${rel(f)} -> ${target}`);
     });
   assert.deepEqual(broken, []);
 });

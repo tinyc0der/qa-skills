@@ -8,19 +8,9 @@
   },
   "plugins": [
     {
-      "name": "requirements",
-      "source": "./plugins/requirements",
-      "description": "Review requirements from Jira, Confluence, and Figma: user stories, their acceptance criteria, and the business rules that hold beyond one ticket"
-    },
-    {
-      "name": "test-management",
-      "source": "./plugins/test-management",
-      "description": "Test case lifecycle on TestRail: generate, improve, deduplicate, push, pull, run on the live app with results in TestRail, report failures as Jira bugs, and verify fixed bugs"
-    },
-    {
-      "name": "qa-process",
-      "source": "./plugins/qa-process",
-      "description": "QA process for manual QC: orchestrate the test case lifecycle and plan QC subtasks in Jira"
+      "name": "qa-skills",
+      "source": "./",
+      "description": "Manual QC from requirements to verified bugs: review user stories from Jira, Confluence, and Figma, write test cases and sync them with TestRail, run them on the live app, report and verify bugs, and plan QC subtasks in Jira"
     }
   ]
 }

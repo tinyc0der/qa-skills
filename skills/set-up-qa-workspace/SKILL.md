@@ -16,7 +16,7 @@ Checks the connections the QA skills use and writes the workspace's `AGENTS.md`,
 ## Rules
 
 - Run from the QA workspace root: the folder that holds, or will hold, `tickets/`, `domain/`, and `.env`.
-- Check TestRail only when `sync-test-cases-with-testrail` is installed. Every other check serves `gather-context`, which every plugin bundles.
+- Check TestRail only when `sync-test-cases-with-testrail` is installed. Every other check serves `gather-context`, which the plugin always bundles.
 - Each setting stays with the skill that owns it: run that skill's check, and ask for what is missing as its setup says.
 - **Every line of the overview comes from a source or from the QC, never from what the agent knows of the product or the market.**
 - Create no empty folders: each skill creates its own when it first writes there.
