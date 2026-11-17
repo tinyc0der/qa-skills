@@ -35,17 +35,21 @@ Run the steps back to back. Stop only where a step needs the QC, and put every q
 Event: the QC is assigned a story
 =>
 1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file.
-2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review draft.
-3. 🗂 Plan the story's QC subtask (with `plan-qc-subtasks` skill): steps 1 and 2 only, no message of its own. A plan that writes nothing stays out of the message.
-   ⏸ One message with the review, then the checklist, then the QC subtask plan, then one question for all:
-      ❓ Write the cases?
-      1. ✅ Write the QC subtask, write the cases, and push them to TestRail
-      2. 📝 Write the QC subtask and write the cases, no push
-      3. ✏️ Type changes to the review, the checklist, or the QC subtask plan
-4. 💬 Do only what the answer approved: write the QC subtask plan (with `plan-qc-subtasks` skill, from its step 4), write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
+   ⏸ One message: the story key, title, and counts on the first line, then the sources not read, then the review with its gaps and questions numbered for the reply, then one question. A review with no gap and no question has nothing to confirm: skip this stop.
+      Read the review above and answer the points you can. I draft the checklist once you confirm it.
+
+      ❓ Is the review complete?
+      1. ✅ Confirm: the open points are for the PO, as written
+      2. ✏️ Type the answers you have, or changes to the review
+   **Draft no checklist before the QC replies: each answer changes its items.** An answer settles its gap or question: move it to the context file's `Answers`, and take it out of the review. A typed reply completes the review too: go on without asking again. A point keeps its number to the end of the flow: a settled point's number stays unused, and each added point takes the next one.
+2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Questions the QC left open become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review.
+   ⏸ That skill's checklist gate. Above the checklist, list the questions this step added to the review: the QC sends them to the PO with the rest.
+3. 💬 Write the cases (with `qa-write-test-cases` skill). Its report asks the QC to review them. Above that ask, show the review as it now stands, with the open questions the checklist and the cases added, in one block the QC can paste. Above the block, name the points added since the checklist, and say to send it to the PO now: the answers take time.
+4. ⬆️ Push the cases once the QC says they are right (with `sync-test-cases-with-testrail` skill).
 =>
-Deliverable: the review for the QC to send to the PO, the QC subtask in Jira, the cases on TestRail linked to the story
+Deliverable: the review for the QC to send to the PO, the cases on TestRail linked to the story
 Next event: the PO answers, Dev sets their Due dates, or a build is ready
+Last message: the push result, then one next step. Open points in the review → `When the PO answers, say "the PO answered, continue <KEY>".` None → the build, said the same way. Do not ask again to send the review.
 ```
 
 ### PO Answer Flow
@@ -54,7 +58,8 @@ Next event: the PO answers, Dev sets their Due dates, or a build is ready
 Event: the PO answers in the story's comments, or the story changes
 =>
 1. 🔄 Re-run `gather-context` for the story.
-2. 📝 Update the cases each new answer lists in the context file, and the cases the change touches (with `qa-write-test-cases` skill), and push them.
+2. 📝 Update the cases each new answer lists in the context file, and the cases the change touches (with `qa-write-test-cases` skill). Its report asks the QC to review them.
+3. ⬆️ Push the cases once the QC says they are right (with `sync-test-cases-with-testrail` skill).
 =>
 Deliverable: the answers in the cases on TestRail
 Next event: a build is ready
@@ -65,9 +70,9 @@ Next event: a build is ready
 ```
 Event: Dev sets the Due dates of their subtasks
 =>
-Date the QC subtask, estimating its story points if it has none (with `plan-qc-subtasks` skill)
+Create the QC subtask when the story has none, estimate its story points, and date it (with `plan-qc-subtasks` skill)
 =>
-Deliverable: story points and dates on the QC subtask
+Deliverable: the QC subtask in Jira, with its story points and dates
 ```
 
 ### Build Ready Flow
@@ -102,7 +107,7 @@ User: says "continue <KEY>", or asks what is left on a ticket
 2. 🔎 Find each event that happened without its deliverable. Read Jira, TestRail, the ticket folder, and `test-runs/`, never an earlier conversation:
    - no cases with refs <KEY> on TestRail → Assigned Story Flow
    - an answer in the context file that a case it lists lacks → PO Answer Flow
-   - `plan-qc-subtasks` finds something to write → Dev Dates Flow
+   - every Dev subtask has a Due date, and `plan-qc-subtasks` finds something to write → Dev Dates Flow
    - a `results.md` with refs <KEY> in `test-runs/` that has `untested` blocks or results not pushed to TestRail → resume that run (with `run-test-suite` skill)
    - a build with the story is on a test environment, and cases with refs <KEY> have no passed or failed result → Build Ready Flow
    - a failed result in `test-runs/` without a Bug key → draft its Bugs (with `report-bug` skill)

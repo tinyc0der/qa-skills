@@ -89,7 +89,7 @@ The story points are the smallest value in `QC_SP_HOURS` whose hours cover the e
 
 ### Step 3: Ask once
 
-One message as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out. Questions from Steps 1 and 2, such as missing story keys or a field the project lacks, go in it. Called from another skill's flow, the plan goes in that flow's message instead, and its approval covers these rows.
+One message as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out. Questions from Steps 1 and 2, such as missing story keys or a field the project lacks, go in it.
 
 - One line of counts: `3 to create · 4 story points · 5 dated · 2 waiting`.
 - One row per QC subtask: story key, QC subtask (key, or new with its title), story points with the estimated hours, Start date, Due date, and the Dev subtask key and title that set the Start date. A kept value that differs from the computed one gets a short note.
