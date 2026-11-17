@@ -1,6 +1,6 @@
 ---
 name: review-user-story
-description: Review a Jira user story with its subtasks, comments, parent epic, linked Confluence pages, and linked Figma frames, and draft QA feedback for the product owner. Produce the gaps a tester needs filled (complete, testable, ready to test) and the material ambiguities and contradictions; post the approved feedback as a Jira comment. Use when a user supplies a Jira story or ticket and asks to review it, check its testability or acceptance criteria, or give feedback to the PO. Accept Jira links, Confluence pages, and pasted text.
+description: Review a Jira user story with its subtasks, comments, parent epic, linked Confluence pages, and linked Figma frames, and draft QA feedback for the product owner. Produce the gaps a tester needs filled (complete, testable, ready to test) and the material ambiguities and contradictions. Use when a user supplies a Jira story or ticket and asks to review it, check its testability or acceptance criteria, or give feedback to the PO. Accept Jira links, Confluence pages, and pasted text.
 ---
 
 # Review User Story
@@ -8,11 +8,6 @@ description: Review a Jira user story with its subtasks, comments, parent epic, 
 Review a user story before testing starts: find what is unclear, missing, or untestable. The result is QA feedback for the product owner.
 
 The deliverable is a brief, useful review, not a sentence-by-sentence audit or a critique of ticket organization.
-
-**When to skip steps:**
-
-- No Jira story to comment on (pasted text, a Confluence page) → end with the review, without the post question. Record its gaps as open questions in the context file.
-- A follow-up review finds nothing new → post nothing, and report the `asked` items still unanswered.
 
 ## Workflow
 
@@ -64,19 +59,9 @@ Do not:
 - Treat existing defects as unresolved decisions when their expected behavior is already explicit.
 - Invent concerns just to fill the section. If none are material, say so.
 
-### 4. Send the feedback to the PO
+### 4. Record the gaps and questions
 
-- Show the review to the user first, with the question below. Run inside the testing workflow, the question waits for the checklist and goes in the same message.
-- **Post it only after the user approves**, as one comment on the story through the Atlassian MCP.
-
-```
-❓ Post this review as a comment on <KEY>?
-
-1. ✅ Post
-2. ✏️ Type changes
-```
-- The comment is the only write to Jira. Never edit the story's description, fields, or subtasks.
-- After posting, add each gap and question the comment raised to the context file's open questions or conflicts, marked `asked` as [Context File](../gather-context/references/context-file.md) describes.
+- Add each gap and question to the context file's open questions or conflicts, as [Context File](../gather-context/references/context-file.md) describes.
 
 ## Output format
 
@@ -96,8 +81,7 @@ Use exactly these two headings, in this order. Do not add an executive summary, 
 Output constraints:
 - Gaps: one bullet per failed check from step 2, or "No gaps found."
 - Questions: only the material ones from step 3.
-- Follow-up review (an earlier QA review comment is on the story): raise only what it did not raise and the `asked` items the user asks to send again. Leave out a heading with none.
-- Do not edit issues, create subtasks, rewrite the story, or execute tests. The approved Jira comment and the context file update (step 4) are the only writes.
+- Do not edit issues, create subtasks, rewrite the story, or execute tests. The context file update (step 4) is the only write.
 
 ## Quality check before responding
 

@@ -44,7 +44,7 @@ Find the TestRail cases that already test the feature, with the `sync-test-cases
 
 ### 3. Decide which source wins
 
-- A PO answer in the context file's `Answers`, or a PO comment answering an `asked` item, settles that item. It wins over the ticket text it answers.
+- A PO answer in the context file's `Answers`, or a PO comment answering an open question or open conflict, settles that item. It wins over the ticket text it answers.
 - The ticket is the primary source. Where another source contradicts it, the ticket wins.
 - Silence is not conflict: a source that states a behavior the ticket does not mention gives that behavior. When that source predates the ticket and the ticket does not link it, the behavior is an open question.
 - Released stories of the same screen and their fixed bugs are current behavior. For parts the ticket does not change, they rank above spec pages.

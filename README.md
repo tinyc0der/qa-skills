@@ -68,8 +68,8 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 
 A ticket spans several conversations, since it waits for the PO, a build, and Bug fixes. Tell `testing-workflow` what happened (you were assigned a story, a build is ready, Dev fixed a bug) and it runs that workflow, or say "continue <KEY>" and it finds where the ticket stands from Jira, TestRail, and the ticket folder.
 
-1. Review the Jira story with `review-user-story` and post the feedback to the PO. It starts with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
-2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Through `testing-workflow`, the same answer creates your QC subtask with `plan-qc-subtasks`. Open questions left in the context file go back to the PO through `review-user-story`.
+1. Review the Jira story with `review-user-story` and send the feedback to the PO yourself. It starts with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
+2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Through `testing-workflow`, the same answer creates your QC subtask with `plan-qc-subtasks`. Open questions left in the context file show up again in the next `review-user-story`.
 3. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
 4. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
 5. When Dev fixes a Bug, retest it with `verify-bug`. It checks the build carries the fix, reruns the Bug's steps, its failed cases, and the flows around them, and one answer closes or reopens every Bug it retested.

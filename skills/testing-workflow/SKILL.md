@@ -34,17 +34,17 @@ Run the steps back to back. Stop only where a step needs the QC, and put every q
 ```
 Event: the QC is assigned a story
 =>
-1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file. Do not stop for the post question.
+1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file.
 2. 📝 Draft the checklist (with `qa-write-test-cases` skill). Unanswered points become `ask` items; do not wait for the PO. Add the open questions the checklist raised to the review draft.
 3. 🗂 Plan the story's QC subtask (with `plan-qc-subtasks` skill): steps 1 and 2 only, no message of its own. A plan that writes nothing stays out of the message.
    ⏸ One message with the review, then the checklist, then the QC subtask plan, then one question for all:
-      ❓ Post the review and write the cases?
-      1. ✅ Post the review, write the QC subtask, write the cases, and push them to TestRail
-      2. 📝 Post the review, write the QC subtask, and write the cases, no push
+      ❓ Write the cases?
+      1. ✅ Write the QC subtask, write the cases, and push them to TestRail
+      2. 📝 Write the QC subtask and write the cases, no push
       3. ✏️ Type changes to the review, the checklist, or the QC subtask plan
-4. 💬 Do only what the answer approved: post the review, write the QC subtask plan (with `plan-qc-subtasks` skill, from its step 4), write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
+4. 💬 Do only what the answer approved: write the QC subtask plan (with `plan-qc-subtasks` skill, from its step 4), write the cases, push them (with `qa-write-test-cases` skill). A typed change approves nothing else.
 =>
-Deliverable: the review comment for the PO, the QC subtask in Jira, the cases on TestRail linked to the story
+Deliverable: the review for the QC to send to the PO, the QC subtask in Jira, the cases on TestRail linked to the story
 Next event: the PO answers, Dev sets their Due dates, or a build is ready
 ```
 
@@ -100,7 +100,7 @@ User: says "continue <KEY>", or asks what is left on a ticket
 =>
 1. 🔄 Run `gather-context` for the ticket.
 2. 🔎 Find each event that happened without its deliverable. Read Jira, TestRail, the ticket folder, and `test-runs/`, never an earlier conversation:
-   - no QA review comment from the QC on the story, or no cases with refs <KEY> on TestRail → Assigned Story Flow
+   - no cases with refs <KEY> on TestRail → Assigned Story Flow
    - an answer in the context file that a case it lists lacks → PO Answer Flow
    - `plan-qc-subtasks` finds something to write → Dev Dates Flow
    - a `results.md` with refs <KEY> in `test-runs/` that has `untested` blocks or results not pushed to TestRail → resume that run (with `run-test-suite` skill)
