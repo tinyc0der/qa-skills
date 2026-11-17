@@ -40,7 +40,7 @@ Sources may come as pasted text, links, or MCP tools. Read Jira and Confluence t
 Find the TestRail cases that already test the feature, with the `sync-test-cases-with-testrail` skill:
 
 - Run `list` and match sections and case titles to the feature.
-- TestRail not set up: continue without the check and record TestRail as not read.
+- `list` stops on missing `.env` variables: record TestRail as not read, and the report asks the QC to add the variables it names to `.env`, never to paste the API key in the chat. The case check, `pull`, and `push` all need them. Continue meanwhile, and run `list` again once the QC says they are in.
 - Do not `pull`.
 
 ### 3. Decide which source wins
@@ -64,4 +64,4 @@ Report, as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out, th
 
 Hand to [`save-domain-knowledge`](../save-domain-knowledge/SKILL.md) what this run adds that holds beyond the ticket: answers it moves into `Answers`, and confirmed rules the ticket changes. An earlier run offered the rest. It drafts the entries, and the report carries its one question.
 
-Run by another skill: hand the report to that skill instead of messaging the QC. Its own message carries what matters.
+Run by another skill: hand the report to that skill instead of messaging the QC. Its own message carries what matters, and its first stop carries the TestRail setup question.

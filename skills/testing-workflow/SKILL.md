@@ -35,7 +35,7 @@ Run the steps back to back. Stop only where a step needs the QC, and put every q
 Event: the QC is assigned a story
 =>
 1. 🔎 Draft the review of the story (with `review-user-story` skill). It runs `gather-context` first; later steps reuse the context file.
-   ⏸ One message: the story key, title, and counts on the first line, then the sources not read, then the review with its gaps and questions numbered for the reply, then one question. A review with no gap and no question has nothing to confirm: skip this stop.
+   ⏸ One message: the story key, title, and counts on the first line, then the sources not read, each with what the QC can do about it, such as the `.env` variables TestRail lacks, then the review with its gaps and questions numbered for the reply, then one question. A review with no gap and no question has nothing to confirm: skip this stop.
       Read the review above and answer the points you can. I draft the checklist once you confirm it.
 
       ❓ Is the review complete?
@@ -112,5 +112,6 @@ User: says "continue <KEY>", or asks what is left on a ticket
    - a build with the story is on a test environment, and cases with refs <KEY> have no passed or failed result → Build Ready Flow
    - a failed result in `test-runs/` without a Bug key → draft its Bugs (with `report-bug` skill)
    - a Bug linked to the story that Dev marked fixed and nobody closed or reopened since → Bug Fix Flow
+   TestRail not read → never take it as having no cases: ask for its setup as `gather-context` says, and start no flow that writes cases until `list` runs.
 3. Run those flows in this order. None found: name the event the ticket waits for.
 ```
