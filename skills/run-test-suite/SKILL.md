@@ -1,6 +1,6 @@
 ---
 name: run-test-suite
-description: Run manual test cases on the live web app with the `agent-browser` skill or on an Android or iOS device with the `agent-device` skill, record a Passed, Failed, or Blocked result with screenshot evidence for each case, push the results to a TestRail test run, and hand failed cases to `report-bug`. Works from `*.test.md` files, a TestRail section, a ticket key, a Bug key, or an existing TestRail run. Reads and updates the app's automation lessons so each run is faster than the last. Use when the user wants test cases run on web, Android, or iOS and each recorded as pass or fail, from a ticket's cases, a section, files, or a TestRail run; for regression, smoke, or fix verification; or because a build is ready to test. Also use to create a TestRail test run or push a run's results. Not for writing test cases, filing bugs, or verifying a Bug Dev marked fixed (`verify-bug`).
+description: Run manual test cases on the live web app with the `agent-browser` skill or on an Android or iOS device with the `agent-device` skill, record a Passed, Failed, or Blocked result with screenshot evidence for each case, push the results to a TestRail test run, and hand failed cases to `report-bug`. Works from `*.test.md` files, a TestRail section, a ticket key, a Bug key, or an existing TestRail run. Reads and updates the app's automation lessons so each run is faster than the last. Use when the user wants test cases run on web, Android, or iOS and each recorded as pass or fail, from a ticket's cases, a section, files, or a TestRail run; for regression, smoke, or fix verification; or because a build is ready to test. Also use to create a TestRail test run, push a run's results, or probe the API behind a deployed story for bugs. Not for writing test cases, filing bugs, or verifying a Bug Dev marked fixed (`verify-bug`).
 ---
 
 # Run Test Suite
@@ -12,10 +12,15 @@ References:
 - [Results Format](./references/results-format.md) defines `results.md` and how the `results` command of `sync-test-cases-with-testrail` maps it to TestRail.
 - [Automation Lessons](./references/automation-lessons.md) defines the per-app lesson files and what belongs in them.
 - [UI Checks](./references/ui-checks.md) defines how to read displayed values, transient states, and screenshots.
+- [API Checks](./references/api-checks.md) defines how to read the app's requests, call an endpoint directly, compare responses, and probe the API after the run.
 - [Device Session](./references/device-session.md) defines how Android and iOS cases pick a device, open the app, read its build, and take evidence.
 - [Test Case Format](../qa-write-test-cases/references/testrail-test-case-format.md) of `qa-write-test-cases` defines the `*.test.md` cases this skill runs.
 
 TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync skill>/scripts/testrail.mjs <command>`, with the setup that skill describes.
+
+**When to skip steps:**
+
+- The user asks only for API probes → Step 1 selects the story's `smoke: yes` cases, else one happy-path case per flow, only to capture the requests. Skip Steps 5 and 6: the results stay local, and the report leads with the probe suggestions.
 
 ## Workflow
 
@@ -27,6 +32,7 @@ TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync
 6. Hand failed cases to `report-bug`
 7. Save automation lessons
 8. Report
+9. Run the API probes the QC picks
 
 ### Step 1: Select cases
 
@@ -86,11 +92,11 @@ Ask before the first case only when the run creates a TestRail run, has cases in
 2. ✏️ Type changes
 ```
 
-The approval covers the data changes the listed cases make and creating the TestRail run the plan names. **After it, only steps a person must do (Step 3) and the Bug drafts (Step 6) wait for the QC.** The run and the push finish while the QC is away.
+The approval covers the data changes the listed cases make and creating the TestRail run the plan names. **After it, only steps a person must do (Step 3), the Bug drafts (Step 6), and the API probes (Step 9) wait for the QC.** The run and the push finish while the QC is away.
 
 ### Step 3: Run the cases
 
-Runner subagents run the cases, one batch of up to 10 cases at a time, in the same named session. Each runner gets its cases, the `results.md` path, the run folder, the lesson file, [Results Format](./references/results-format.md), [UI Checks](./references/ui-checks.md), [Device Session](./references/device-session.md) for Android and iOS, and the rules below. It returns its results, lesson candidates (what was slow or broke, and the fix that worked), and user actions still needed. Runners never push to TestRail or file bugs: the main session reviews every result first.
+Runner subagents run the cases, one batch of up to 10 cases at a time, in the same named session. Each runner gets its cases, the `results.md` path, the run folder, the lesson file, [Results Format](./references/results-format.md), [UI Checks](./references/ui-checks.md), [API Checks](./references/api-checks.md), [Device Session](./references/device-session.md) for Android and iOS, and the rules below. It returns its results, lesson candidates (what was slow or broke, and the fix that worked), and user actions still needed. Runners never push to TestRail or file bugs: the main session reviews every result first.
 
 Risky scope (money, sign-in and permissions, data hard to restore, personal data): the first batch is one happy path, one negative case, and one boundary case. Review them per Step 4 before the next batch. Fix a setup problem and rerun them; a case that needs a fix is `blocked`. Their results count for the run.
 
@@ -126,6 +132,8 @@ Per case:
 - A session case not finished inside its window stays `untested`, naming the next window, such as "ATC closed before step 3; next ATC 2026-11-16 14:30".
 - OTP, MFA, CAPTCHA, a step on the device itself, or any other step only a person can do: send the user one short message (case, step, what to do) and run other cases meanwhile. Still not done at the end → `blocked`, owner the user.
 - Never write a `passed` the runner did not observe.
+
+While running, each runner also captures the requests its cases send, checks them, and writes them to `probes.md`, per [API Checks](./references/api-checks.md#probe-the-api). It sends nothing extra: the probes run in Step 9, after the QC picks.
 
 After the last batch, close every session the run opened, lanes included: `agent-browser --session <name> close`, and on Android and iOS as [Device Session](./references/device-session.md#close) says. Then check `agent-browser session list` and `agent-device session list`, and close any the run left behind, such as a lane whose runner stopped. A session where the user is still signing in or entering an OTP stays open until they finish. Never `close --all`: it closes other work's sessions.
 
@@ -177,8 +185,26 @@ Update `automation-lessons/<app>.md` per [Automation Lessons](./references/autom
 
 Lay it out as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says:
 
-1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, cases that need a fix, cases that differ locally (Step 1), session times to save (Step 1), story comments to post (Step 4), results not pushed.
+1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, the API probes to pick, cases that need a fix, cases that differ locally (Step 1), session times to save (Step 1), story comments to post (Step 4), results not pushed.
 2. Counts by status, zeros included, the TestRail run link, and run time against the estimate. Part of an existing run: this run's counts, then the run's totals. Cases left out because they already had a result: count by status, outside this run's counts.
 3. Failed: one line per case, with its title, failing step, Expected vs Actual, and Bug key or "Bug pending".
 4. Blocked: one line per case, with the reason, owner, and what unblocks it. Untested: case and reason.
 5. One line: the `results.md` path and how many lessons were added, changed, or removed.
+
+Ask for the probes in the same message, listing the `suggested` rows of `probes.md` by request, each probe with what it saves:
+
+```
+❓ Run the API probes?
+
+1. ✅ Run the ones that save nothing when the server is right
+2. 🧪 Run all, also the ones that place an order or move money
+3. ✏️ Type changes
+```
+
+### Step 9: Run the API probes the QC picks
+
+Only after the QC's pick. No `suggested` row → no question and no Step 9.
+
+- Open the run's session again and run the picked probes per [API Checks](./references/api-checks.md#probe-the-api). Update each row of `probes.md` as it finishes.
+- Hand each `found` row to `report-bug` as a defect found in the live app, with its evidence file. Add the Bug key to the row once filed.
+- Close the session as Step 3 says, then report: findings first, then counts of `found`, `done`, and `skipped`, and what a probe saved and reversed.

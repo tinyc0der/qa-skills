@@ -1,6 +1,6 @@
 ---
 title: UI Checks
-description: How a runner reads display assertions, transient states, requests, timing, and screenshots before it records a step as passed or failed.
+description: How a runner reads display assertions, transient states, timing, and screenshots before it records a step as passed or failed.
 ---
 
 # UI Checks
@@ -24,14 +24,6 @@ A screenshot is evidence, not the check. Read each displayed value from the page
 - Name a computed color with its common name and compare that with Expected. A semi-transparent color or one on another background: read the background and `opacity` first.
 - `font-family` lists fallbacks. The design font is in use only when `[...document.fonts].filter(f => f.status === 'loaded')` includes it.
 - Hover and focus states: `hover` or `focus` the element, then read again. Android and iOS have no hover.
-
-## API and Network
-
-- The app's own request: after the step's action, `agent-browser network requests --filter <path>`. Check the method, status, and the response fields the step names. On Android and iOS, as [Device Session](./device-session.md#network) says.
-- A direct call: `eval` with `fetch` inside the signed-in page, so the session cookie never leaves the browser. A no-session check adds `credentials: 'omit'`. A check that one account cannot reach another's data runs in a second test account's lane, never with a copied token.
-- A request sent again after its session ended: keep the old cookie or token only for that replay, never in evidence or a file.
-- An error the case names (timeout, 5xx, offline): `agent-browser network route <url> --abort`, or `--body <json>` for a server response, before the action. Run `agent-browser network unroute <url>` right after the step.
-- Evidence: `C<id>-step<n>.json` with the method, URL, status, and response body. Remove cookies, `Authorization` headers, and tokens first. Never save a HAR: it keeps them.
 
 ## Timing
 
