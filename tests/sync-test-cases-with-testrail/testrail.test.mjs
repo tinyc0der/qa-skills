@@ -893,8 +893,55 @@ test('push --dry-run sends no POST and leaves the file untouched', async () => {
     assert.equal(posts(mock.state).length, 0);
     assert.equal(readFileSync(file, 'utf8'), before);
     assert.match(run.stdout, /create section "Web"/);
-    assert.match(run.stdout, /create section "Login Functionality"/);
+    assert.match(run.stdout, /create section "Login Functionality" under "Web"/);
     assert.match(run.stdout, /add case "User can log in with valid credentials"/);
+  } finally {
+    await mock.close();
+  }
+});
+
+const deepSections = () => [
+  { id: 1, name: 'MOBILE - CHI TIẾT CỔ PHIẾU', parent_id: null },
+  { id: 2, name: 'Chi tiết cổ phiếu', parent_id: 1 },
+  { id: 3, name: 'Tổng quan', parent_id: 2 },
+  { id: 4, name: 'Tổng quan', parent_id: null },
+];
+
+test('push --parent-section takes a path, reuses each section on it, and creates only the last one when missing', async () => {
+  const mock = await startMock({ sections: deepSections() });
+  const cwd = workdir();
+  const path = 'mobile - chi tiết cổ phiếu › Chi tiết cổ phiếu > Tổng quan';
+  try {
+    const dry = await runCli(['push', 'login.test.md', '--dry-run', '--parent-section', path], { env: baseEnv(mock.port), cwd });
+    assert.equal(dry.code, 0, dry.stderr);
+    assert.match(dry.stdout, /^\[dry-run\] create section "Login Functionality" under "MOBILE - CHI TIẾT CỔ PHIẾU › Chi tiết cổ phiếu › Tổng quan"$/m);
+    assert.equal(posts(mock.state).length, 0);
+
+    const run = await runCli(['push', 'login.test.md', '--parent-section', `${path} › Sticky giá khớp`], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 0, run.stderr);
+    const added = named(mock.state, 'add_section').map((r) => [r.body.name, r.body.parent_id ?? null]);
+    assert.equal(added.length, 2);
+    assert.deepEqual(added[0], ['Sticky giá khớp', 3]);
+    assert.equal(added[1][0], 'Login Functionality');
+    assert.ok(![null, 3].includes(added[1][1]), `Login Functionality went under ${added[1][1]}`);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('push --parent-section stops before writing when a section before the last one on the path is missing', async () => {
+  const mock = await startMock({ sections: deepSections() });
+  const cwd = workdir();
+  try {
+    const run = await runCli(['push', 'login.test.md', '--parent-section', 'MOBILE - CHI TIẾT CỔ PHIẾU › Chi tiet co phieu › Tổng quan'], { env: baseEnv(mock.port), cwd });
+    assert.equal(run.code, 1);
+    assert.match(run.stderr, /Section not found: "Chi tiet co phieu" under "MOBILE - CHI TIẾT CỔ PHIẾU"\. Sections there: Chi tiết cổ phiếu\. Nothing was written\./);
+    assert.equal(posts(mock.state).length, 0);
+
+    const empty = await runCli(['push', 'login.test.md', '--parent-section', 'MOBILE - CHI TIẾT CỔ PHIẾU ›  › Tổng quan'], { env: baseEnv(mock.port), cwd });
+    assert.equal(empty.code, 1);
+    assert.match(empty.stderr, /Invalid --parent-section/);
+    assert.equal(posts(mock.state).length, 0);
   } finally {
     await mock.close();
   }

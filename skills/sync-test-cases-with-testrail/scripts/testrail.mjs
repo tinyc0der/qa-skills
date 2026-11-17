@@ -13,6 +13,7 @@ const YES_RE = /^(yes|true|1)$/i;
 const NO_RE = /^(no|false|0)$/i;
 const YES_NO_KEYS = ['smoke', 'automation'];
 const STANDARD_KEYS = ['smoke', 'automation', 'platform'];
+const SECTION_PATH_SEP = /\s*›\s*|\s+>\s+/;
 const FIELD_KINDS = { 5: 'checkbox', 6: 'dropdown', 12: 'multiselect' };
 
 const USAGE = `Usage: node testrail.mjs <command> [options]
@@ -22,7 +23,7 @@ Commands:
   list [--section <name>]                   Print sections and cases (C<id>) of the resolved suite
   list --run <id>                           Print the cases of a test run with their status
   push <files...> [--dry-run]               Create or update cases in TestRail and write IDs back
-       [--parent-section <name>]
+       [--parent-section <path>]            Nest new sections under this section, e.g. "Mobile › Stock detail"
        [--confirm-others <ids>]             Also update these cases another QC owns, e.g. C12,C13
   pull [--section <name>] [--out <dir>]     Download cases into .test.md files (default dir test-cases/)
        [--run <id>] [--overwrite]           --run keeps only the run's cases; --overwrite replaces differing files
@@ -900,10 +901,17 @@ async function cmdPush(files, opts, cfg, cwd) {
     );
   }
 
+  const pathOf = (id) => {
+    const parts = [];
+    for (let s = sections.find((x) => x.id === id); s; s = sections.find((x) => x.id === s.parent_id)) parts.unshift(s.name);
+    return parts.join(' › ');
+  };
+
   async function ensureSection(name, parentId, description) {
     const found = sections.find((s) => s.parent_id === parentId && s.name === name);
     if (found) return { id: found.id, created: false };
-    console.log(`${tag}create section ${JSON.stringify(name)}`);
+    const under = parentId === null ? '' : ` under ${JSON.stringify(pathOf(parentId))}`;
+    console.log(`${tag}create section ${JSON.stringify(name)}${under}`);
     let id = `new-${++placeholders}`;
     if (!dry) {
       const body = { name, suite_id: suiteId };
@@ -915,11 +923,30 @@ async function cmdPush(files, opts, cfg, cwd) {
     return { id, created: true };
   }
 
-  let parentId = null;
-  if (opts['parent-section']) {
-    const parent = await ensureSection(opts['parent-section'], null);
-    parentId = parent.id;
+  // "A › B › C": A and B must exist; C is reused, or created when missing. One name is a top-level section.
+  async function resolveParentSection(path) {
+    const names = path.split(SECTION_PATH_SEP).map((n) => n.trim());
+    if (names.some((n) => !n)) throw new CliError(`Invalid --parent-section "${path}"; write it as "Top › Child › Grandchild"`);
+    let id = null;
+    for (const [i, name] of names.entries()) {
+      const siblings = sections.filter((s) => s.parent_id === id);
+      const found = siblings.filter((s) => s.name.trim().toLowerCase() === name.toLowerCase());
+      const where = id === null ? 'at the top level' : `under "${pathOf(id)}"`;
+      if (found.length > 1) throw new CliError(`Section "${name}" ${where} is ambiguous: sections ${found.map((s) => s.id).join(', ')}. Nothing was written.`);
+      if (found.length) {
+        id = found[0].id;
+        continue;
+      }
+      if (i < names.length - 1) {
+        const options = siblings.map((s) => s.name).join(', ') || 'none';
+        throw new CliError(`Section not found: "${name}" ${where}. Sections there: ${options}. Nothing was written.`);
+      }
+      id = (await ensureSection(name, id)).id;
+    }
+    return id;
   }
+
+  const parentId = opts['parent-section'] ? await resolveParentSection(opts['parent-section']) : null;
 
   for (const [fileIndex, { file, path, text, doc }] of loaded.entries()) {
     const stats = { created: 0, reused: 0, added: 0, updated: 0, unchanged: 0 };

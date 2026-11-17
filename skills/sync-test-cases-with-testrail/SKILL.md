@@ -35,8 +35,8 @@ node <skill>/scripts/testrail.mjs check <files...>
 node <skill>/scripts/testrail.mjs list [--section <name>]
 node <skill>/scripts/testrail.mjs list --run <id>
 node <skill>/scripts/testrail.mjs pull [--section <name>] [--run <id>] [--out <dir>] [--overwrite]
-node <skill>/scripts/testrail.mjs push <files...> --dry-run [--parent-section <name>]
-node <skill>/scripts/testrail.mjs push <files...> [--parent-section <name>] [--confirm-others <case ids>]
+node <skill>/scripts/testrail.mjs push <files...> --dry-run [--parent-section <path>]
+node <skill>/scripts/testrail.mjs push <files...> [--parent-section <path>] [--confirm-others <case ids>]
 node <skill>/scripts/testrail.mjs results <results.md> --dry-run
 node <skill>/scripts/testrail.mjs results <results.md>
 node <skill>/scripts/testrail.mjs runs [--refs <keys>] [--milestone <name>] [--since <YYYY-MM-DD>] [--active] [--details]
@@ -63,7 +63,7 @@ Rules:
 
 - Pass the files explicitly. Push only `*.test.md` files.
 - Each suite becomes a section with the same name. An existing section with that name is reused.
-- `--parent-section` nests the sections under a top-level section, created if missing.
+- `--parent-section` nests the new sections under the section at that path, written with the names `list` prints: `Top › Child › Grandchild`. One name is a top-level section. Every section on the path must exist except the last, which is created when missing. A missing one before it stops the push before any write and lists the sections there.
 - A test with `testrail_id:` is updated in place. A test without it is created. Never edit or remove these lines by hand.
 - A new case gets `TESTRAIL_OWNER` as owner. An update never changes a case's owner, and a blank owner stays blank.
 - Without `TESTRAIL_OWNER`, every case that has an owner counts as another QC's. With no `owner` field mapped, every case counts as another QC's, since no owner can be read. `push` stops when `TESTRAIL_OWNER` is set but no `owner` field is mapped, or when the field has no option of that name.

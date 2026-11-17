@@ -155,7 +155,7 @@ One message, in this order:
 
 ### Step 5: Generate detailed test cases
 
-Destination, named in the checklist header: the section where Step 1 found the feature's cases, expanded; otherwise a new section named after the feature.
+Destination, named in the checklist header by its full path (`Top › Child`): the section where Step 1 found the feature's cases, expanded; otherwise a new section named after the feature, under the section that holds the cases of the screen it changes, else at the top level.
 
 Write test case files to the ticket's folder ([Ticket Folder](../gather-context/references/ticket-folder.md)).
 
@@ -191,4 +191,4 @@ Report as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out:
 - One line per case: its title as written, priority, and `smoke` or `ask` tag. The QC names a case by it when asking for a change.
 - Last, the ask: `Review the test cases in <files>. Tell me what to change, or say "push" and I push them to <section>.`
 
-On "push", run the `sync-test-cases-with-testrail` skill. A new section with several suites needs `--parent-section "<feature name>"` on that push, so the suites nest under the one section the header named.
+On "push", run the `sync-test-cases-with-testrail` skill. Suites not on TestRail yet need `--parent-section "<path>"`, or their sections land at the top level. One suite named after the feature: the path of the section it goes under. Several suites: that path, then the feature name, so the suites nest under the one section the header named.
