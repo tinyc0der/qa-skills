@@ -12,7 +12,7 @@ References:
 - [Results Format](./references/results-format.md) defines `results.md` and how the `results` command of `sync-test-cases-with-testrail` maps it to TestRail.
 - [Automation Lessons](./references/automation-lessons.md) defines the per-app lesson files and what belongs in them.
 - [UI Checks](./references/ui-checks.md) defines how to read displayed values, transient states, and screenshots.
-- [Regression Suggestion](./references/regression-suggestion.md) defines which related features the report suggests a regression on.
+- [Follow-up Checks](./references/follow-up.md) defines what the report offers to run next and how it ranks the options by risk.
 - [API Checks](./references/api-checks.md) defines how to read the app's requests, call an endpoint directly, compare responses, and probe the API after the run.
 - [Data Checks](./references/data-checks.md) defines how to compare what the app shows and saves with the database.
 - [Device Session](./references/device-session.md) defines how Android and iOS cases pick a device, open the app, read its build, and take evidence.
@@ -22,7 +22,7 @@ TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync
 
 **When to skip steps:**
 
-- The user asks only for API probes or data checks → Step 1 selects the story's `smoke: yes` cases, else one happy-path case per flow, only to capture the requests and reach the screens. Skip Steps 5 and 6: the results stay local, and the report leads with the suggested checks.
+- The user asks only for API probes or data checks → Step 1 selects the story's `smoke: yes` cases, else one happy-path case per flow, only to capture the requests and reach the screens. Skip Steps 5 and 6: the results stay local, and the report leads with the follow-up question.
 
 ## Workflow
 
@@ -34,7 +34,7 @@ TestRail commands run the script of `sync-test-cases-with-testrail`: `node <sync
 6. Hand failed cases to `report-bug`
 7. Save automation lessons
 8. Report
-9. Run the extra checks the QC picks
+9. Run the follow-up the QC picks
 
 ### Step 1: Select cases
 
@@ -53,7 +53,7 @@ Scope by kind of run:
 
 - New feature: every case of the story.
 - Fix verification: the failed cases, plus the story's cases for the other branches and boundaries of the same flow. A flow that moves orders or money adds the cases that check buying power, fee, and order status after the action.
-- Regression: cases in the sections the change touches. No ticket says which areas changed → ask in the Step 2 message. Sections the QC picked from a story's report (Step 8): their `smoke: yes` cases, else their critical ones, unless the QC picked all.
+- Regression: cases in the sections the change touches. No ticket says which areas changed → ask in the Step 2 message. Features the QC picked as a follow-up (Step 9): their `smoke: yes` cases, else their critical ones, unless the QC picked all.
 - Smoke: cases with `smoke: yes`, or the ones the user names.
 
 Platform of each case, from its `platform`: a web option runs in the browser, an Android or iOS option on that OS, and a mobile option on each mobile OS of the run. `All`, or no platform, runs on every platform of the run: the ones the user names, else the ones the story covers.
@@ -94,7 +94,7 @@ Ask before the first case only when the run creates a TestRail run, has cases in
 2. ✏️ Type changes
 ```
 
-The approval covers the data changes the listed cases make and creating the TestRail run the plan names. **After it, only steps a person must do (Step 3), the Bug drafts (Step 6), and the extra checks (Step 9) wait for the QC.** The run and the push finish while the QC is away.
+The approval covers the data changes the listed cases make and creating the TestRail run the plan names. **After it, only steps a person must do (Step 3), the Bug drafts (Step 6), and the follow-up (Step 9) wait for the QC.** The run and the push finish while the QC is away.
 
 ### Step 3: Run the cases
 
@@ -194,38 +194,29 @@ Update `data-map/<app>.md` per [Data Checks](./references/data-checks.md#data-ma
 
 Lay it out as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says:
 
-1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, the API probes and data checks to pick, the regression to run on related features, cases that need a fix, cases that differ locally (Step 1), session times to save (Step 1), story comments to post (Step 4), results not pushed.
+1. For the QC to decide: the Bug drafts (Step 6), product defects outside the case steps, the follow-up to run next, cases that need a fix, cases that differ locally (Step 1), session times to save (Step 1), story comments to post (Step 4), results not pushed.
 2. Counts by status, zeros included, the TestRail run link, and run time against the estimate. Part of an existing run: this run's counts, then the run's totals. Cases left out because they already had a result: count by status, outside this run's counts.
 3. Failed: one line per case, with its title, failing step, Expected vs Actual, and Bug key or "Bug pending".
 4. Blocked: one line per case, with the reason, owner, and what unblocks it. Untested: case and reason.
 5. One line: the `results.md` path and how many lessons were added, changed, or removed.
 
-Ask for the extra checks in the same message, listing the `suggested` rows of `probes.md`: the API probes by request, each with what it saves, and the data checks by screen, which only read:
+Ask one question on what to run next, in the same message, per [Follow-up Checks](./references/follow-up.md). The options are API probes, data checks, and a regression on related features, after any kind of run. Offer only the ones the run and the story make worth running, the riskiest first:
 
 ```
-❓ Run the extra checks?
+❓ What should run next?
 
-1. ✅ Run the ones that save nothing when the server is right
-2. 🧪 Run all, also the ones that place an order or move money
-3. ✏️ Type changes
+1. ✅ <riskiest option>: <scope> · <why>
+2. <next option>: <scope> · <why>
+3. <next option>: <scope> · <why>
+4. ⏭️ Nothing more
+5. ✏️ Type changes: several options, or another scope
 ```
 
-After a new feature run, suggest a regression on the related features in the same message, per [Regression Suggestion](./references/regression-suggestion.md):
+### Step 9: Run the follow-up the QC picks
 
-```
-❓ Run a regression on the related features?
+No question asked, or the QC picks nothing → no Step 9.
 
-1. ✅ Run their smoke cases in a new TestRail run `<KEY> regression`
-2. 🧪 Run all their cases
-3. ✏️ Type changes
-```
-
-A pick starts a new run of this skill, kind Regression, on the picked sections, with the story key as refs. The pick approves creating that TestRail run. Step 2 of the new run asks only what is still open.
-
-### Step 9: Run the extra checks the QC picks
-
-Only after the QC's pick. No `suggested` row → no question and no Step 9.
-
-- Open the run's session again. Run the picked API probes per [API Checks](./references/api-checks.md#probe-the-api) and the picked data checks per [Data Checks](./references/data-checks.md#after-the-run). Update each row of `probes.md` as it finishes.
+- API probes and data checks: open the run's session again. Run the picked probes per [API Checks](./references/api-checks.md#probe-the-api) and the picked data checks per [Data Checks](./references/data-checks.md#after-the-run). Update each row of `probes.md` as it finishes.
 - Hand each `found` row to `report-bug` as a defect found in the live app, with its evidence file. Add the Bug key to the row once filed. A data difference the QC has not confirmed waits for that answer.
 - Close the session as Step 3 says, then report: findings first, then counts of `found`, `done`, and `skipped`, and what a probe saved and reversed.
+- A regression: start a new run of this skill, kind Regression, on the picked features, with the story key as refs. The pick approves creating its TestRail run. Step 2 of the new run asks only what is still open.

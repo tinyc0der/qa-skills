@@ -55,7 +55,7 @@ The run folder's record of every extra check: each captured request with its pro
 
 ### After the run
 
-Suggest the probes below for each captured request, one `suggested` row each. Leave out a probe that an earlier run's `probes.md` shows `done` or `found` for the same request on the same build. Run a probe only after the QC picks it (Step 9), in the run's session opened again.
+Suggest the probes below for each captured request, one `suggested` row each. Leave out a probe that an earlier run's `probes.md` shows `done` or `found` for the same request on the same build. The Step 8 question offers them ([Follow-up Checks](./follow-up.md)). Run a probe only after the QC picks it (Step 9), in the run's session opened again.
 
 | Probe                     | Send                                                                                                      | Saves data                        | Defect when                                                                             |
 | ------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------- |
