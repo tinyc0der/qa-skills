@@ -20,7 +20,7 @@ npx skills update
 
 ### Claude Code (plugin with marketplace)
 
-For Claude Code skills are grouped into plugins which could be installed from the marketplace.
+In Claude Code, all skills come in one plugin, `qa-skills`, from the `vietcap-plugins` marketplace.
 
 > All commands below should be executed in Claude Code terminal.
 
@@ -30,22 +30,25 @@ For Claude Code skills are grouped into plugins which could be installed from th
 /plugin marketplace add tinyc0der/qa-skills
 ```
 
-2. Install required plugin
+2. Install the plugin
 
 ```bash
-/plugin install <plugin-name>@vietcap-plugins
-# e.g.
-/plugin install test-management@vietcap-plugins
+/plugin install qa-skills@vietcap-plugins
+```
+
+If you installed the earlier `requirements`, `test-management`, or `qa-process` plugins, uninstall them. They no longer load:
+
+```bash
+/plugin uninstall requirements@vietcap-plugins
+/plugin uninstall test-management@vietcap-plugins
+/plugin uninstall qa-process@vietcap-plugins
 ```
 
 3. Use
 
 ```bash
-# invoke plugin
-/test-management
-
-# or call skill directly
-/test-management:qa-write-test-cases
+# call skill directly
+/qa-skills:qa-write-test-cases
 
 # or just use skill name
 qa-write-test-cases

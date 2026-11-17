@@ -1,0 +1,20 @@
+{
+  "name": "qa-skills",
+  "version": "2.0.0",
+  "description": "Manual QC from requirements to verified bugs: review user stories from Jira, Confluence, and Figma, write test cases and sync them with TestRail, run them on the live app, report and verify bugs, and plan QC subtasks in Jira",
+  "repository": "https://github.com/tinyc0der/qa-skills",
+  "license": "MIT",
+  "keywords": [
+    "qa",
+    "quality",
+    "testing",
+    "requirements",
+    "user-stories",
+    "acceptance-criteria",
+    "test-management",
+    "test-cases",
+    "testrail",
+    "test-runs",
+    "bugs"
+  ]
+}
