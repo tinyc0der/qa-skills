@@ -24,6 +24,7 @@ A lesson is how to drive the app, never what the app should do. It never becomes
 - Restore: `agent-browser --session backoffice-qa --restore open https://staging.example.com/orders`
 - Signed in: the header shows the account name; signed out shows the "Sign in" button.
 - Login: `agent-browser auth login backoffice-qa`. SSO asks for OTP on every new device: ask the user.
+- Database, staging, read-only: `psql "service=backoffice-staging-ro" --csv -f <file.sql>`.
 
 ## Navigation
 
@@ -55,7 +56,7 @@ A lesson is how to drive the app, never what the app should do. It never becomes
 
 | Section    | Holds                                                                                |
 | ---------- | ------------------------------------------------------------------------------------ |
-| Session    | Restore command, how to tell signed in from signed out, login alias, OTP and MFA notes |
+| Session    | Restore command, how to tell signed in from signed out, login alias, OTP and MFA notes, and each environment's read-only database command: the client, a connection alias, and the flags that run a `.sql` file and print CSV |
 | Navigation | Deep links and URL parameters that skip clicks                                       |
 | Waits      | The wait that works after each slow action, and waits that never settle              |
 | Elements   | Controls that need a special command, and stable text or roles to target             |

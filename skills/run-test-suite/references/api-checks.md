@@ -36,10 +36,10 @@ No extra request is sent. Smoke runs skip this.
 
 ### probes.md
 
-The run folder's record of every captured request and probe. The Step 8 report and the Step 9 run both read and update it.
+The run folder's record of every extra check: each captured request with its probes, and each data check ([Data Checks](./data-checks.md)), whose row names the screen. The Step 8 report and the Step 9 run both read and update it.
 
 ```markdown
-# API probes
+# Extra checks
 
 | Request      | Probe                     | Status    | Result                                                        |
 | ------------ | ------------------------- | --------- | ------------------------------------------------------------- |
@@ -47,6 +47,7 @@ The run folder's record of every captured request and probe. The Step 8 report a
 | POST /orders | Field the app never sends | found     | `fee: 0` is saved on the order · `api-POST-orders-field.json` |
 | POST /orders | Same moment               | suggested | Places up to two orders                                       |
 | GET /orders  | Another account's ID      | skipped   | One test account                                              |
+| Order book   | Database                  | suggested | Reads only                                                    |
 ```
 
 - Status: `suggested`, `done` (ran, found nothing), `found`, or `skipped` with the reason.
