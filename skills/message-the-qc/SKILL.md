@@ -40,5 +40,5 @@ A stop that a skill names stands even where this list does not cover it, such as
 - Write in the language the QC writes in.
 - Name things the way the QC finds them: case title and `C<id>`, Jira key, section path. Leave out account IDs, sprint IDs, section IDs, and how the work was done.
 - Counts on one line with zeros: `12 passed · 2 failed · 0 blocked · 1 untested`.
-- End a message that stops for the QC with one line above its question: what to do now, and what the answer starts, such as `Review the checklist above. I write one test case per item once you approve it.` The QC reads it where they answer.
+- End a message that stops for the QC with one line, in its own paragraph above its question: what to do now, and what the answer starts, such as `Review the checklist above. I write one test case per item once you approve it.` The QC reads it where they answer.
 - End a report with the one next step that fits, not a menu.

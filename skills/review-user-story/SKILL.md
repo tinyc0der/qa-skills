@@ -66,7 +66,8 @@ Use exactly these two headings, in this order. Do not add an executive summary, 
 ## Gaps
 
 - **Testable:** "the price board updates fast" has no measurable pass/fail.
-- **Ready to test:** no error text when buying power is too low; no rounding rule for the fee.
+- **Ready to test:** no error text when buying power is too low.
+- **Ready to test:** no rounding rule for the fee.
 
 ## Questions
 
@@ -74,5 +75,5 @@ Use exactly these two headings, in this order. Do not add an executive summary, 
 ```
 
 Output constraints:
-- Gaps: one bullet per failed check from step 2, or "No gaps found."
+- Gaps: one bullet per missing or failing item, led by its check from step 2, or "No gaps found." Never join two items in one bullet: each gets its own answer.
 - Do not edit issues, create subtasks, rewrite the story, or execute tests. The context file update (step 4) is the only write.

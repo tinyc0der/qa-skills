@@ -110,6 +110,7 @@ Item rules:
 - Group items by user journey in flow order. In each group, list the happy path first, then negative and edge cases.
 - Prefix each item with its TestRail priority: 🔴 critical for the core flow and for data shown to users who must not see it, 🟠 high for main alternative flows and key validations, 🟡 medium for edge cases and boundaries, 🟢 low for minor UI and copy. An `ask` item keeps the priority of its impact. When pulled cases use other priority names, use those.
 - Tag `[smoke]` on the items of the critical path: the happy path of each main flow that one tester can run alone in one session. Smoke and critical items have no `ask` part; a doubtful check that shares their steps goes into its own item.
+- Tag an `ask` item `[ask: <the open question it waits on>]`, by the name the review or the context file gives that question: the QC sees why it waits.
 - Number groups and items (`2`, `2.3`) so the user can refer to them. The numbers stay in the checklist, never in test files.
 
 Example:
@@ -123,6 +124,7 @@ Example:
 - 2 Cancel a pending order
   - 2.1 🔴 [critical] [smoke] Pending order can be cancelled in the continuous session
   - 2.2 🟠 [high] Pending order cannot be cancelled during ATC
+  - 2.3 🟠 [high] [ask: partially matched order] Cancel on a partially matched order
 ```
 
 #### Self review
@@ -133,7 +135,7 @@ Run [Self review](#self-review) on the checklist. Skip it when the user only rem
 
 One message, in this order:
 
-1. Header, one line each: scope and item count, with the other tiers' counts; role, and the role Step 3 recommends; destination section (Step 5); sources not read; count of `ask` items waiting on the PO.
+1. Header, one line each: scope and item count, with the other tiers' counts; role, and the role Step 3 recommends; destination section (Step 5); sources not read; count of `ask` items waiting on the PO, and what the QC approves for them: each case checks only what any answer keeps, until the PO answers.
 2. The findings Self review leaves for the QC, as numbered questions.
 3. The checklist.
 4. The question:
@@ -186,6 +188,7 @@ Report as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out:
 
 - The findings the review leaves for the QC, items that needed splitting, and gaps found while writing, as numbered questions.
 - The number of test cases and suites, with the files linked.
+- One line per case: its title as written, priority, and `smoke` or `ask` tag. The QC names a case by it when asking for a change.
 - Last, the ask: `Review the test cases in <files>. Tell me what to change, or say "push" and I push them to <section>.`
 
 On "push", run the `sync-test-cases-with-testrail` skill. A new section with several suites needs `--parent-section "<feature name>"` on that push, so the suites nest under the one section the header named.
