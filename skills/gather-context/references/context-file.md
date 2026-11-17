@@ -18,8 +18,7 @@ An open question or open conflict that tests depend on has a `Cases:` sub-bullet
 
 Updates:
 
-- Overwrite the file on a re-run, but keep `Left without a test`, `Answers`, and each open question and open conflict no source settles yet, with its `asked` marks and `Cases:`.
-- An open question or open conflict sent to the PO ends with `asked <date>` and the comment's link. Sending it again adds another.
+- Overwrite the file on a re-run, but keep `Left without a test`, `Answers`, and each open question and open conflict no source settles yet, with its `Cases:`.
 - An answer to an open question or an open conflict, or a story change that settles one → move it to `Answers`, with its `Cases:`.
 - A new doubt → add it to `Open questions`.
 
@@ -53,7 +52,7 @@ Conflicts:
 
 Open questions:
 
-- Order matched before the cancel reaches the exchange: no source says what the investor sees; asked 2026-11-11 ([TRADE-205 comment](https://example.atlassian.net/browse/TRADE-205?focusedCommentId=1002))
+- Order matched before the cancel reaches the exchange: no source says what the investor sees
   - Cases: C210, C211
 
 Answers:
