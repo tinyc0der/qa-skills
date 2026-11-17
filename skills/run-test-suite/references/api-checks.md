@@ -1,8 +1,3 @@
----
-title: API Checks
-description: How a runner reads the app's requests, calls an endpoint directly, probes the API behind the cases for defects, and saves API evidence.
----
-
 # API Checks
 
 ## Read or Send the Request

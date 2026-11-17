@@ -1,8 +1,3 @@
----
-title: Follow-up Checks
-description: How the report of a run picks what to offer the QC next (API probes, data checks, a regression on related features) and ranks it by the risk the run and the story show.
----
-
 # Follow-up Checks
 
 A run's cases cover the story as written. After the result, one question offers what could still find bugs, and the QC picks. Offer only what the run and the story make worth the QC's time, the riskiest first.

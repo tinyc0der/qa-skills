@@ -1,8 +1,3 @@
----
-title: Data Checks
-description: How a runner compares what the app shows and saves with the database, through a read-only connection and a data map, and what a difference means.
----
-
 # Data Checks
 
 The QC has read access to the database of the environment under test. The runner uses it to check what a person can only sample: every row and cell of a table, and what an action really saved.
