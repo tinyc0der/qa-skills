@@ -52,6 +52,7 @@ Avoid:
 A step is an action (with optional test data) and an expected result, in the format of [Test Case Format](./testrail-test-case-format.md) §4. A wait or setup step (`Wait until 10:05`, `Go to the iPhone home screen`) may have no expected result.
 
 - Each expected result passes or fails: no "either X or Y", no "record whether X". An outcome no source gives is an `ask` item, not two accepted outcomes.
+- No expected result behind a condition (`If the banner shows, it reads …`): it passes when the condition never happens. The preconditions force the condition.
 - Every check goes in the expected result, never in the action.
 - Each step is a simple sentence. Avoid commas and sub-sentences.
 - Steps are mechanical: click, send, read, assert.
