@@ -68,12 +68,13 @@ Each QC keeps their own QA workspace, with no shared repo: one folder per ticket
 
 A ticket spans several conversations, since it waits for the PO, a build, and Bug fixes. Tell `testing-workflow` what happened (you were assigned a story, a build is ready, Dev fixed a bug) and it runs that workflow, or say "continue <KEY>" and it finds where the ticket stands from Jira, TestRail, and the ticket folder.
 
-1. Review the Jira story with `review-user-story` and send the feedback to the PO yourself. It starts with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse.
-2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist with "Write and push" and the cases go to TestRail without another question. Through `testing-workflow`, the same answer creates your QC subtask with `plan-qc-subtasks`. Open questions left in the context file show up again in the next `review-user-story`.
-3. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
-4. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
-5. When Dev fixes a Bug, retest it with `verify-bug`. It checks the build carries the fix, reruns the Bug's steps, its failed cases, and the flows around them, and one answer closes or reopens every Bug it retested.
-6. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
+1. Review the Jira story with `review-user-story` and send the feedback to the PO yourself. It starts with `gather-context`, which saves the ticket's sources, conflicts, and open questions to a context file that later steps reuse. Through `testing-workflow`, the review waits for you. Confirm it, or answer the open questions you can, and then `testing-workflow` drafts the checklist.
+2. Generate cases with `qa-write-test-cases`. Each case links its Jira key in `refs`. Approve the checklist, and the skill writes the cases. Read them, then push them to TestRail with `sync-test-cases-with-testrail`. Open questions left in the context file show up again in the next `review-user-story`.
+3. When Dev sets their Due dates, `plan-qc-subtasks` creates your QC subtask, estimates its story points, and sets its dates, all in one approval.
+4. Run the cases on the live app with `run-test-suite`. Its one question, when it needs one, comes before the first case; the results go to a TestRail run without another.
+5. File Jira Bugs for the failed cases with `report-bug`, approving them all in one answer.
+6. When Dev fixes a Bug, retest it with `verify-bug`. It checks the build carries the fix, reruns the Bug's steps, its failed cases, and the flows around them, and one answer closes or reopens every Bug it retested.
+7. Later, pull cases back and run `improve-test-cases` or `detect-duplicate-test-cases`.
 
 Skills stop only for input only you have and for writes others see that cannot be undone, and ask everything pending in one message. See the [`message-the-qc`](./skills/message-the-qc/SKILL.md) skill.
 

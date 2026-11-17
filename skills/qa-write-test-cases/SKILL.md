@@ -16,13 +16,14 @@ References:
 
 **When to skip steps:**
 
-- The QC gives the finished cases → skip Steps 2 to 4 and write only those cases. Format them, set `refs:`, and compare them with the story's existing cases. Steps 6 and 7 still run, and the push asks first, since no checklist approved it.
-- New answers in the context file's `Answers` list cases already written → pull those cases fresh, change only what the answers settle, and skip Steps 2 to 4. Steps 6 and 7 still run.
+- The QC gives the finished cases → skip Steps 2 to 4 and write only those cases. Format them, set `refs:`, and compare them with the story's existing cases. Step 6 still runs.
+- New answers in the context file's `Answers` list cases already written → pull those cases fresh, change only what the answers settle, and skip Steps 2 to 4. Step 6 still runs.
 
 ## User interaction
 
 - **Always generate a checklist before test cases**, even if the user asks for test cases directly.
 - **The checklist (Step 4) is the one approval gate.** Scope, role, and destination are defaults the checklist message states, and the QC changes them in the same reply.
+- **Never push the cases, even when the QC asked for the push before they were written: the QC reads them before other QCs see them on TestRail.** The report asks the QC to review them, and the push waits for their word.
 - Stop and write to the QC as the [`message-the-qc`](../message-the-qc/SKILL.md) skill says.
 - Write the checklist and test cases in the language the user asks for. Otherwise use the language of existing test cases, then of the requirements.
 
@@ -45,10 +46,9 @@ Without subagents, apply the fixes yourself.
 1. Gather context into a context file
 2. Choose coverage scope — default
 3. Choose role — default
-4. Generate checklist — self review, then the approval gate
+4. Generate checklist — self review, then the checklist gate
 5. Generate detailed test cases
-6. Review test cases — self review
-7. Push and summarize
+6. Review test cases — self review, then the report
 
 ### Step 1: Gather context
 
@@ -129,7 +129,7 @@ Example:
 
 Run [Self review](#self-review) on the checklist. Skip it when the user only removed or reworded items.
 
-#### Approval gate
+#### Checklist gate
 
 One message, in this order:
 
@@ -139,19 +139,17 @@ One message, in this order:
 4. The question:
 
 ```
-❓ Write the test cases?
+❓ Write the test cases from this checklist?
 
-1. ✅ Write and push to TestRail
-2. 📝 Write only
-3. ✏️ Type changes: item numbers to drop, items to add, another tier, role, or section
+1. ✅ Write the cases
+2. ✏️ Type changes: item numbers to drop, items to add, another tier, role, or section
 ```
 
-- Items only removed or reworded, or another section → apply the change and go to Step 5 without asking again. Push in Step 7 only when the reply says to push.
+- Items only removed or reworded, or another section → apply the change and go to Step 5 without asking again.
 - Items added, or another tier or role → regenerate (Step 4) and ask again.
 - The user asked only for a checklist → leave out the question, end here, and offer the test cases in one line.
 - More details → enable the 🤓 nerd role.
 - User not satisfied → go back to Step 1 for more context.
-- Option 1 also approves the Step 7 push of exactly these cases to the section the header names.
 
 ### Step 5: Generate detailed test cases
 
@@ -168,7 +166,6 @@ Generation rules:
 - Multiple features or whole product → one file per feature.
 - When the user chose to expand an existing section, `pull --section <section> --out <ticket folder>` it, then add each new test to the pulled file of the subsection it fits. Never overwrite a pulled file.
 - When pulled cases carry `platform:`, the project keeps one section tree per feature for all platforms. Add the new platform's tests to those subsections; do not create a section per platform.
-- A new section with several suites: push with `--parent-section "<feature name>"` so the suites nest under the one section the header named.
 - **Keep scope**: test only the functionality under test; don't test linked features unless the user explicitly asks.
 
 Format rules:
@@ -183,9 +180,12 @@ Format rules:
 
 Run [Self review](#self-review) on the new test cases. Before each review, run `check` of the `sync-test-cases-with-testrail` skill on the files and fix what it reports.
 
-### Step 7: Push and summarize
+List the test of each `ask` item under the open question or open conflict it depends on, as [Context File](../gather-context/references/context-file.md) describes: the PO's answer finds its cases there.
 
-- Push approved at the gate → push the files with the `sync-test-cases-with-testrail` skill. The gate approved creating these cases in that section and nothing else. A dry run that does more, such as updating any case (pulled legacy cases convert to the steps template) or creating another section, stops and shows what it would change.
-- List the test of each `ask` item under the open question or open conflict it depends on, as [Context File](../gather-context/references/context-file.md) describes: the PO's answer finds its cases there.
-- Summary, in this order: the findings Step 6 leaves for the user, items that needed splitting, and gaps found while writing, as questions; the number of test cases and suites, the files, and the TestRail section link when pushed.
-- Next step: open questions or open conflicts in the context file → send them to the PO with the `review-user-story` skill. Otherwise, run the cases when the build is ready. Not pushed → push with `sync-test-cases-with-testrail`.
+Report as the [`message-the-qc`](../message-the-qc/SKILL.md) skill lays out:
+
+- The findings the review leaves for the QC, items that needed splitting, and gaps found while writing, as numbered questions.
+- The number of test cases and suites, with the files linked.
+- Last, the ask: `Review the test cases in <files>. Tell me what to change, or say "push" and I push them to <section>.`
+
+On "push", run the `sync-test-cases-with-testrail` skill. A new section with several suites needs `--parent-section "<feature name>"` on that push, so the suites nest under the one section the header named.
