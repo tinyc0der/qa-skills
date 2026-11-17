@@ -71,4 +71,6 @@ Suggest the probes below for each captured request, one `suggested` row each. Le
 
 ## Evidence
 
-`C<id>-step<n>.json` for a case's step, with the method, URL, status, and response body. Remove cookies, `Authorization` headers, and tokens first. Never save a HAR: it keeps them.
+- `C<id>-step<n>.json` for a case's step, with the method, URL, status, and response body.
+- `<path slug>` in an `api-` file name is the path in lowercase, with `-` for `/` and `id` for each ID, such as `api-GET-orders-id-fills.json`. Every run uses the same name for the same request: other runs find the file by it.
+- Remove cookies, `Authorization` headers, and tokens first. Never save a HAR: it keeps them.
