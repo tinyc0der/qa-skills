@@ -21,6 +21,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - Input the client cannot send is a row in the server validation test.
 - A source that says "same as the existing X": items for the parts of X the feature shows (limits, defaults, recalculated values, options it compares with).
 - An acceptance criterion that says "matches screen X" when X reads the same data: one more item checks a record against an independent oracle (the formula, or a third screen), since the match passes by construction.
+- A calculated value (fee, buying power, P&L): at least two data rows with different compositions (one matched lot, several lots at different prices), each expected value worked out from the formula. One correct total can hide two errors that cancel out.
 
 **Equivalence partitioning**
 
@@ -68,6 +69,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 
 - User types any source names for the screen (guest, logged-in, tiers, experiment groups), even if the ticket names none: one item per user type whose result can differ. A fix that does not read the user type needs none. Access rules another story defines stay with that story.
 - A permission the server checks: one API item with a row per user type it denies, no session included.
+- A ticket that adds or changes how a session ends (logout, password change, expiry, device removed): one API item where a request captured before the end is sent again after it and is denied. The login screen showing only proves the client cleared its copy.
 - A screen open to more users than its data's source screen: one item that the response for the least privileged user carries only the fields the screen shows.
 
 ## 3. Experience-based techniques
@@ -77,6 +79,7 @@ Rate each area of the feature by impact and likelihood before deriving items. Hi
 - One item per error class a source names or implies (timeout, 5xx, 4xx, offline) that has its own expected result.
 - Each precondition the feature itself checks (OTP at submit, session at a save): one item for when it does not hold. Not the login every read-only screen needs. For a failed job or import, seed the data state the failure leaves (a missing record, a null field) instead of stopping the job.
 - An action that moves money or cannot be undone (place or cancel an order, transfer money): one item where it is submitted twice fast (double tap, submit again while the first is loading), and one where it is interrupted between submit and result (app sent to the background during OTP, network lost, back pressed). Each ends with one result or none, and every screen that shows it agrees (order book, buying power, history).
+- The same action when the server accepts it but the response never arrives (timeout shown) and the user submits again: one result, not two. Cutting the network before the request leaves does not cover this.
 - An order or money action: each result also checks buying power, cash, holdings, and the order in the order book. A rejected order leaves them as they were. After a partial match, the fee and the cash spent follow the matched quantity, and the hold on the unmatched quantity is released when it is cancelled or expires. Fee rates and rounding come from `domain/` or the source.
 - Realtime data (prices on the price board and order form, order status pushed by the server): one item where the feed drops and reconnects, and one where the app returns from the background. The value shown catches up within the tolerance a source or `domain/` gives. No tolerance → `ask`.
 - A new instance of a shared component (a new tab with the same table, a new export): each bug fixed on the other instances is a row or step for the new one.
